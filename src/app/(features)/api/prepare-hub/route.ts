@@ -32,22 +32,22 @@ export async function POST(req: Request) {
       .where(eq(Resume.id, parseInt(resumeId)));
     const resumeContent = resumeReponse[0].jsonResume;
 
-    const result = await generateText({
-      model: google("gemini-1.5-pro-latest"),
-      messages: [
+const result = await generateText({
+    model: google("gemini-1.5-pro-latest"),
+  messages: [
+    {
+      role: "user",
+      content: [
         {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `You are an AI Assistant who is an expert about Interview.
-              Start Context: You are interviewing for a software engineering role at a top tech company base on my CV ${resumeContent}, ${position} and ${jobDescription} End Context.
-              Question: Generate 5 Interview questions and anwsers based on the context in Json Format.`,
-            },
-          ],
+          type: "text",
+          text: `You are an AI Assistant who is an expert about Interview.
+          Start Context: You are interviewing for a software engineering role at a top tech company base on my CV ${resumeContent}, ${position} and ${jobDescription} End Context.
+          Question: Generate 5 Interview questions and anwsers based on the context in Json Format.`,
         },
       ],
-    });
+    },
+  ],
+});
     const parsedResult = JSON.parse(
       result.text.replace("```json", "").replace("```", "")
     );
