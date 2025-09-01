@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     const resumeContent = resumeReponse[0].jsonResume;
 
 const result = await generateText({
-    model: google("gemini-1.5-pro-latest"),
+    model: google("gemini-1.5-pro-latest") as any,
   messages: [
     {
       role: "user",
