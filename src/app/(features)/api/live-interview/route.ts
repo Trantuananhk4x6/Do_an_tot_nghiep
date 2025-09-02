@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   const { messages } = await req.json();
   try {
     const result = streamText({
-      model: google("gemini-1.5-pro-latest"),
+      model: google("gemini-1.5-pro-latest") as any,
       messages,
       system: `You are a helpful interview assistant. 
         Use tools on every request.

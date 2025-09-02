@@ -2,24 +2,23 @@ import { google } from "@ai-sdk/google";
 import { embed, embedMany } from "ai";
 import { cosineDistance, desc, eq, gt, sql } from "drizzle-orm";
 import { db } from "../../db";
+
 import { InterviewSetEmbeddings } from "../../db/schema";
 
-const embeddingModel = google.textEmbeddingModel("text-embedding-004", {
-  outputDimensionality: 768,
-});
-const generateChunks = (input: string): string[] => {
+const embeddingModel = google.textEmbeddingModel("text-embedding-004");
+function generateChunks(input: string): string[] {
   return input
     .trim()
     .split(".")
     .filter((i) => i !== "");
-};
+}
 
 export const generateEmbeddings = async (
   value: string
 ): Promise<Array<{ embedding: number[]; content: string }>> => {
   const chunks = generateChunks(value);
   const { embeddings } = await embedMany({
-    model: embeddingModel,
+    model: embeddingModel as any,
     values: chunks,
   });
   return embeddings.map((e, i) => ({ content: chunks[i], embedding: e }));
@@ -28,7 +27,7 @@ export const generateEmbeddings = async (
 export const generateEmbedding = async (value: string): Promise<number[]> => {
   const input = value.replaceAll("\\n", " ");
   const { embedding } = await embed({
-    model: embeddingModel,
+    model: embeddingModel as any,
     value: input,
   });
   return embedding;
