@@ -8,110 +8,80 @@ interface AudioRecorderHook {
   transcription: string | null;
 }
 
-export const useAudioRecorder = (): AudioRecorderHook => {
+
+export const useAudioRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [transcription, setTranscription] = useState<string | null>(null);
-  const mediaRecorder = useRef<MediaRecorder | null>(null);
-  const chunks = useRef<Blob[]>([]);
-  const audioStream = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   const startRecording = useCallback(async () => {
     try {
-      // Initialize stream with optimized audio constraints
-      const stream = await navigator.mediaDevices.getUserMedia({
+      setError(null);
+      
+      const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
-          sampleRate: 48000,
-          channelCount: 1, // Mono for better compatibility
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true,
-        }
-      });
-      
-      audioStream.current = stream;
-
-      // Pre-warm the audio context
-      const audioContext = new AudioContext();
-      const source = audioContext.createMediaStreamSource(stream);
-      const destination = audioContext.createMediaStreamDestination();
-      source.connect(destination);
-
-      // Add small delay to ensure stable initialization
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      mediaRecorder.current = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus',
-        audioBitsPerSecond: 128000, // Optimal bitrate for voice
+          sampleRate: 44100
+        } 
       });
 
-      mediaRecorder.current.ondataavailable = (event) => {
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus'
+      });
+
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
-          chunks.current.push(event.data);
+          chunksRef.current.push(event.data);
         }
       };
 
-      mediaRecorder.current.onstop = async () => {
-        const blob = new Blob(chunks.current, { 
-          type: 'audio/webm;codecs=opus'
-        });
-        chunks.current = [];
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm;codecs=opus' });
+        setAudioBlob(blob);
         
-        // Clean up audio context
-        audioContext.close();
-        
-        try {
-          // Create FormData and append the audio blob
-          const formData = new FormData();
-          formData.append('file', blob, 'recording.webm');
-
-          // Call the STT API
-          const response = await fetch('https://service-api.beatinterview.com/api/Stt', {
-            method: 'POST',
-            body: formData,
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to transcribe audio');
-          }
-
-          const transcriptionResult = await response.text();
-          console.log('Transcription result:', transcriptionResult);
-          setTranscription(transcriptionResult);
-          setError(null);
-        } catch (err) {
-          console.error('Transcription error:', err);
-          setError('Failed to transcribe audio');
-        }
-
-        // Clean up audio stream
-        if (audioStream.current) {
-          audioStream.current.getTracks().forEach(track => track.stop());
-          audioStream.current = null;
-        }
+        // Dừng tất cả tracks
+        stream.getTracks().forEach(track => track.stop());
       };
 
-      mediaRecorder.current.start(10); // Smaller timeslice for better buffering
+      mediaRecorder.onerror = (event) => {
+        console.error('MediaRecorder error:', event);
+        setError('Recording error occurred');
+      };
+
+      mediaRecorder.start(100); // Ghi mỗi 100ms
       setIsRecording(true);
-      setError(null);
+      
     } catch (err) {
-      setError('Failed to start recording. Please check your microphone permissions.');
-      console.error('Recording error:', err);
+      console.error('Error starting recording:', err);
+      setError('Failed to start recording. Please check microphone permissions.');
     }
   }, []);
 
   const stopRecording = useCallback(() => {
-    if (mediaRecorder.current && isRecording) {
-      mediaRecorder.current.stop();
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
   }, [isRecording]);
 
+  const clearRecording = useCallback(() => {
+    setAudioBlob(null);
+    setError(null);
+    chunksRef.current = [];
+  }, []);
+
   return {
     isRecording,
+    audioBlob,
+    error,
     startRecording,
     stopRecording,
-    error,
-    transcription
+    clearRecording
   };
-}; 
+};

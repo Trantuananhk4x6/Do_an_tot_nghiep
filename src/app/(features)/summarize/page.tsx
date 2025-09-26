@@ -150,7 +150,13 @@ const SummarizePage = () => {
                     </h3>
                   </div>
                   <div className="grid gap-3">
-                    {summary.keyPoints.map((point, index) => (
+                   {(Array.isArray((summary as any).summary)
+                     ? (summary as any).summary
+                     : summary.summary
+                         .split(/(?:\r\n|\r|\n|[.]\s+)/)
+                         .map((s) => s.trim())
+                         .filter(Boolean)
+                   ).map((point: string, index: number) => (
                       <div
                         key={index}
                         className="flex items-start gap-3 p-4 rounded-lg bg-white border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition-colors"

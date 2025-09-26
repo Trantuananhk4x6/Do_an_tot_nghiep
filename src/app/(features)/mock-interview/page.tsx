@@ -23,6 +23,7 @@ interface Voice {
   name: string;
   gender: string;
   avatarUrl: string;
+  title?: string;
 }
 
 const TRANSITION_PHRASES = [
@@ -65,7 +66,7 @@ const MockInterviewPage = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [streaming, setStreaming] = useState(false);
-
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0); 
   const audioManager = useRef(new AudioManager());
   const speechSynthesis = useRef(SpeechSynthesisManager.getInstance());
 
@@ -108,12 +109,96 @@ const MockInterviewPage = () => {
     };
   }, [messages]);
 
+
+  // Khai báo handleSubmit trước
+ const handleSubmit = useCallback(async (transcription: string) => {
+    console.log('🎯 handleSubmit called with:', transcription);
+    console.log('📊 Current question index:', currentQuestionIndex);
+    console.log('📝 Total questions:', interviewQuestions.length);
+    console.log('❓ Interview questions:', interviewQuestions);
+
+    if (!transcription || isProcessing) {
+      console.log('❌ Early return - no transcription or processing');
+      return;
+    }
+
+    if (interviewQuestions.length === 0) {
+      console.log('❌ No interview questions available');
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      setInputText("");
+
+      // Add user message
+      const userMessage = addMessage(transcription, true);
+      console.log('✅ Added user message');
+
+      // Logic chuyển sang câu hỏi tiếp theo
+      const nextQuestionIndex = currentQuestionIndex + 1;
+      console.log('➡️ Next question index:', nextQuestionIndex);
+      
+      if (nextQuestionIndex < interviewQuestions.length) {
+        // Có câu hỏi tiếp theo
+        const transitionPhrase = getRandomTransitionPhrase();
+        const nextQuestion = interviewQuestions[nextQuestionIndex];
+        const fullResponse = `${transitionPhrase} ${nextQuestion.question}`;
+        
+        console.log('📢 Next question:', nextQuestion.question);
+        console.log('💬 Full response:', fullResponse);
+        
+        // Add AI message với câu hỏi tiếp theo
+        const aiMessage = addMessage(fullResponse, false);
+        
+        // Cập nhật index
+        setCurrentQuestionIndex(nextQuestionIndex);
+        console.log('✅ Updated question index to:', nextQuestionIndex);
+        
+        // Speak với đúng giọng nói
+        const voiceGender = selectedVoice?.gender || 'female';
+        await speechSynthesis.current.speak(fullResponse, voiceGender);
+        
+      } else {
+        // Hết câu hỏi - kết thúc phỏng vấn
+        console.log('🏁 Interview finished - no more questions');
+        const endMessage = "Thank you for your time. That concludes our interview. We'll be in touch soon!";
+        const aiMessage = addMessage(endMessage, false);
+        
+        const voiceGender = selectedVoice?.gender || 'female';
+        await speechSynthesis.current.speak(endMessage, voiceGender);
+        
+        // Tự động chuyển đến trang báo cáo sau 3 giây
+        setTimeout(() => {
+          router.push('/assessment-report');
+        }, 3000);
+      }
+
+    } catch (error) {
+      console.error("❌ Error in handleSubmit:", error);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [addMessage, isProcessing, selectedVoice, currentQuestionIndex, interviewQuestions, router]);
+
+  // Khai báo handleTranscript
   const handleTranscript = useCallback((text: string) => {
+    console.log('📝 Received transcript:', text);
     setMicError(null);
     setInputText(text);
-  }, []);
+    
+    // Tự động stop listening và submit khi có final transcript
+    if (text && text.trim().length > 2) {
+      setTimeout(() => {
+        handleSubmit(text);
+      }, 500);
+    }
+  }, [handleSubmit]);
 
-  const { isListening, isSupported, startListening, stopListening } =
+  // ✅ SỬA DÒNG NÀY: Truyền handleTranscript vào useSpeechRecognition
+
+
+   const { isListening, isSupported, startListening, stopListening } =
     useSpeechRecognition(handleTranscript, "en-US");
 
   const handleToggleRecording = useCallback(() => {
@@ -145,39 +230,55 @@ const MockInterviewPage = () => {
     }
   }, [isListening, isSupported, isProcessing, startListening, stopListening]);
 
-  const handleSubmit = useCallback(async (transcription: string) => {
-    if (!transcription || isProcessing) return;
+// ...existing code...
 
-    try {
-      setIsProcessing(true);
-      
-      const nextResponse = interviewQuestions[currentResponse + 1];
-      
-      if (nextResponse) {
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        
-        const transitionPhrase = getRandomTransitionPhrase();
-        const fullResponse = `${transitionPhrase} ${nextResponse.question}`;
-        
-        // First synthesize the audio
-        const audioData = await speechSynthesis.current.synthesizeAudio(fullResponse);
-        
-        // Then add the message and update state
-        addMessage(fullResponse, false);
-        setCurrentResponse((prev) => prev + 1);
-        
-        // Finally play the synthesized audio
-        await speechSynthesis.current.speak(audioData);
-      }
-    } catch (error) {
-      console.error("Submit error:", error);
-      setMicError("Failed to process response. Please try again.");
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [currentResponse, interviewQuestions, addMessage, setCurrentResponse, isProcessing]);
+// const handleSubmit = useCallback(async (transcription: string) => {
+//   if (!transcription || isProcessing) return;
 
-  // Add cleanup effect
+//   try {
+//     setIsProcessing(true);
+//     setInputText("");
+
+//     // Add user message
+//     const userMessage = addMessage(transcription, true);
+
+//     // Simulate AI response
+//     const responses = [
+//       "That's a great question! Can you tell me more about your experience with...",
+//       "I appreciate your detailed response. Now, could you tell me...",
+//       "Excellent! Your background shows strong technical skills. How do you handle...",
+//     ];
+
+//     const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+    
+//     // Add AI message
+//     const aiMessage = addMessage(randomResponse, false);
+
+//     // Speak with correct gender
+//     const voiceGender = selectedVoice?.gender || 'female'; // Lấy gender từ selectedVoice
+//     await speechSynthesis.current.speak(randomResponse, voiceGender);
+
+//   } catch (error) {
+//     console.error("Error in handleSubmit:", error);
+//   } finally {
+//     setIsProcessing(false);
+//   }
+// }, [currentResponse, interviewQuestions, addMessage, setCurrentResponse, isProcessing, selectedVoice]);
+
+// const handleTranscript = useCallback((text: string) => {
+//     console.log('📝 Received transcript:', text);
+//     setMicError(null);
+//     setInputText(text);
+    
+//     // Tự động stop listening và submit khi có final transcript
+//     if (text && text.trim().length > 2) {
+//       stopListening();
+//       setTimeout(() => {
+//         handleSubmit(text);
+//       }, 500);
+//     }
+//   }, [stopListening, handleSubmit]);
+
   useEffect(() => {
     return () => {
       // Cleanup on unmount
@@ -189,28 +290,21 @@ const MockInterviewPage = () => {
     };
   }, [isListening, stopListening]);
 
-  const handleInterviewSetup = useCallback(
-    async (voice: Voice, interviewId: string) => {
-      try {
-        const response = await axios.get(`/api/interview-set?id=${interviewId}`);
-        setInterviewQuestions(response.data);
-        setSelectedVoice(voice);
-        handleStart(response.data);
-      } catch (error) {
-        console.error("Error fetching interview questions:", error);
-      }
-    },
-    []
-  );
 
   const handleStart = useCallback(async (questions: any[]) => {
+    console.log('🚀 Starting interview with questions:', questions);
     setIsStarted(true);
+    setCurrentQuestionIndex(0);
+    setInterviewQuestions(questions); // ✅ QUAN TRỌNG: Set questions vào state
+    
     const firstQuestion = questions[0];
     if (firstQuestion) {
+      console.log('🎤 Speaking first question:', firstQuestion.question);
       addMessage(firstQuestion.question, false);
-      await speechSynthesis.current.speak(firstQuestion.question);
+      const voiceGender = selectedVoice?.gender || 'female';
+      await speechSynthesis.current.speak(firstQuestion.question, voiceGender);
     }
-  }, [setIsStarted, addMessage]);
+  }, [setIsStarted, addMessage, selectedVoice]);
 
   const handleEnd = useCallback(() => {
     if (isListening) {
@@ -222,7 +316,22 @@ const MockInterviewPage = () => {
     setIsProcessing(false);
     setPlayingMessageId(null);
   }, [resetState, isListening, stopListening]);
-
+  const handleInterviewSetup = useCallback(
+    async (voice: Voice, interviewId: string) => {
+      try {
+        console.log('⚙️ Setting up interview with ID:', interviewId);
+        const response = await axios.get(`/api/interview-set?id=${interviewId}`);
+        console.log('📥 Received questions from API:', response.data);
+        
+        setSelectedVoice(voice);
+        // Truyền questions trực tiếp vào handleStart
+        await handleStart(response.data);
+      } catch (error) {
+        console.error("❌ Error fetching interview questions:", error);
+      }
+    },
+    [handleStart] // ✅ Thêm handleStart vào dependency
+  );
   const handleLeaveInterview = useCallback(() => {
     if (window.confirm('Are you sure you want to leave the interview?')) {
       handleEnd();

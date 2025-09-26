@@ -17,6 +17,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "img.beatinterview.com",
       },
+       {
+        protocol: "https",
+        hostname: "images.unsplash.com", 
+      },
     ],
   },
 };

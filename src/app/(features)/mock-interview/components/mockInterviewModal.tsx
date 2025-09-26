@@ -44,7 +44,8 @@ const MockInterviewModal: React.FC<MockInterviewModalProps> = ({
       try {
         const [interviewsResponse, voicesResponse] = await Promise.all([
           axios.get("/api/prepare-hub"),
-          axios.get("https://service-api.beatinterview.com/api/voices")
+          // axios.get("https://service-api.beatinterview.com/api/voices")
+          axios.get("/voices") 
         ]);
         setInterviews(interviewsResponse.data);
         setVoices(voicesResponse.data);
