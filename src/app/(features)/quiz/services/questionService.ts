@@ -35,7 +35,7 @@ if (typeof window !== "undefined") {
   pdfjsLib = require("pdfjs-dist/build/pdf");
   pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 }
-pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+//pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
 import { QuestionResponse } from "../models/Question";
 

@@ -195,7 +195,10 @@ If unsure, use the getInformation tool. Respond concisely as the interviewee.`,
     });
 
     console.log("Stream result ready");
+   const response = result.toDataStreamResponse();
+console.log("Response object:", response);
     return result.toDataStreamResponse();
+
   } catch (err) {
     console.error("streamText error:", err);
     return new Response(JSON.stringify({ error: "Model request failed" }), { status: 500 });
