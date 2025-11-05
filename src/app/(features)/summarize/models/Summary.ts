@@ -10,4 +10,10 @@ export interface SummaryResponse {
   keyPoints: string[];
   wordCount: number;
   readingTime: number;
+   weaknesses?: Weakness[];
 }
+export interface Weakness {
+  issue: string;
+  suggestion: string;
+}
+

@@ -1,4 +1,5 @@
 export interface Message {
+  content: string;
   id: string;
   text: string;
   isUser: boolean;

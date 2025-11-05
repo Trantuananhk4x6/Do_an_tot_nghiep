@@ -35,28 +35,15 @@ const InterviewInput: React.FC<InterviewInputProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inputText, setInputText] = useState("");
-  const [isManualStop, setIsManualStop] = useState(false); // ✅ Track manual stop
-  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null); // ✅ Silence timer
   const lastTranscriptRef = useRef<string>(""); // ✅ Track last transcript
 
-  // ✅ Improved transcript handler
+  // ✅ Transcript handler - CHỈ update UI, KHÔNG tự động submit
   const handleTranscript = (text: string) => {
     console.log('🎤 InterviewInput received transcript:', text);
     setInputText(text);
     lastTranscriptRef.current = text;
 
-    // ✅ Clear previous timeout
-    if (silenceTimeoutRef.current) {
-      clearTimeout(silenceTimeoutRef.current);
-    }
-
-    // ✅ Set new timeout - auto submit after 3 seconds of silence
-    if (text && text.trim().length > 5) { // Tăng từ 2 lên 5 ký tự
-      silenceTimeoutRef.current = setTimeout(() => {
-        console.log('⏱️ Auto-submitting after silence timeout');
-        handleSubmission(text);
-      }, 3000); // 3 giây không nói gì thì tự động submit
-    }
+    // ✅ BỎ auto-submit timeout - chỉ submit khi user bấm Stop
   };
 
   const { 
@@ -70,12 +57,6 @@ const InterviewInput: React.FC<InterviewInputProps> = ({
     if (!text || isSubmitting) return;
     
     console.log('📤 InterviewInput submitting:', text);
-    
-    // ✅ Clear timeout khi submit
-    if (silenceTimeoutRef.current) {
-      clearTimeout(silenceTimeoutRef.current);
-      silenceTimeoutRef.current = null;
-    }
 
     setIsSubmitting(true);
     try {
@@ -99,7 +80,6 @@ const InterviewInput: React.FC<InterviewInputProps> = ({
 
     if (isListening) {
       console.log('🛑 Manual stop - stopping listening...');
-      setIsManualStop(true);
       stopListening();
       
       // ✅ Submit ngay khi user manually stop
@@ -109,28 +89,12 @@ const InterviewInput: React.FC<InterviewInputProps> = ({
       }
     } else {
       console.log('▶️ Starting listening...');
-      setIsManualStop(false);
       setInputText("");
       lastTranscriptRef.current = "";
-      
-      // ✅ Clear any pending timeouts
-      if (silenceTimeoutRef.current) {
-        clearTimeout(silenceTimeoutRef.current);
-        silenceTimeoutRef.current = null;
-      }
       
       startListening();
     }
   };
-
-  // ✅ Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (silenceTimeoutRef.current) {
-        clearTimeout(silenceTimeoutRef.current);
-      }
-    };
-  }, []);
 
   return (
     <div className="flex flex-col items-center">
@@ -161,7 +125,7 @@ const InterviewInput: React.FC<InterviewInputProps> = ({
             )}
             {/* ✅ Instruction */}
             <div className="text-center text-xs text-gray-500 mt-2">
-              Speak your answer. It will auto-submit after 3 seconds of silence, or click stop when done.
+              Speak your answer. Click Stop when you're done to submit.
             </div>
           </motion.div>
         )}
@@ -192,7 +156,7 @@ const InterviewInput: React.FC<InterviewInputProps> = ({
       {/* ✅ Debug info */}
       <div className="text-xs text-gray-400 mt-2">
         {isSupported ? 
-          (isListening ? "🎤 Listening... (auto-submit in 3s after silence)" : "Ready to listen") : 
+          (isListening ? "🎤 Listening... Click Stop to submit" : "Ready to listen") : 
           "Speech recognition not supported"
         }
       </div>

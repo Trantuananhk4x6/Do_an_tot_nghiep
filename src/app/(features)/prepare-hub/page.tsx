@@ -129,24 +129,27 @@ const Page = () => {
   };
   return (
     <>
-      <div>
-        <h1>Interview Preparation Hub</h1>
-        <div className="mt-1 max-w-[640px] text-sm font-medium text-slate-700">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold gradient-text mb-2">Interview Preparation Hub</h1>
+        <div className="mt-1 max-w-[640px] text-sm font-medium text-gray-400">
           Generate interview questions and answers based on your resume and job
           descriptions
         </div>
       </div>
-      <div>
+      <div className="mb-6">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => getUserResume()}>
-              <Plus /> Prepare
+            <Button 
+              onClick={() => getUserResume()}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl shadow-neon hover:shadow-neon-hover transition-all duration-300"
+            >
+              <Plus className="mr-2" /> Prepare Interview
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md glass-effect border border-white/10">
             <DialogHeader>
-              <DialogTitle>Tell us more about your job interview</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="gradient-text">Tell us more about your job interview</DialogTitle>
+              <DialogDescription className="text-gray-400">
                 Add Detail about your job interview. Click save when you are
                 done.
               </DialogDescription>
@@ -155,20 +158,21 @@ const Page = () => {
               <Loading />
             ) : (
               <>
-                <div className="flex flex-col space-y-2">
+                <div className="flex flex-col space-y-4">
                   <div className="flex-1 gap-2">
-                    <Label>
-                      Resume <span className="text-red-500">*</span>
+                    <Label className="text-gray-300">
+                      Resume <span className="text-red-400">*</span>
                     </Label>
                     <Select onValueChange={handleResumeChange}>
-                      <SelectTrigger>
+                      <SelectTrigger className="glass-effect border-white/10 text-gray-300">
                         <SelectValue placeholder="Select your Resumes" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="glass-effect border border-white/10">
                         {resumes.map((resume: Resume) => (
                           <SelectItem
                             key={resume.id}
                             value={resume.id.toString()}
+                            className="text-gray-300"
                           >
                             {resume.name}
                           </SelectItem>
@@ -177,12 +181,12 @@ const Page = () => {
                     </Select>
                   </div>
                   <div className="flex flex-1 gap-2">
-                    <div>
-                      <Label htmlFor="name">
-                        Company Name <span className="text-red-500">*</span>
+                    <div className="flex-1">
+                      <Label htmlFor="name" className="text-gray-300">
+                        Company Name <span className="text-red-400">*</span>
                       </Label>
                       <Input
-                        className="col-span-3"
+                        className="glass-effect border-white/10 text-gray-300"
                         type="text"
                         placeholder="ABC Technology"
                         value={companyName}
@@ -193,12 +197,12 @@ const Page = () => {
                         }
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="name">
-                        Position <span className="text-red-500">*</span>
+                    <div className="flex-1">
+                      <Label htmlFor="name" className="text-gray-300">
+                        Position <span className="text-red-400">*</span>
                       </Label>
                       <Input
-                        className="col-span-3"
+                        className="glass-effect border-white/10 text-gray-300"
                         type="text"
                         placeholder="Software engineer"
                         value={position}
@@ -209,10 +213,10 @@ const Page = () => {
                     </div>
                   </div>
                   <div className="flex-1 gap-2">
-                    <Label htmlFor="name">Job Description</Label>
+                    <Label htmlFor="name" className="text-gray-300">Job Description</Label>
                     <Textarea
                       id="jobDescriptionUrl"
-                      className="col-span-3"
+                      className="glass-effect border-white/10 text-gray-300"
                       placeholder="Job description"
                       value={jobDescription}
                       onChange={handleJobDescriptionChange}
@@ -224,7 +228,7 @@ const Page = () => {
             )}
             <DialogFooter>
               <DialogClose asChild>
-                <Button type="button" variant="secondary">
+                <Button type="button" variant="secondary" className="glass-effect border border-white/10">
                   Cancel
                 </Button>
               </DialogClose>
@@ -232,6 +236,7 @@ const Page = () => {
                 type="submit"
                 onClick={handleSubmit}
                 disabled={!selectedResume || uploading}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
               >
                 {uploading ? <Loading /> : "Save"}
               </Button>
@@ -243,12 +248,19 @@ const Page = () => {
         {loading ? (
           <Loading />
         ) : interviewSet.length === 0 ? (
-          <p>
-            Not found any questions. Please upload your resume and
-            jobdescription.
-          </p>
+          <div className="glass-effect rounded-2xl p-12 text-center border border-white/10">
+            <div className="inline-block p-4 rounded-2xl bg-purple-500/10 mb-4">
+              <svg className="h-16 w-16 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <p className="text-gray-400 text-lg">
+              Not found any questions. Please upload your resume and
+              jobdescription.
+            </p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {interviewSet.map((interview: InterviewSet) => (
               <InterviewCard
                 key={interview.id}

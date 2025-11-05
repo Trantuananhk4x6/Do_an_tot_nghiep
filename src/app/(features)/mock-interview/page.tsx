@@ -17,13 +17,24 @@ import MockInterviewModal from './components/mockInterviewModal';
 import { cn } from "@/lib/utils";
 import WebcamStream from "./components/WebcamStream";
 import { useRouter } from "next/navigation";
-
+import DIDTalkingHead from "./components/DIDTalkingHead";
+import { v4 as uuidv4 } from 'uuid';
+import { AnimatedStars } from "@/components/ui/animated-stars";
+import type { InterviewSession, TranscriptEntry } from './types/assessment';
 interface Voice {
   id: string;
   name: string;
   gender: string;
+  age: number;
+  voiceTone: string;
   avatarUrl: string;
-  title?: string;
+  title: string;
+  expertise: string;
+  yearsOfExperience: number;
+  interviewStyle: string;
+  focusAreas: string[];
+  questionTypes: string[];
+  personality: string;
 }
 
 const TRANSITION_PHRASES = [
@@ -66,9 +77,14 @@ const MockInterviewPage = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [streaming, setStreaming] = useState(false);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0); 
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentAIText, setCurrentAIText] = useState<string>(""); // ✅ State cho D-ID video
   const audioManager = useRef(new AudioManager());
   const speechSynthesis = useRef(SpeechSynthesisManager.getInstance());
+  
+  // ✅ NEW: Interview session tracking for AI assessment
+  const [interviewSession, setInterviewSession] = useState<InterviewSession | null>(null);
+  const interviewStartTime = useRef<number>(0);
 
   const {
     isStarted,
@@ -134,6 +150,18 @@ const MockInterviewPage = () => {
       // Add user message
       const userMessage = addMessage(transcription, true);
       console.log('✅ Added user message');
+      
+      // ✅ NEW: Record candidate response in transcript
+      if (interviewSession) {
+        const timeSinceStart = Date.now() - interviewStartTime.current;
+        interviewSession.transcript.push({
+          speaker: 'candidate',
+          message: transcription,
+          timestamp: timeSinceStart
+        });
+        setInterviewSession({...interviewSession});
+        console.log('✅ Recorded candidate response in transcript');
+      }
 
       // Logic chuyển sang câu hỏi tiếp theo
       const nextQuestionIndex = currentQuestionIndex + 1;
@@ -148,8 +176,23 @@ const MockInterviewPage = () => {
         console.log('📢 Next question:', nextQuestion.question);
         console.log('💬 Full response:', fullResponse);
         
+        // ✅ Set text cho D-ID video
+        setCurrentAIText(fullResponse);
+        
         // Add AI message với câu hỏi tiếp theo
         const aiMessage = addMessage(fullResponse, false);
+        
+        // ✅ NEW: Record interviewer question in transcript
+        if (interviewSession) {
+          const timeSinceStart = Date.now() - interviewStartTime.current;
+          interviewSession.transcript.push({
+            speaker: 'interviewer',
+            message: fullResponse,
+            timestamp: timeSinceStart
+          });
+          setInterviewSession({...interviewSession});
+          console.log('✅ Recorded next question in transcript');
+        }
         
         // Cập nhật index
         setCurrentQuestionIndex(nextQuestionIndex);
@@ -163,6 +206,10 @@ const MockInterviewPage = () => {
         // Hết câu hỏi - kết thúc phỏng vấn
         console.log('🏁 Interview finished - no more questions');
         const endMessage = "Thank you for your time. That concludes our interview. We'll be in touch soon!";
+        
+        // ✅ Set text cho D-ID video
+        setCurrentAIText(endMessage);
+        
         const aiMessage = addMessage(endMessage, false);
         
         const voiceGender = selectedVoice?.gender || 'female';
@@ -179,21 +226,15 @@ const MockInterviewPage = () => {
     } finally {
       setIsProcessing(false);
     }
-  }, [addMessage, isProcessing, selectedVoice, currentQuestionIndex, interviewQuestions, router]);
+  }, [addMessage, isProcessing, selectedVoice, currentQuestionIndex, interviewQuestions, router, interviewSession]);
 
-  // Khai báo handleTranscript
+  // Khai báo handleTranscript - CHỈ update UI, KHÔNG submit
   const handleTranscript = useCallback((text: string) => {
-    console.log('📝 Received transcript:', text);
+    console.log('📝 Received transcript (not submitting):', text);
     setMicError(null);
-    setInputText(text);
-    
-    // Tự động stop listening và submit khi có final transcript
-    if (text && text.trim().length > 2) {
-      setTimeout(() => {
-        handleSubmit(text);
-      }, 500);
-    }
-  }, [handleSubmit]);
+    setInputText(text); // Chỉ update input text để hiển thị
+    // ✅ BỎ tự động submit - để InterviewInput xử lý
+  }, []);
 
   // ✅ SỬA DÒNG NÀY: Truyền handleTranscript vào useSpeechRecognition
 
@@ -297,10 +338,44 @@ const MockInterviewPage = () => {
     setCurrentQuestionIndex(0);
     setInterviewQuestions(questions); // ✅ QUAN TRỌNG: Set questions vào state
     
+    // ✅ NEW: Initialize interview session for tracking
+    const sessionId = uuidv4();
+    const startTime = Date.now();
+    interviewStartTime.current = startTime;
+    
+    const session: InterviewSession = {
+      sessionId,
+      startTime,
+      interviewer: {
+        name: selectedVoice?.name || 'AI Interviewer',
+        title: selectedVoice?.title || 'Senior Interviewer',
+        gender: selectedVoice?.gender || 'female',
+        age: selectedVoice?.age || 35,
+        voiceTone: selectedVoice?.voiceTone || 'professional',
+        expertise: selectedVoice?.expertise || 'General Software Engineering',
+        yearsOfExperience: selectedVoice?.yearsOfExperience || 10,
+        focusAreas: selectedVoice?.focusAreas || ['Technical Skills', 'Problem Solving'],
+        interviewStyle: selectedVoice?.interviewStyle || 'Professional and Friendly'
+      },
+      transcript: []
+    };
+    setInterviewSession(session);
+    console.log('✅ Created interview session:', sessionId);
+    
     const firstQuestion = questions[0];
     if (firstQuestion) {
       console.log('🎤 Speaking first question:', firstQuestion.question);
+      setCurrentAIText(firstQuestion.question); // ✅ Set text cho D-ID
       addMessage(firstQuestion.question, false);
+      
+      // ✅ Record first question in transcript
+      session.transcript.push({
+        speaker: 'interviewer',
+        message: firstQuestion.question,
+        timestamp: 0 // First question at time 0
+      });
+      setInterviewSession({...session});
+      
       const voiceGender = selectedVoice?.gender || 'female';
       await speechSynthesis.current.speak(firstQuestion.question, voiceGender);
     }
@@ -332,13 +407,79 @@ const MockInterviewPage = () => {
     },
     [handleStart] // ✅ Thêm handleStart vào dependency
   );
-  const handleLeaveInterview = useCallback(() => {
-    if (window.confirm('Are you sure you want to leave the interview?')) {
+  const handleLeaveInterview = useCallback(async () => {
+    if (!window.confirm('Are you sure you want to leave the interview?')) {
+      return;
+    }
+    
+    try {
+      console.log('🚀 Leaving interview - generating assessment...');
+      
+      // Stop audio and clean up
+      if (isListening) {
+        stopListening();
+      }
+      speechSynthesis.current.stop();
+      
+      // Calculate duration
+      const endTime = Date.now();
+      const durationInSeconds = Math.floor((endTime - interviewStartTime.current) / 1000);
+      
+      if (interviewSession && interviewSession.transcript.length > 0) {
+        // Complete the session data
+        const completeSession = {
+          ...interviewSession,
+          endTime,
+          duration: durationInSeconds
+        };
+        
+        console.log('📊 Session stats:');
+        console.log('  - Duration:', durationInSeconds, 'seconds');
+        console.log('  - Transcript entries:', completeSession.transcript.length);
+        console.log('  - Questions answered:', Math.floor(completeSession.transcript.length / 2));
+        
+        // Call AI assessment API
+        console.log('🤖 Calling assessment API...');
+        const response = await axios.post('/api/assess-interview', {
+          interviewSession: completeSession
+        });
+        
+        if (response.data.success && response.data.assessment) {
+          console.log('✅ Assessment generated successfully!');
+          console.log('  - Overall Score:', response.data.assessment.overallScore);
+          console.log('  - Readiness Level:', response.data.assessment.readinessLevel);
+          
+          // Save assessment to sessionStorage
+          sessionStorage.setItem('latestAssessment', JSON.stringify(response.data.assessment));
+          sessionStorage.setItem('interviewSession', JSON.stringify(completeSession));
+          
+          console.log('💾 Saved assessment to sessionStorage');
+        } else {
+          console.error('❌ Assessment API returned error:', response.data.error);
+          alert('Failed to generate assessment. Please try again.');
+          return;
+        }
+      } else {
+        console.warn('⚠️ No interview data to assess');
+        alert('No interview data available for assessment.');
+        return;
+      }
+      
+      // Clean up and navigate
+      handleEnd();
+      setElapsedTime(0);
+      router.push('/assessment-report');
+      
+    } catch (error) {
+      console.error('❌ Error generating assessment:', error);
+      alert('Failed to generate assessment. Redirecting to report page...');
+      
+      // Still navigate even on error
       handleEnd();
       setElapsedTime(0);
       router.push('/assessment-report');
     }
-  }, [handleEnd, router]);
+  }, [handleEnd, router, interviewSession, isListening, stopListening]);
 
   const handleCameraToggle = useCallback(() => {
     setIsCameraOn(prev => !prev);
@@ -359,73 +500,99 @@ const MockInterviewPage = () => {
   }, []);
 
   return (
-    <div className="h-screen bg-white flex flex-col overflow-hidden">
-      <div className="flex-1">
+    <div className="h-screen bg-background flex flex-col overflow-hidden relative">
+      {/* Animated Stars Background */}
+      <AnimatedStars />
+      
+      <div className="flex-1 relative z-10">
         {!isStarted ? (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex-1 flex flex-col items-center justify-center"
+            className="flex-1 flex flex-col items-center justify-center px-4"
           >
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">Mock Interview</h1>
-            <p className="text-gray-600 mb-8 text-center max-w-md">
-              Practice your interview skills with our AI-powered interviewer. Get real-time feedback and improve your responses.
-            </p>
-            <Button
-              variant={"default"}
-              size={"lg"}
-              onClick={() => setShowLanguageModal(true)}
-            >
-              Start Your Interview
-            </Button>
-          </motion.div>
-        ) : (
-          <div className="h-full flex flex-col p-4">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex flex-col gap-1">
-                <h1 className="text-xl font-semibold text-gray-900">Mock interview</h1>
-                <div className="flex items-center gap-2 text-gray-500 text-sm">
-                  <Clock className="h-4 w-4" />
-                  <InterviewTimer 
-                    isStarted={isStarted} 
-                    onReset={() => setElapsedTime(0)} 
-                  />
+            <div className="glass-effect rounded-3xl p-12 max-w-2xl w-full text-center">
+              <div className="mb-6 inline-block">
+                <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center mx-auto animate-float">
+                  <svg className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={handleCameraToggle}
-                  className={cn(
-                    "rounded-full w-10 h-10 p-0 flex items-center justify-center transition-colors duration-200",
-                    isCameraOn 
-                      ? "bg-indigo-600 hover:bg-indigo-700" 
-                      : "bg-gray-100 hover:bg-gray-200"
-                  )}
-                  aria-label={isCameraOn ? "Turn off camera" : "Turn on camera"}
-                >
-                  <Camera 
+              <h1 className="text-5xl font-bold gradient-text mb-6">Mock Interview</h1>
+              <p className="text-gray-400 mb-8 text-lg leading-relaxed">
+                Practice your interview skills with our AI-powered interviewer. Get real-time feedback and improve your responses.
+              </p>
+              <Button
+                variant={"default"}
+                size={"lg"}
+                onClick={() => setShowLanguageModal(true)}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-6 text-lg rounded-xl shadow-neon hover:shadow-neon-hover transition-all duration-300"
+              >
+                <span className="flex items-center gap-2">
+                  Start Your Interview
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </span>
+              </Button>
+            </div>
+          </motion.div>
+        ) : (
+          <div className="h-full flex flex-col p-6">
+            {/* Header */}
+            <div className="glass-effect rounded-2xl p-4 mb-4 border border-white/10">
+              <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-1">
+                  <h1 className="text-xl font-semibold gradient-text">Mock Interview</h1>
+                  <div className="flex items-center gap-2 text-gray-400 text-sm">
+                    <Clock className="h-4 w-4" />
+                    <InterviewTimer 
+                      isStarted={isStarted} 
+                      onReset={() => setElapsedTime(0)} 
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={handleCameraToggle}
                     className={cn(
-                      "h-5 w-5 transition-colors duration-200", 
-                      isCameraOn ? "text-white" : "text-gray-600"
-                    )} 
-                  />
-                </Button>
-                <Button
-                  onClick={handleLeaveInterview}
-                  className="bg-red-500 hover:bg-red-600 text-white rounded-full px-4 py-2 text-sm"
-                >
-                  Leave
-                </Button>
+                      "rounded-full w-10 h-10 p-0 flex items-center justify-center transition-all duration-300",
+                      isCameraOn 
+                        ? "bg-gradient-to-br from-purple-600 to-pink-600 hover:shadow-neon" 
+                        : "glass-effect border border-white/10 hover:bg-white/5"
+                    )}
+                    aria-label={isCameraOn ? "Turn off camera" : "Turn on camera"}
+                  >
+                    <Camera 
+                      className={cn(
+                        "h-5 w-5 transition-colors duration-200", 
+                        isCameraOn ? "text-white" : "text-gray-400"
+                      )} 
+                    />
+                  </Button>
+                  <Button
+                    onClick={handleLeaveInterview}
+                    className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-full px-4 py-2 text-sm transition-all duration-300"
+                  >
+                    Leave
+                  </Button>
+                </div>
               </div>
             </div>
 
+            {/* Main Content */}
             <div className="flex gap-4 flex-1 min-h-0">
+              {/* Video Section */}
               <div className="w-[25%] flex flex-col gap-4">
-                <div className="relative rounded-lg overflow-hidden bg-black aspect-[4/3]">
-                  <img
-                    src={selectedVoice.avatarUrl}
-                    alt="Interviewer"
-                    className="absolute inset-0 w-full h-full object-cover"
+                <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 bg-black/50 aspect-[4/3] shadow-neon">
+                  <DIDTalkingHead
+                    text={currentAIText}
+                    avatarUrl={selectedVoice?.avatarUrl}
+                    voiceGender={selectedVoice?.gender}
+                    isSpeaking={playingMessageId !== null}
+                    onVideoReady={() => console.log('✅ D-ID video ready')}
+                    onVideoEnd={() => console.log('🎬 D-ID video ended')}
                   />
                 </div>
                 <WebcamStream 
@@ -435,8 +602,9 @@ const MockInterviewPage = () => {
                 />
               </div>
 
-              <div className="w-[75%] flex flex-col min-h-0">
-                <div className="flex-1 min-h-0">
+              {/* Chat Section */}
+              <div className="w-[75%] flex flex-col min-h-0 gap-4">
+                <div className="flex-1 min-h-0 glass-effect rounded-2xl border border-white/10 overflow-hidden">
                   <InterviewTranscript
                     messages={messages.map((msg) => ({
                       ...msg,
@@ -444,7 +612,7 @@ const MockInterviewPage = () => {
                     }))}
                   />
                 </div>
-                <div className="mt-auto">
+                <div className="glass-effect rounded-2xl border border-white/10 p-4">
                   <InterviewInput
                     isProcessing={isProcessing}
                     onSubmit={handleSubmit}

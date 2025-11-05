@@ -1,0 +1,132 @@
+'use client';
+
+import React from 'react';
+import { Certification } from '@/app/(features)/support-cv/types/cv.types';
+
+interface CertificationsSectionProps {
+  data: Certification[];
+  onChange: (data: Certification[]) => void;
+}
+
+export default function CertificationsSection({ data, onChange }: CertificationsSectionProps) {
+  const addCertification = () => {
+    const newCert: Certification = {
+      id: Date.now().toString(),
+      name: '',
+      issuer: '',
+      date: '',
+      expiryDate: '',
+      credentialId: '',
+      link: ''
+    };
+    onChange([...data, newCert]);
+  };
+
+  const updateCertification = (index: number, updates: Partial<Certification>) => {
+    const updated = [...data];
+    updated[index] = { ...updated[index], ...updates };
+    onChange(updated);
+  };
+
+  const removeCertification = (index: number) => {
+    onChange(data.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+          <span>🏆</span>
+          Certifications
+        </h2>
+        <button
+          onClick={addCertification}
+          className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all"
+        >
+          + Add Certification
+        </button>
+      </div>
+
+      <div className="space-y-6">
+        {data.map((cert, index) => (
+          <div key={cert.id} className="border border-gray-200 rounded-xl p-6 relative">
+            <button
+              onClick={() => removeCertification(index)}
+              className="absolute top-4 right-4 text-red-500 hover:text-red-700"
+            >
+              🗑️
+            </button>
+
+            <div className="space-y-4">
+              {/* Certification Name */}
+              <input
+                type="text"
+                value={cert.name}
+                onChange={(e) => updateCertification(index, { name: e.target.value })}
+                placeholder="Certification Name (e.g., AWS Certified Solutions Architect)"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              />
+
+              {/* Issuer */}
+              <input
+                type="text"
+                value={cert.issuer}
+                onChange={(e) => updateCertification(index, { issuer: e.target.value })}
+                placeholder="Issuing Organization (e.g., Amazon Web Services)"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              />
+
+              {/* Dates */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Issue Date</label>
+                  <input
+                    type="month"
+                    value={cert.date}
+                    onChange={(e) => updateCertification(index, { date: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Expiry Date (optional)</label>
+                  <input
+                    type="month"
+                    value={cert.expiryDate || ''}
+                    onChange={(e) => updateCertification(index, { expiryDate: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+              </div>
+
+              {/* Credential ID & Link */}
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  value={cert.credentialId || ''}
+                  onChange={(e) => updateCertification(index, { credentialId: e.target.value })}
+                  placeholder="Credential ID (optional)"
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                />
+                <input
+                  type="url"
+                  value={cert.link || ''}
+                  onChange={(e) => updateCertification(index, { link: e.target.value })}
+                  placeholder="Verification URL (optional)"
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {data.length === 0 && (
+          <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-xl">
+            <div className="text-6xl mb-4">🏆</div>
+            <p className="text-gray-500 mb-2">No certifications added yet</p>
+            <p className="text-sm text-gray-400">Add professional certifications to boost credibility!</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -3,10 +3,10 @@ import Loading from "./loading";
 
 const Video = () => {
   return (
-    <section className="py-8 bg-indigo-300 rounded-2xl">
-      <div className="max-w-screen-xl mx-auto flex justify-center">
+    <section className="py-8 bg-indigo-300 rounded-2xl" style={{ display: "none" }}>
+      <div className="max-w-screen-xl mx-auto flex justify-center" >
         <Suspense fallback={<Loading />}>
-          <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+          <div className="relative w-full" style={{ paddingBottom: "56.25%", display : "none" }} >
             <iframe
               src="https://www.youtube.com/embed/f-BBP3qRvvo"
               allowFullScreen

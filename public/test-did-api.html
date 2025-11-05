@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D-ID API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #logs {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .log-success { color: #4EC9B0; }
+        .log-error { color: #F48771; }
+        .log-info { color: #9CDCFE; }
+        .log-warning { color: #DCDCAA; }
+        #videoContainer {
+            margin-top: 20px;
+            display: none;
+        }
+        video {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 10px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.loading { background: #FFC107; color: #000; }
+        .status.success { background: #4CAF50; color: white; }
+        .status.error { background: #F44336; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 D-ID API Test Tool</h1>
+        <p>Test D-ID Talking Head API trước khi tích hợp vào app</p>
+
+        <div class="input-group">
+            <label>API Key:</label>
+            <input type="text" id="apiKey" value="YW5odHQwMi5hZHNhZ2VuY3lAZ21haWwuY29t:Fp4Xz46INxRvlMYe133_f" />
+        </div>
+
+        <div class="input-group">
+            <label>Text to speak:</label>
+            <textarea id="textInput">Tell me about yourself and your experience with software development.</textarea>
+        </div>
+
+        <div class="input-group">
+            <label>Avatar URL:</label>
+            <input type="text" id="avatarUrl" value="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face" />
+        </div>
+
+        <div class="input-group">
+            <label>Voice Gender:</label>
+            <select id="voiceGender">
+                <option value="female">Female (Jenny)</option>
+                <option value="male">Male (Guy)</option>
+            </select>
+        </div>
+
+        <button id="testBtn" onclick="testAPI()">🚀 Test API</button>
+        <button onclick="clearLogs()">🗑️ Clear Logs</button>
+        <span id="status"></span>
+
+        <div id="logs"></div>
+        <div id="videoContainer">
+            <h3>📹 Generated Video:</h3>
+            <video id="videoPlayer" controls autoplay></video>
+        </div>
+    </div>
+
+    <script>
+        let pollInterval;
+
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = `log-${type}`;
+            logs.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        function setStatus(text, type) {
+            const status = document.getElementById('status');
+            status.innerHTML = `<span class="status ${type}">${text}</span>`;
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            document.getElementById('videoContainer').style.display = 'none';
+            setStatus('', '');
+        }
+
+        async function testAPI() {
+            clearLogs();
+            
+            const apiKey = document.getElementById('apiKey').value;
+            const text = document.getElementById('textInput').value;
+            const avatarUrl = document.getElementById('avatarUrl').value;
+            const voiceGender = document.getElementById('voiceGender').value;
+
+            if (!text.trim()) {
+                log('❌ Please enter text to speak', 'error');
+                return;
+            }
+
+            const testBtn = document.getElementById('testBtn');
+            testBtn.disabled = true;
+            setStatus('Testing...', 'loading');
+
+            try {
+                log('🎬 ========== START D-ID API TEST ==========', 'success');
+                log(`📝 Text: ${text}`);
+                log(`🖼️ Avatar URL: ${avatarUrl}`);
+                log(`🎤 Voice Gender: ${voiceGender}`);
+
+                const voiceId = voiceGender === 'male' 
+                    ? 'en-US-GuyNeural' 
+                    : 'en-US-JennyNeural';
+
+                log(`🎙️ Selected voice ID: ${voiceId}`);
+
+                const requestBody = {
+                    script: {
+                        type: "text",
+                        input: text,
+                        provider: { 
+                            type: "microsoft", 
+                            voice_id: voiceId 
+                        }
+                    },
+                    source_url: avatarUrl || "https://create-images-results.d-id.com/DefaultPresenter_f.jpg",
+                    config: {
+                        fluent: true,
+                        pad_audio: 0,
+                        stitch: true
+                    }
+                };
+
+                log('📤 Sending request to D-ID API...');
+
+                // Create talk
+                const createRes = await fetch("https://api.d-id.com/talks", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Basic ${btoa(apiKey)}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(requestBody),
+                });
+
+                log(`📥 Response status: ${createRes.status} ${createRes.statusText}`);
+
+                if (!createRes.ok) {
+                    const errorText = await createRes.text();
+                    log(`❌ API Error: ${errorText}`, 'error');
+                    setStatus('Failed', 'error');
+                    testBtn.disabled = false;
+                    return;
+                }
+
+                const createData = await createRes.json();
+                log(`✅ Talk created successfully!`, 'success');
+                log(`🆔 Talk ID: ${createData.id}`);
+
+                // Polling
+                log('🔄 Starting polling for video URL...');
+                let pollCount = 0;
+                const maxPolls = 30;
+
+                while (pollCount < maxPolls) {
+                    await new Promise(r => setTimeout(r, 2000));
+                    pollCount++;
+
+                    const pollRes = await fetch(`https://api.d-id.com/talks/${createData.id}`, {
+                        headers: { 
+                            "Authorization": `Basic ${btoa(apiKey)}` 
+                        },
+                    });
+
+                    const pollData = await pollRes.json();
+                    log(`📊 Poll ${pollCount}/${maxPolls} - Status: ${pollData.status}`, 'info');
+
+                    if (pollData.result_url) {
+                        log('🎥 ========== VIDEO READY! ==========', 'success');
+                        log(`📹 Video URL: ${pollData.result_url}`);
+                        
+                        // Show video
+                        const videoContainer = document.getElementById('videoContainer');
+                        const videoPlayer = document.getElementById('videoPlayer');
+                        videoPlayer.src = pollData.result_url;
+                        videoContainer.style.display = 'block';
+                        
+                        setStatus('Success!', 'success');
+                        testBtn.disabled = false;
+                        return;
+                    }
+
+                    if (pollData.status === 'error') {
+                        log(`❌ Video generation error: ${pollData.error?.description || 'Unknown error'}`, 'error');
+                        setStatus('Error', 'error');
+                        testBtn.disabled = false;
+                        return;
+                    }
+                }
+
+                log('⏱️ Timeout: Video not ready after 30 polls', 'warning');
+                setStatus('Timeout', 'error');
+
+            } catch (error) {
+                log(`❌ Exception: ${error.message}`, 'error');
+                console.error(error);
+                setStatus('Error', 'error');
+            } finally {
+                testBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

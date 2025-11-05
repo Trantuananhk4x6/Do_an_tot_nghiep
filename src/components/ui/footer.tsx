@@ -1,21 +1,23 @@
 const Footer = () => {
   return (
-    <footer className="bg-white">
+    <footer className="glass-effect border-t border-white/10">
       <div className="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="lg:flex lg:items-start lg:gap-8 gap-4">
           <div>
-            <div className="h-20 w-20 rounded-3xl bg-indigo-600 flex items-center justify-center">
-              <span className="text-white font-semibold text-3xl">BI</span>
+            <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-neon">
+              <svg className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
             </div>
           </div>
 
           <div className="mt-8 grid grid-cols-2 gap-8 lg:mt-0 lg:grid-cols-5 lg:gap-y-16">
             <div className="col-span-2">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Get start with Beat Interview!
+                <h2 className="text-2xl font-bold gradient-text">
+                  Get start with AI Interview!
                 </h2>
-                <p className="mt-4 text-gray-500">
+                <p className="mt-4 text-gray-400">
                   Your ultimate platform to master job interviews, create
                   standout resumes, and secure your dream job with confidence.
                   🚀
@@ -24,12 +26,12 @@ const Footer = () => {
             </div>
 
             <div className="col-span-2 sm:col-span-1">
-              <p className="font-medium text-gray-900">Products</p>
+              <p className="font-medium text-gray-300">Products</p>
               <ul className="mt-6 space-y-4 text-sm">
                 <li>
                   <a
                     href="#"
-                    className="text-gray-700 transition hover:opacity-75"
+                    className="text-gray-400 transition hover:text-purple-400"
                   >
                     AI-Interview
                   </a>
@@ -38,7 +40,7 @@ const Footer = () => {
                 <li>
                   <a
                     href="#"
-                    className="text-gray-700 transition hover:opacity-75"
+                    className="text-gray-400 transition hover:text-purple-400"
                   >
                     AI Mock Interview
                   </a>
@@ -47,7 +49,7 @@ const Footer = () => {
                 <li>
                   <a
                     href="#"
-                    className="text-gray-700 transition hover:opacity-75"
+                    className="text-gray-400 transition hover:text-purple-400"
                   >
                     QA Prepare Hub
                   </a>
@@ -56,7 +58,7 @@ const Footer = () => {
                 <li>
                   <a
                     href="#"
-                    className="text-gray-700 transition hover:opacity-75"
+                    className="text-gray-400 transition hover:text-purple-400"
                   >
                     Summary
                   </a>
@@ -65,7 +67,7 @@ const Footer = () => {
                 <li>
                   <a
                     href="#"
-                    className="text-gray-700 transition hover:opacity-75"
+                    className="text-gray-400 transition hover:text-purple-400"
                   >
                     Quiz
                   </a>
@@ -74,13 +76,13 @@ const Footer = () => {
             </div>
 
             <div className="col-span-2 sm:col-span-1">
-              <p className="font-medium text-gray-900">Company</p>
+              <p className="font-medium text-gray-300">Company</p>
 
               <ul className="mt-6 space-y-4 text-sm">
                 <li>
                   <a
                     href="#"
-                    className="text-gray-700 transition hover:opacity-75"
+                    className="text-gray-400 transition hover:text-purple-400"
                   >
                     About
                   </a>
@@ -89,7 +91,7 @@ const Footer = () => {
                 <li>
                   <a
                     href="#"
-                    className="text-gray-700 transition hover:opacity-75"
+                    className="text-gray-400 transition hover:text-purple-400"
                   >
                     Meet the Team
                   </a>
@@ -98,13 +100,13 @@ const Footer = () => {
             </div>
 
             <div className="col-span-2 sm:col-span-1">
-              <p className="font-medium text-gray-900">Helpful Links</p>
+              <p className="font-medium text-gray-300">Helpful Links</p>
 
               <ul className="mt-6 space-y-4 text-sm">
                 <li>
                   <a
                     href="#"
-                    className="text-gray-700 transition hover:opacity-75"
+                    className="text-gray-400 transition hover:text-purple-400"
                   >
                     Contact
                   </a>
@@ -113,7 +115,7 @@ const Footer = () => {
                 <li>
                   <a
                     href="#"
-                    className="text-gray-700 transition hover:opacity-75"
+                    className="text-gray-400 transition hover:text-purple-400"
                   >
                     FAQs
                   </a>
@@ -126,7 +128,7 @@ const Footer = () => {
                   href="#"
                   rel="noreferrer"
                   target="_blank"
-                  className="text-gray-700 transition hover:opacity-75"
+                  className="text-gray-400 transition hover:text-purple-400"
                 >
                   <span className="sr-only">Facebook</span>
                   <svg
@@ -149,7 +151,7 @@ const Footer = () => {
                   href="#"
                   rel="noreferrer"
                   target="_blank"
-                  className="text-gray-700 transition hover:opacity-75"
+                  className="text-gray-400 transition hover:text-purple-400"
                 >
                   <span className="sr-only">Instagram</span>
 
@@ -173,7 +175,7 @@ const Footer = () => {
                   href="#"
                   rel="noreferrer"
                   target="_blank"
-                  className="text-gray-700 transition hover:opacity-75"
+                  className="text-gray-400 transition hover:text-purple-400"
                 >
                   <span className="sr-only">Twitter</span>
 
@@ -193,7 +195,7 @@ const Footer = () => {
                   href="#"
                   rel="noreferrer"
                   target="_blank"
-                  className="text-gray-700 transition hover:opacity-75"
+                  className="text-gray-400 transition hover:text-purple-400"
                 >
                   <span className="sr-only">GitHub</span>
 
@@ -217,7 +219,7 @@ const Footer = () => {
                   href="#"
                   rel="noreferrer"
                   target="_blank"
-                  className="text-gray-700 transition hover:opacity-75"
+                  className="text-gray-400 transition hover:text-purple-400"
                 >
                   <span className="sr-only">Dribbble</span>
 
@@ -239,17 +241,17 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-8 border-t border-gray-100 pt-8">
+        <div className="mt-8 border-t border-white/10 pt-8">
           <div className="sm:flex sm:justify-between">
             <p className="text-xs text-gray-500">
-              &copy; 2022. AI Interview. All rights reserved.
+              &copy; 2025. AI Interview. All rights reserved.
             </p>
 
             <ul className="mt-8 flex flex-wrap justify-start gap-4 text-xs sm:mt-0 lg:justify-end">
               <li>
                 <a
                   href="#"
-                  className="text-gray-500 transition hover:opacity-75"
+                  className="text-gray-500 transition hover:text-purple-400"
                 >
                   Terms & Conditions
                 </a>
@@ -258,7 +260,7 @@ const Footer = () => {
               <li>
                 <a
                   href="#"
-                  className="text-gray-500 transition hover:opacity-75"
+                  className="text-gray-500 transition hover:text-purple-400"
                 >
                   Privacy Policy
                 </a>
@@ -267,7 +269,7 @@ const Footer = () => {
               <li>
                 <a
                   href="#"
-                  className="text-gray-500 transition hover:opacity-75"
+                  className="text-gray-500 transition hover:text-purple-400"
                 >
                   Cookies
                 </a>

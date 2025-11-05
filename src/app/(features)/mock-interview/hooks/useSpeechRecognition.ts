@@ -59,16 +59,20 @@ export const useSpeechRecognition = (
           console.log('📊 Speech recognition onresult event:', event);
           console.log('Results length:', event.results.length);
           
-          // ✅ Clear timeout khi có kết quả
+          // ✅ Reset timeout để tiếp tục ghi nếu user đang nói
           if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
+            // ✅ Auto stop sau 30 giây
+            timeoutRef.current = setTimeout(() => {
+              console.log('⏰ Auto stopping after timeout');
+              recognition.stop();
+            }, 30000);
           }
           
-          let finalTranscript = '';
-          let interimTranscript = '';
+          let fullTranscript = '';
           
-          // ✅ Xử lý giống test thành công
-          for (let i = event.resultIndex; i < event.results.length; i++) {
+          // ✅ GHI LẠI TOÀN BỘ từ đầu đến giờ (như YouTube/Google)
+          for (let i = 0; i < event.results.length; i++) {
             const result = event.results[i];
             const transcript = result[0].transcript;
             
@@ -78,48 +82,39 @@ export const useSpeechRecognition = (
               confidence: result[0].confidence
             });
             
-            if (result.isFinal) {
-              finalTranscript += transcript;
-            } else {
-              interimTranscript += transcript;
-            }
+            // Nối tất cả các transcript lại
+            fullTranscript += transcript + ' ';
           }
           
-          const currentTranscript = finalTranscript || interimTranscript;
-          console.log('📝 Current transcript:', currentTranscript);
+          fullTranscript = fullTranscript.trim();
+          console.log('📝 Full transcript so far:', fullTranscript);
           
-          if (currentTranscript && currentTranscript.trim().length > 0) {
-            setTranscript(currentTranscript);
+          if (fullTranscript && fullTranscript.length > 0) {
+            // ✅ Chỉ update transcript, KHÔNG tự động gửi
+            setTranscript(fullTranscript);
             
-            // ✅ Sử dụng callbackRef thay vì onTranscript
+            // ✅ Gọi callback để update UI real-time
             if (callbackRef.current) {
-              console.log('📞 Calling callback with:', currentTranscript);
-              callbackRef.current(currentTranscript);
-              
-              // ✅ Auto stop sau final transcript
-              if (finalTranscript && finalTranscript.trim().length > 2) {
-                setTimeout(() => {
-                  console.log('🛑 Auto stopping after final transcript');
-                  recognition.stop();
-                }, 1500);
-              }
+              console.log('📞 Updating transcript (not submitting):', fullTranscript);
+              callbackRef.current(fullTranscript);
             }
+            // ✅ BỎ auto stop - chỉ stop khi user bấm button
           }
         };
 
         recognition.onerror = (event: any) => {
           console.error('❌ Speech recognition error:', event.error, event);
-          setError(`Speech error: ${event.error}`);
           
           if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
           }
           
-          // ✅ Chỉ restart cho một số lỗi nhất định
+          // ✅ Chỉ restart cho lỗi no-speech, giữ lại transcript cũ
           if (event.error === 'no-speech') {
-            console.log('🔄 Restarting due to no speech...');
+            console.log('🔄 No speech detected, but keeping transcript');
+            // Không set error để không làm mất transcript
             setTimeout(() => {
-              if (recognitionRef.current) {
+              if (recognitionRef.current && isListening) {
                 try {
                   recognitionRef.current.start();
                 } catch (e) {
@@ -128,7 +123,12 @@ export const useSpeechRecognition = (
                 }
               }
             }, 500);
+          } else if (event.error === 'aborted') {
+            // User chủ động dừng, không cần báo lỗi
+            console.log('✅ Recognition aborted by user');
+            setIsListening(false);
           } else {
+            setError(`Speech error: ${event.error}`);
             setIsListening(false);
           }
         };
@@ -163,7 +163,7 @@ export const useSpeechRecognition = (
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [language]); // ✅ Loại bỏ onTranscript và isListening khỏi dependencies
+  }, [language]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const startListening = useCallback(() => {
     console.log('🚀 startListening called, isListening:', isListening);

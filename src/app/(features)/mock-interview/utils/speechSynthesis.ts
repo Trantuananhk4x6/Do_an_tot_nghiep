@@ -90,10 +90,16 @@ class SpeechSynthesisManager {
           };
 
           utterance.onerror = (error) => {
-            console.error('Speech error:', error);
+            // Silently handle common speech synthesis errors
+            if (error.error === 'interrupted' || error.error === 'canceled') {
+              console.log('Speech interrupted/canceled (normal behavior)');
+            } else {
+              console.warn('Speech error:', error.error);
+            }
             this.currentUtterance = null;
             this.emit('speechError', error);
-            reject(error);
+            // Don't reject on error, resolve instead to prevent promise rejections
+            resolve();
           };
 
           this.synthesis.speak(utterance);

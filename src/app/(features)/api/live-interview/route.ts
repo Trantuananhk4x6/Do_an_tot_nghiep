@@ -41,8 +41,9 @@ export async function POST(req: Request) {
   }
 
   let { messages, audio } = body;
-  console.log("Received messages count:", messages.length);
-  console.log("Received audio:", audio ? "yes" : "no");
+  console.log("[Live Interview] Received messages count:", messages.length);
+  console.log("[Live Interview] Last message:", messages[messages.length - 1]);
+  console.log("[Live Interview] Received audio:", audio ? "yes" : "no");
 
   // If audio provided, transcribe server-side and append transcript to messages so model always sees it.
   if (audio) {
@@ -58,12 +59,15 @@ export async function POST(req: Request) {
       } else if (!DEEPGRAM_KEY) {
         messages.push({ role: "user", content: "Transcript: [transcription unavailable: server not configured]" });
       } else {
-        console.log("Transcribing audio with Deepgram (prerecorded)...");
+        console.log("[Live Interview] Transcribing audio with Deepgram (prerecorded)...");
         const { result, error } = await deepgram.listen.prerecorded.transcribeFile(audioBuffer, {
           model: "nova-2",
-          language: "en",
+          language: "en-US",
           punctuate: true,
           smart_format: true,
+          diarize: false,
+          utterances: false,
+          numerals: true,
         });
 
         if (error) {
@@ -72,7 +76,8 @@ export async function POST(req: Request) {
         } else {
           const rawTranscript =
             result?.results?.channels?.[0]?.alternatives?.[0]?.transcript?.trim() || "";
-          console.log("Deepgram raw transcript length:", rawTranscript.length);
+          console.log("[Live Interview] Deepgram raw transcript:", rawTranscript);
+          console.log("[Live Interview] Deepgram confidence:", result?.results?.channels?.[0]?.alternatives?.[0]?.confidence);
   const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GOOGLE_GENERATIVE_API_KEY || undefined;  
           // If we got something, ask Gemini to refine punctuation and add question marks
           if (rawTranscript) {
@@ -85,13 +90,12 @@ export async function POST(req: Request) {
               ].join("\n\n");
 
               // safe call to generateText + safe handling of return type
-              const refineResult = await generateText({
-                model: google("gemini-1.5-flash"),
-                apiKey: apiKey as any,
-                prompt: refinePrompt,
-                // no heavy generation needed
-                max_tokens: 300,
-              });
+                            const refineResult = await generateText({
+                              model: google("gemini-2.5-flash", { apiKey: apiKey as any } as any),
+                              prompt: refinePrompt,
+                              // no heavy generation needed
+                              maxTokens: 300,
+                            });
 
               // handle different shapes: string or object with .text
               let refined = "";
@@ -105,7 +109,7 @@ export async function POST(req: Request) {
               }
 
               refined = (refined || rawTranscript).trim();
-              console.log("Refined transcript length:", refined.length);
+              console.log("[Live Interview] Refined transcript:", refined);
               messages.push({ role: "user", content: `Transcript: ${refined}` });
             } catch (refineErr) {
               console.error("Refine error:", refineErr);
@@ -125,14 +129,37 @@ export async function POST(req: Request) {
 
   // Prepare and call the model. Keep tools (getInformation) available but rely on pre-transcription so model sees user audio.
   try {
+    console.log("[Live Interview] Calling AI model with", messages.length, "messages");
+    console.log("[Live Interview] Final messages:", JSON.stringify(messages, null, 2));
+    
     const result = streamText({
-      model: google("gemini-1.5-flash"),
-      apiKey: GOOGLE_API_KEY || undefined as any,
-      messages ,
-      system: `You are a helpful interview assistant. 
-Use tools on every request when appropriate.  
-Be sure to check the knowledge base before answering.  
-If unsure, use the getInformation tool. Respond concisely as the interviewee.`,
+      model: google("gemini-2.5-flash"),
+      messages: messages as any,
+      system: `You are a job candidate being interviewed. You are a real person with experiences, skills, and personality.
+
+IMPORTANT ROLE:
+- You are NOT an AI assistant or chatbot
+- You are a professional candidate answering interview questions
+- Respond as a human would in an actual interview setting
+- Use personal pronouns (I, me, my) naturally
+- Share experiences, examples, and stories from "your background"
+
+RESPONSE STYLE:
+- Answer naturally and conversationally, like a real person
+- Use the getInformation tool to retrieve relevant information from your resume/background
+- Incorporate retrieved information as if it's your own experience
+- Add human touches: "In my previous role...", "I remember when...", "I've found that..."
+- Show enthusiasm and personality
+- Be honest if you don't know something: "That's a great question. While I haven't had direct experience with that, I'm eager to learn..."
+
+NEVER say things like:
+- "I am a large language model"
+- "I am an AI"
+- "I don't have physical location"
+- "I am trained by..."
+- "As an AI assistant..."
+
+Instead, respond as the candidate whose information is in the knowledge base. Use their skills, experiences, and background as your own.`,
       tools: {
         getInformation: tool({
           description: `Get information from the user's knowledge base to answer questions.`,
@@ -175,9 +202,8 @@ If unsure, use the getInformation tool. Respond concisely as the interviewee.`,
               try {
                 const r = await generateText({
                   model: google("gemini-1.5-flash"),
-                  apiKey: GOOGLE_API_KEY || undefined ,
                   prompt: `Refine this transcript (punctuation & question marks only):\n\n${t}`,
-                  max_tokens: 300,
+                  maxTokens: 300,
                 });
                 if (!r) return t;
                 if (typeof r === "string") return r;
@@ -194,14 +220,16 @@ If unsure, use the getInformation tool. Respond concisely as the interviewee.`,
       },
     });
 
-    console.log("Stream result ready");
-   const response = result.toDataStreamResponse();
-console.log("Response object:", response);
+    console.log("[Live Interview] Stream result ready, returning response");
     return result.toDataStreamResponse();
 
   } catch (err) {
-    console.error("streamText error:", err);
-    return new Response(JSON.stringify({ error: "Model request failed" }), { status: 500 });
+    console.error("[Live Interview] streamText error:", err);
+    console.error("[Live Interview] Error details:", JSON.stringify(err, null, 2));
+    return new Response(JSON.stringify({ error: "Model request failed", details: err instanceof Error ? err.message : "Unknown error" }), { 
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 }
 
@@ -224,7 +252,7 @@ console.log("Response object:", response);
   
 //   try {
 //     const result = streamText({
-//       model: google("gemini-1.5-flash"), // Thay đổi từ "gemini-1.5-pro-latest" thành "gemini-1.5-flash"
+//       model: google("gemini-2.5-flash"), // Thay đổi từ "gemini-2.5-pro-latest" thành "gemini-2.5-flash"
 //       messages,
 //       system: `You are a helpful interview assistant. 
 //         Use tools on every request.
