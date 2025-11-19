@@ -9,6 +9,7 @@ import SkillsSection from '@/app/(features)/support-cv/components/editor/SkillsS
 import ProjectsSection from '@/app/(features)/support-cv/components/editor/ProjectsSection';
 import CertificationsSection from '@/app/(features)/support-cv/components/editor/CertificationsSection';
 import LanguagesSection from '@/app/(features)/support-cv/components/editor/LanguagesSection';
+import AwardsSection from '@/app/(features)/support-cv/components/editor/AwardsSection';
 import TemplateSelectorPanel from '@/app/(features)/support-cv/components/TemplateSelectorPanel';
 
 interface CVEditorProps {
@@ -383,6 +384,13 @@ export default function CVEditor({
             <LanguagesSection
               data={cvData.languages}
               onChange={(languages) => onUpdate({ ...cvData, languages })}
+            />
+          )}
+
+          {activeSection === 'awards' && (
+            <AwardsSection
+              data={cvData.awards || []}
+              onChange={(awards) => onUpdate({ ...cvData, awards })}
             />
           )}
           </div>

@@ -1,0 +1,1 @@
+ALTER TABLE "interviewSet" ADD COLUMN "language" text DEFAULT 'en';

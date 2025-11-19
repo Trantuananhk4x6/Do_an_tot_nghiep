@@ -4,14 +4,22 @@ import { Button } from "@/components/ui/button";
 import { useChat } from "ai/react";
 import { Markdown } from "@/components/ui/markdown";
 import { Zap, Hand } from "lucide-react";
+import NeuralNetworkBg from "@/components/ui/neural-network-bg";
 
 let socket;
 let recorder;
 
 const Page = () => {
-  const { messages, append, isLoading } = useChat({
+  const { messages, append, isLoading, error } = useChat({
     api: "/api/live-interview",
     maxSteps: 2,
+    onError: (error) => {
+      console.error("[Live Interview] Chat error:", error);
+      alert("⚠️ AI Error: " + error.message + "\n\nPlease try asking your question again.");
+    },
+    onFinish: (message) => {
+      console.log("[Live Interview] AI response finished:", message.content.substring(0, 100));
+    },
   });
   const [transcript, setTranscript] = useState([]);
   const [isSharing, setIsSharing] = useState(false);
@@ -19,8 +27,18 @@ const Page = () => {
   const [time, setTime] = useState(0);
   const [mode, setMode] = useState("manual"); // "auto" or "manual"
   const [lastProcessedLength, setLastProcessedLength] = useState(0);
+  const [lastQuestionSent, setLastQuestionSent] = useState(""); // Track last question to prevent duplicates
   const videoRef = useRef(null);
   const timerRef = useRef(null);
+  const autoModeTimeoutRef = useRef(null);
+
+  // Debug: Log messages whenever they change
+  useEffect(() => {
+    console.log("[Live Interview] Messages updated, count:", messages.length);
+    if (messages.length > 0) {
+      console.log("[Live Interview] Last message:", messages[messages.length - 1]);
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (isSharing) {
@@ -33,118 +51,242 @@ const Page = () => {
     return () => clearInterval(timerRef.current);
   }, [isSharing]);
 
-  // Auto mode: Detect questions and auto-answer
+  // Auto mode: Detect questions and auto-answer with minimal delay
   useEffect(() => {
-    if (mode === "auto" && transcript.length > lastProcessedLength) {
-      const fullText = transcript.join("");
-      const newText = fullText.substring(lastProcessedLength);
-      
-      // Detect question patterns
-      const questionPatterns = [
-        /(?:what|how|why|when|where|who|which|can you|could you|would you|do you|are you|is it|will you|should)[^.!?]*\?/gi,
-        /(?:tell me|explain|describe|discuss)[^.!?]*[.?]/gi,
-      ];
-      
-      let detectedQuestion = null;
-      for (const pattern of questionPatterns) {
-        const match = newText.match(pattern);
-        if (match && match[0]) {
-          detectedQuestion = match[0].trim();
-          break;
-        }
-      }
-      
-      if (detectedQuestion && !isLoading) {
-        console.log("[Auto Mode] Detected question:", detectedQuestion);
-        append({ role: "user", content: detectedQuestion });
-        setLastProcessedLength(fullText.length);
-      }
+    // Clear any pending timeout
+    if (autoModeTimeoutRef.current) {
+      clearTimeout(autoModeTimeoutRef.current);
     }
-  }, [transcript, mode, lastProcessedLength, isLoading, append]);
+
+    if (mode === "auto" && transcript.length > 0 && !isLoading) {
+      const fullText = transcript.join("").trim();
+      
+      // Skip if no new content
+      if (fullText.length <= lastProcessedLength) {
+        return;
+      }
+      
+      const newText = fullText.substring(lastProcessedLength);
+      console.log("[Auto Mode] New text to analyze:", newText);
+      
+      // Check if we have a complete question with question mark - process immediately
+      const hasQuestionMark = /\?/.test(newText);
+      const delay = hasQuestionMark ? 200 : 500; // 0.2s if has ?, otherwise 0.5s
+      
+      console.log("[Auto Mode] Using delay:", delay, "ms, hasQuestionMark:", hasQuestionMark);
+      
+      // Quick debounce to wait for complete sentences
+      autoModeTimeoutRef.current = setTimeout(() => {
+        // Improved question detection patterns
+        const questionPatterns = [
+          // Direct questions with question mark
+          /(?:what|how|why|when|where|who|which|whose|whom)[^.!]*\?/gi,
+          // Modal verb questions
+          /(?:can you|could you|would you|will you|should you|may you|might you)[^.!?]*\?/gi,
+          // Do/Does/Did questions
+          /(?:do you|does|did|are you|is it|was|were)[^.!?]*\?/gi,
+          // Imperative questions (tell me, talk about)
+          /(?:tell me|explain|describe|discuss|talk about|share|give me).{10,}[.?]/gi,
+          // You + verb patterns (You tell me, You talk about)
+          /you\s+(?:tell|talk|explain|describe|discuss|share|give).{10,}[.?]/gi,
+          // Vietnamese questions translated to English
+          /(?:bạn|anh|chị|em).*(?:gì|sao|như thế nào|tại sao|khi nào|ở đâu|ai)/gi,
+        ];
+        
+        let detectedQuestion = null;
+        let allMatches = [];
+        
+        // Collect all matches from all patterns
+        for (const pattern of questionPatterns) {
+          const matches = newText.match(pattern);
+          if (matches && matches.length > 0) {
+            allMatches = allMatches.concat(matches);
+          }
+        }
+        
+        if (allMatches.length > 0) {
+          // Get the longest match (usually more complete question)
+          detectedQuestion = allMatches.reduce((longest, current) => 
+            current.length > longest.length ? current : longest, ""
+          ).trim();
+          
+          // Clean up the question
+          detectedQuestion = detectedQuestion
+            .replace(/\s+/g, ' ')  // Remove extra spaces
+            .replace(/^[,.:;]\s*/, '') // Remove leading punctuation
+            .replace(/\s+[.?]+$/, '?'); // Ensure it ends with question mark
+          
+          console.log("[Auto Mode] All matches found:", allMatches);
+          console.log("[Auto Mode] Selected question:", detectedQuestion);
+        } else if (newText.trim().length > 20) {
+          // If no pattern matched but we have substantial text, treat it as a question
+          detectedQuestion = newText.trim();
+          console.log("[Auto Mode] No pattern matched, using full text as question:", detectedQuestion);
+        }
+        
+        // Check if question is valid and not duplicate
+        if (detectedQuestion && 
+            detectedQuestion.length > 10 && 
+            detectedQuestion !== lastQuestionSent) {
+          
+          console.log("[Auto Mode] ✅ Detected valid question:", detectedQuestion);
+          console.log("[Auto Mode] Question length:", detectedQuestion.length);
+          console.log("[Auto Mode] Sending to AI NOW...");
+          
+          // Update last question immediately to prevent duplicates
+          setLastQuestionSent(detectedQuestion);
+          
+          append({ role: "user", content: detectedQuestion })
+            .then(() => {
+              console.log("[Auto Mode] ✅ Question sent successfully, waiting for response...");
+              // Update processed length after successful send
+              setLastProcessedLength(fullText.length);
+            })
+            .catch((err) => {
+              console.error("[Auto Mode] ❌ Failed to send question:", err);
+              // Reset last question on error so user can retry
+              setLastQuestionSent("");
+              alert("⚠️ Failed to send question to AI. Please try Manual Mode.");
+            });
+        } else if (detectedQuestion && detectedQuestion === lastQuestionSent) {
+          console.log("[Auto Mode] ⏭️ Question already sent, skipping duplicate:", detectedQuestion);
+        } else if (detectedQuestion) {
+          console.log("[Auto Mode] ⚠️ Question too short:", detectedQuestion);
+        }
+      }, delay);
+    }
+
+    return () => {
+      if (autoModeTimeoutRef.current) {
+        clearTimeout(autoModeTimeoutRef.current);
+      }
+    };
+  }, [transcript, mode, lastProcessedLength, isLoading, append, lastQuestionSent]);
 
   const startTranscription = async () => {
-    navigator.mediaDevices
-      .getDisplayMedia({ video: true, audio: true })
-      .then(async (screenStream) => {
-        if (!process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY)
-          return alert(
-            "You must provide a Deepgram API Key in the options page."
-          );
-        if (screenStream.getAudioTracks().length == 0)
-          return alert("You must share your tab with audio. Refresh the page.");
+    try {
+      // Check for Deepgram API Key first
+      if (!process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY) {
+        alert("⚠️ Deepgram API Key is missing. Please configure it in your environment variables.");
+        return;
+      }
 
-        const micStream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
-        const audioContext = new AudioContext();
-        const mixed = mix(audioContext, [screenStream, micStream]);
-
-        recorder = new MediaRecorder(mixed, { mimeType: "audio/webm" });
-
-        // Improved Deepgram configuration for better accuracy
-        const deepgramParams = new URLSearchParams({
-          model: "nova-2",
-          language: "en-US",
-          punctuate: "true",
-          smart_format: "true",
-          interim_results: "true",
-          utterance_end_ms: "1000",
-          vad_events: "true",
-          endpointing: "300",
-          numerals: "true",
-        });
-
-        socket = new WebSocket(
-          `${process.env.NEXT_PUBLIC_DEEPGRAM_URL}?${deepgramParams.toString()}`,
-          ["token", process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY]
-        );
-
-        recorder.addEventListener("dataavailable", (evt) => {
-          if (evt.data.size > 0 && socket.readyState == 1)
-            socket.send(evt.data);
-        });
-
-        socket.onopen = () => {
-          recorder.start(500);
-        };
-
-        socket.onmessage = (msg) => {
-          try {
-            const data = JSON.parse(msg.data);
-            
-            // Check if this is a transcript message (not metadata)
-            if (data.channel && data.channel.alternatives) {
-              const alternative = data.channel.alternatives[0];
-              const transcript = alternative?.transcript;
-              const isFinal = data.is_final || data.speech_final;
-              
-              // Only add final transcripts to avoid duplicates
-              if (transcript && isFinal) {
-                setTranscript((prevTranscript) => [
-                  ...prevTranscript,
-                  transcript,
-                  " ",
-                ]);
-              }
-            }
-          } catch (err) {
-            console.error("[Live Interview] Error parsing transcript:", err);
-            console.error("[Live Interview] Message data:", msg.data);
-          }
-        };
-        
-        socket.onerror = (error) => {
-          console.error("[Live Interview] WebSocket error:", error);
-          alert("Connection error with transcription service");
-        };
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = screenStream;
-          videoRef.current.play();
-        }
-        setIsSharing(true);
-        setTime(0);
+      // Request screen sharing with audio
+      console.log("[Live Interview] Requesting screen sharing permission...");
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({ 
+        video: true, 
+        audio: true 
       });
+
+      console.log("[Live Interview] Screen sharing granted");
+      console.log("[Live Interview] Audio tracks:", screenStream.getAudioTracks().length);
+
+      if (screenStream.getAudioTracks().length === 0) {
+        alert("⚠️ No audio detected! Please:\n1. Click 'Share' again\n2. Select the tab you want to share\n3. Make sure to check 'Share audio' checkbox");
+        screenStream.getTracks().forEach(track => track.stop());
+        return;
+      }
+
+      // Request microphone access
+      console.log("[Live Interview] Requesting microphone permission...");
+      const micStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+      console.log("[Live Interview] Microphone access granted");
+
+      const audioContext = new AudioContext();
+      const mixed = mix(audioContext, [screenStream, micStream]);
+
+      recorder = new MediaRecorder(mixed, { mimeType: "audio/webm" });
+
+      // Improved Deepgram configuration for better accuracy
+      const deepgramParams = new URLSearchParams({
+        model: "nova-2",
+        language: "en-US",
+        punctuate: "true",
+        smart_format: "true",
+        interim_results: "true",
+        utterance_end_ms: "1000",
+        vad_events: "true",
+        endpointing: "300",
+        numerals: "true",
+      });
+
+      socket = new WebSocket(
+        `${process.env.NEXT_PUBLIC_DEEPGRAM_URL}?${deepgramParams.toString()}`,
+        ["token", process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY]
+      );
+
+      recorder.addEventListener("dataavailable", (evt) => {
+        if (evt.data.size > 0 && socket.readyState == 1)
+          socket.send(evt.data);
+      });
+
+      socket.onopen = () => {
+        console.log("[Live Interview] WebSocket connected to Deepgram");
+        recorder.start(500);
+      };
+
+      socket.onmessage = (msg) => {
+        try {
+          const data = JSON.parse(msg.data);
+          console.log("[Deepgram] Received message type:", data.type);
+          
+          // Check if this is a transcript message (not metadata)
+          if (data.channel && data.channel.alternatives && data.channel.alternatives.length > 0) {
+            const alternative = data.channel.alternatives[0];
+            const transcript = alternative?.transcript;
+            const isFinal = data.is_final || data.speech_final;
+            
+            console.log("[Deepgram] Transcript:", transcript, "isFinal:", isFinal);
+            
+            // Only add final transcripts to avoid duplicates and ensure quality
+            if (transcript && transcript.trim().length > 0 && isFinal) {
+              console.log("[Deepgram] Adding final transcript:", transcript);
+              setTranscript((prevTranscript) => [
+                ...prevTranscript,
+                transcript,
+                " ",
+              ]);
+            }
+          }
+        } catch (err) {
+          console.error("[Live Interview] Error parsing transcript:", err);
+          console.error("[Live Interview] Message data:", msg.data);
+        }
+      };
+      
+      socket.onerror = (error) => {
+        console.error("[Live Interview] WebSocket error:", error);
+        alert("❌ Connection error with transcription service. Please check your internet connection and try again.");
+      };
+
+      socket.onclose = () => {
+        console.log("[Live Interview] WebSocket closed");
+      };
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = screenStream;
+        videoRef.current.play();
+      }
+      setIsSharing(true);
+      setTime(0);
+      console.log("[Live Interview] Transcription started successfully");
+
+    } catch (error) {
+      console.error("[Live Interview] Error starting transcription:", error);
+      
+      // Handle specific errors
+      if (error.name === 'NotAllowedError') {
+        alert("❌ Permission Denied!\n\nYou need to allow:\n1. Screen sharing permission\n2. Microphone permission\n\nPlease click 'Start' again and allow the permissions.");
+      } else if (error.name === 'NotFoundError') {
+        alert("❌ No microphone found!\n\nPlease connect a microphone and try again.");
+      } else if (error.name === 'NotReadableError') {
+        alert("❌ Device is busy!\n\nYour microphone or screen is being used by another application. Please close other apps and try again.");
+      } else {
+        alert(`❌ Error: ${error.message}\n\nPlease try again or contact support if the problem persists.`);
+      }
+    }
   };
 
   const stopTranscription = () => {
@@ -164,6 +306,7 @@ const Page = () => {
   const clearTranscription = () => {
     setTranscript([]);
     setLastProcessedLength(0);
+    setLastQuestionSent(""); // Reset last question when clearing
   };
 
   const handleTextSelection = () => {
@@ -181,22 +324,25 @@ const Page = () => {
   };
 
   const askAi = async () => {
-    if (selectedText) {
+    if (selectedText && selectedText.trim().length > 0) {
       console.log("[Live Interview] Asking AI with text:", selectedText);
       try {
         await append({ role: "user", content: selectedText });
-        console.log("[Live Interview] Message sent successfully");
+        console.log("[Live Interview] Message sent successfully, waiting for AI response...");
+        setSelectedText(""); // Clear selection after sending
       } catch (err) {
         console.error("[Live Interview] Error asking AI:", err);
-        alert("Failed to send question to AI. Please try again.");
+        alert("⚠️ Failed to send question to AI:\n" + (err.message || "Unknown error") + "\n\nPlease try again.");
       }
     } else {
-      alert("Please select some text from the transcript first.");
+      alert("⚠️ Please select some text from the transcript first.");
     }
   };
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-6 h-full p-6">
+    <>
+      <NeuralNetworkBg />
+      <div className="relative z-10 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-6 h-full p-6">
       {/* Left Panel - Video & Transcript */}
       <div className="flex flex-col space-y-4">
         {/* Header */}
@@ -245,7 +391,9 @@ const Page = () => {
               onClick={() => {
                 setMode("auto");
                 setSelectedText("");
-                setLastProcessedLength(transcript.join("").length);
+                setLastQuestionSent(""); // Reset to allow processing from this point
+                // Don't reset lastProcessedLength - allow processing of existing text
+                console.log("[Mode Switch] Switched to Auto mode");
               }}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
                 mode === "auto"
@@ -260,6 +408,7 @@ const Page = () => {
               onClick={() => {
                 setMode("manual");
                 setSelectedText("");
+                console.log("[Mode Switch] Switched to Manual mode");
               }}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
                 mode === "manual"
@@ -273,7 +422,7 @@ const Page = () => {
           </div>
           <p className="text-xs text-gray-500 mt-3 text-center">
             {mode === "auto" 
-              ? "🤖 AI will automatically detect and answer questions"
+              ? "🤖 Questions with '?' → Instant AI response (0.2s) | Others → Wait 0.5s"
               : "✋ Select text manually and click 'Ask AI' button"}
           </p>
         </div>
@@ -342,7 +491,21 @@ const Page = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
           </svg>
           Interview with AI
+          {isLoading && (
+            <span className="ml-2 text-xs text-purple-400 animate-pulse-glow flex items-center gap-1">
+              <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing...
+            </span>
+          )}
         </h2>
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+            <strong>Error:</strong> {error.message}
+          </div>
+        )}
         <div className="mt-4 space-y-4">
           {messages.length === 0 ? (
             <div className="text-center py-12">
@@ -352,7 +515,9 @@ const Page = () => {
                 </svg>
               </div>
               <p className="text-gray-400 text-sm">
-                Select text from your transcript and click "Ask AI" to get help.
+                {mode === "auto" 
+                  ? "🤖 Auto Mode Active: Speak clearly and end with '?' for instant response!"
+                  : "✋ Manual Mode: Select text from transcript and click 'Ask AI'"}
               </p>
             </div>
           ) : (
@@ -365,7 +530,7 @@ const Page = () => {
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
-                        You
+                        Question
                       </>
                     ) : (
                       <>
@@ -386,12 +551,22 @@ const Page = () => {
                 </div>
               ))}
               {isLoading && (
-                <div className="flex items-center gap-2 text-gray-400 italic animate-pulse-glow">
-                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  AI is thinking...
+                <div className="mb-4 animate-fade-in">
+                  <div className="font-bold uppercase text-xs mb-2 text-pink-400 flex items-center gap-2">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    AI Assistant
+                  </div>
+                  <div className="p-4 rounded-xl border bg-pink-500/10 border-pink-500/30">
+                    <div className="flex items-center gap-3">
+                      <svg className="animate-spin h-5 w-5 text-pink-400" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span className="text-gray-300 italic">AI is thinking and preparing your answer...</span>
+                    </div>
+                  </div>
                 </div>
               )}
             </>
@@ -399,6 +574,7 @@ const Page = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

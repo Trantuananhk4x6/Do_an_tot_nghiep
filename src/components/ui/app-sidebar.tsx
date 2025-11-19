@@ -8,6 +8,9 @@ import {
   ChevronUp,
   BookOpen,
   FileEdit,
+  Briefcase,
+  Users,
+  GraduationCap,
 } from "lucide-react";
 import {
   Sidebar,
@@ -52,6 +55,16 @@ const items = [
     icon: FileEdit,
   },
   {
+    title: "Find Job",
+    url: "/find-job",
+    icon: Briefcase,
+  },
+  {
+    title: "Consulting & Network",
+    url: "/consulting",
+    icon: GraduationCap,
+  },
+  {
     title: "Quiz",
     url: "/quiz",
     icon: FileQuestion,
@@ -68,19 +81,19 @@ export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <Sidebar className="border-r border-white/10 bg-black/40 backdrop-blur-2xl">
+    <Sidebar className="border-r border-white/5 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 backdrop-blur-2xl">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarHeader className="p-6 pb-4">
-            {/* Modern Logo */}
-            <div className="flex items-center gap-3 group cursor-pointer">
+          <SidebarHeader className="p-6 pb-6">
+            {/* Modern Logo with enhanced styling */}
+            <div className="flex items-center gap-3 group cursor-pointer hover:scale-105 transition-transform duration-300">
               <div className="relative">
-                {/* Glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl blur-md opacity-75 group-hover:opacity-100 transition-opacity"></div>
-                {/* Icon container */}
-                <div className="relative h-11 w-11 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg">
+                {/* Enhanced glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 rounded-2xl blur-xl opacity-60 group-hover:opacity-100 group-hover:blur-2xl transition-all duration-500"></div>
+                {/* Icon container with shimmer */}
+                <div className="relative h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-600 via-fuchsia-600 to-pink-600 flex items-center justify-center shadow-2xl shadow-purple-500/50 group-hover:shadow-purple-500/80 transition-all duration-300">
                   <svg
-                    className="w-6 h-6 text-white"
+                    className="w-7 h-7 text-white group-hover:scale-110 transition-transform duration-300"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -95,16 +108,16 @@ export function AppSidebar() {
                 </div>
               </div>
               <div>
-                <h1 className="text-xl font-bold gradient-text">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 via-fuchsia-400 to-pink-400 bg-clip-text text-transparent group-hover:from-purple-300 group-hover:to-pink-300 transition-all duration-300">
                   AI Interview
                 </h1>
-                <p className="text-xs text-gray-500">Powered by Gemini</p>
+                <p className="text-xs text-gray-500 group-hover:text-gray-400 transition-colors">Powered by Gemini</p>
               </div>
             </div>
           </SidebarHeader>
           
-          <SidebarGroupContent className="px-3">
-            <SidebarMenu className="space-y-1">
+          <SidebarGroupContent className="px-4">
+            <SidebarMenu className="space-y-2">
               {items.map((item) => {
                 const isActive = pathname === item.url;
                 return (
@@ -112,43 +125,54 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild isActive={isActive}>
                       <a
                         href={item.url}
-                        className={`group flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-300 relative overflow-hidden ${
+                        className={`group flex items-center gap-3 rounded-2xl px-4 py-3.5 transition-all duration-300 relative overflow-hidden ${
                           isActive
-                            ? "bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30"
-                            : "hover:bg-white/5 border border-transparent"
+                            ? "bg-gradient-to-r from-purple-600/30 via-fuchsia-600/25 to-pink-600/30 border border-purple-500/40 shadow-lg shadow-purple-500/20"
+                            : "hover:bg-gradient-to-r hover:from-white/5 hover:to-white/10 border border-transparent hover:border-white/10"
                         }`}
                       >
-                        {/* Active indicator */}
+                        {/* Enhanced active indicator with pulse */}
                         {isActive && (
-                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-purple-500 to-pink-500 rounded-r-full"></div>
+                          <>
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-purple-400 via-fuchsia-500 to-pink-400 rounded-r-full shadow-lg shadow-purple-500/50"></div>
+                            {/* Animated glow */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 animate-pulse"></div>
+                          </>
                         )}
                         
-                        {/* Icon */}
+                        {/* Enhanced icon with better styling */}
                         <div
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${
+                          className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all duration-300 ${
                             isActive
-                              ? "bg-gradient-to-br from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/50"
-                              : "bg-white/5 text-gray-400 group-hover:bg-white/10 group-hover:text-purple-400"
+                              ? "bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 text-white shadow-xl shadow-purple-500/50 scale-105"
+                              : "bg-white/5 text-gray-400 group-hover:bg-gradient-to-br group-hover:from-purple-600/20 group-hover:to-pink-600/20 group-hover:text-purple-300 group-hover:scale-105"
                           }`}
                         >
-                          <item.icon className="h-5 w-5" />
+                          <item.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
+                          {/* Icon glow effect */}
+                          {isActive && (
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl blur-md opacity-50"></div>
+                          )}
                         </div>
                         
-                        {/* Text */}
+                        {/* Enhanced text with better typography */}
                         <span
-                          className={`text-sm font-medium transition-colors ${
+                          className={`text-sm font-semibold transition-all duration-300 ${
                             isActive
                               ? "text-white"
-                              : "text-gray-400 group-hover:text-white"
+                              : "text-gray-400 group-hover:text-gray-200"
                           }`}
                         >
                           {item.title}
                         </span>
                         
-                        {/* Hover glow effect */}
+                        {/* Enhanced hover effect */}
                         {!isActive && (
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-purple-600/10 to-pink-600/10 rounded-xl"></div>
+                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-purple-600/5 via-fuchsia-600/5 to-pink-600/5 rounded-2xl"></div>
                         )}
+                        
+                        {/* Shimmer effect on hover */}
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700 bg-gradient-to-r from-transparent via-white to-transparent -translate-x-full group-hover:translate-x-full transform duration-1000"></div>
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -160,19 +184,21 @@ export function AppSidebar() {
       </SidebarContent>
       
       <SidebarFooter>
-        <div className="border-t border-white/10 p-4 bg-black/20">
-          <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group">
+        <div className="border-t border-white/5 p-5 bg-gradient-to-b from-black/20 to-black/40 backdrop-blur-sm">
+          <div className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gradient-to-r hover:from-white/5 hover:to-white/10 transition-all duration-300 cursor-pointer group border border-transparent hover:border-white/10 hover:shadow-lg hover:shadow-purple-500/10">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full blur-sm opacity-0 group-hover:opacity-75 transition-opacity"></div>
-              <UserButton />
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 rounded-full blur-md opacity-0 group-hover:opacity-75 transition-all duration-500"></div>
+              <div className="relative transform group-hover:scale-110 transition-transform duration-300">
+                <UserButton />
+              </div>
             </div>
             <div className="flex flex-col flex-1 min-w-0">
               {isLoaded ? (
                 <>
-                  <span className="text-sm font-medium text-white truncate">
+                  <span className="text-sm font-semibold text-white truncate group-hover:text-purple-300 transition-colors">
                     {user.firstName} {user.lastName}
                   </span>
-                  <span className="text-xs text-gray-500 truncate">
+                  <span className="text-xs text-gray-500 truncate group-hover:text-gray-400 transition-colors">
                     {user.emailAddresses[0].emailAddress}
                   </span>
                 </>
@@ -180,7 +206,7 @@ export function AppSidebar() {
                 <Loading />
               )}
             </div>
-            <ChevronUp className="ml-auto h-4 w-4 text-gray-500 group-hover:text-purple-400 transition-colors" />
+            <ChevronUp className="ml-auto h-4 w-4 text-gray-500 group-hover:text-purple-400 group-hover:-translate-y-0.5 transition-all duration-300" />
           </div>
         </div>
       </SidebarFooter>

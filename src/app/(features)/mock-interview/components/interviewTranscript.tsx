@@ -19,10 +19,10 @@ const InterviewTranscript: React.FC<InterviewTranscriptProps> = ({
   }, [messages]);
 
   return (
-    <div className="bg-gray-50 rounded-2xl p-6 mb-6 h-[470px] overflow-y-auto space-y-6">
+    <div className="h-full p-6 overflow-y-auto space-y-6 custom-scrollbar">
       {messages.map((message) => (
         <TranscriptMessage
-          key={`${message.id}-${message.timestamp}`}
+          key={message.id}
           isUser={message.isUser}
           message={message.text}
           timestamp={message.timestamp}

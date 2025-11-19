@@ -32,6 +32,17 @@ export async function POST(req: Request) {
       return new Response("Interview set not found", { status: 404 });
     }
 
+    // Get language from interview set, default to English
+    const language = interviewSet.language || "en";
+    const languageMap: Record<string, string> = {
+      vi: "Vietnamese",
+      en: "English",
+      ja: "Japanese",
+      zh: "Chinese",
+      ko: "Korean",
+    };
+    const outputLanguage = languageMap[language] || "English";
+
     // Fetch resume
     const resume = await db.query.Resume.findFirst({
       where: eq(Resume.id, interviewSet.resumeId),
@@ -90,6 +101,8 @@ export async function POST(req: Request) {
           model: google("gemini-1.5-flash-8b") as any,
           prompt: `You are an expert technical interviewer conducting an interview for ${interviewSet.position} at ${interviewSet.companyName}.
 
+IMPORTANT: Generate the question and answer in ${outputLanguage} language.
+
 CANDIDATE'S RESUME (analyze this carefully):
 ${truncatedResume}
 
@@ -109,8 +122,9 @@ CRITICAL REQUIREMENTS:
 3. ✅ MUST be relevant to "${interviewSet.position}" at "${interviewSet.companyName}"
 4. ✅ MUST follow the question type: "${randomType}"
 5. ✅ Make it conversational and natural, not generic
+6. ✅ ALL content (question AND answer) MUST be written in ${outputLanguage}
 
-EXAMPLES OF GOOD QUESTIONS:
+EXAMPLES OF GOOD QUESTIONS (format only, translate to ${outputLanguage}):
 - "I see you worked with [specific tech from CV]. Can you explain how you used it in [specific project]?"
 - "You mentioned [specific achievement]. What was the biggest technical challenge you faced?"
 - "In your role at [company from CV], how did you handle [specific situation]?"
@@ -132,7 +146,28 @@ Important: Add timestamp ${Date.now()} to ensure uniqueness.`,
         
         if (retries === 0) {
           // Fallback questions - random selection for diversity
-          const fallbackQuestions = [
+          const fallbackQuestions = language === "vi" ? [
+            {
+              question: `Kinh nghiệm cụ thể nào trong CV của bạn khiến bạn tự tin có thể xuất sắc trong vai trò ${interviewSet.position} tại ${interviewSet.companyName}?`,
+              answer: `Nêu bật 2-3 dự án hoặc kinh nghiệm chính từ CV phù hợp trực tiếp với trách nhiệm của ${interviewSet.position}. Sử dụng ví dụ cụ thể với công nghệ, vấn đề giải quyết và kết quả đo lường được.`
+            },
+            {
+              question: `Bạn có thể mô tả dự án khó khăn về mặt kỹ thuật nhất mà bạn từng làm và nó liên quan như thế nào đến công việc tại ${interviewSet.companyName}?`,
+              answer: `Sử dụng phương pháp STAR: Tình huống - bối cảnh và mục tiêu dự án, Nhiệm vụ - vai trò và thách thức cụ thể, Hành động - quyết định kỹ thuật và bước thực hiện, Kết quả - thành tựu, chỉ số và bài học. Kết nối với tech stack hoặc sản phẩm của ${interviewSet.companyName}.`
+            },
+            {
+              question: `Điều gì ở vị trí ${interviewSet.position} tại ${interviewSet.companyName} khiến bạn quan tâm nhất, và kinh nghiệm của bạn chuẩn bị cho nó như thế nào?`,
+              answer: `Nghiên cứu sản phẩm, văn hóa và tech stack của ${interviewSet.companyName}. Kết nối kỹ năng và kinh nghiệm cụ thể từ CV với yêu cầu vai trò. Thể hiện sự nhiệt tình chân thành và giải thích điều này phù hợp với mục tiêu nghề nghiệp của bạn.`
+            },
+            {
+              question: `Mô tả một tình huống bạn phải học một công nghệ mới nhanh chóng. Bạn tiếp cận như thế nào và điều này sẽ giúp bạn tại ${interviewSet.companyName} ra sao?`,
+              answer: `Chia sẻ ví dụ cụ thể từ kinh nghiệm. Giải thích quy trình học (tài liệu, hướng dẫn, thực hành, mentorship). Thảo luận kết quả và cách áp dụng kỹ năng. Liên hệ với bản chất nhanh của vai trò ${interviewSet.position}.`
+            },
+            {
+              question: `Kể về một lần bạn phải đưa ra quyết định kỹ thuật khó khăn. Quy trình suy nghĩ của bạn là gì?`,
+              answer: `Mô tả bối cảnh và các lựa chọn bạn đang xem xét. Giải thích đánh đổi (hiệu suất vs bảo trì, chi phí vs khả năng mở rộng). Chia sẻ quyết định, lý do và kết quả. Thể hiện tư duy phân tích và kỹ năng ra quyết định.`
+            }
+          ] : [
             {
               question: `What specific experience from your resume makes you confident you can excel in the ${interviewSet.position} role at ${interviewSet.companyName}?`,
               answer: `Highlight 2-3 key projects or experiences from your CV that directly align with the ${interviewSet.position} responsibilities. Use concrete examples with technologies used, problems solved, and measurable results achieved.`
@@ -202,7 +237,16 @@ Important: Add timestamp ${Date.now()} to ensure uniqueness.`,
         console.log("Extracted from regex:", parsedResult);
       } else {
         // Final fallback with random variation
-        const parseErrorFallbacks = [
+        const parseErrorFallbacks = language === "vi" ? [
+          {
+            question: `Kinh nghiệm trong quá khứ đã chuẩn bị cho bạn như thế nào để đối mặt với thách thức kỹ thuật của ${interviewSet.position} tại ${interviewSet.companyName}?`,
+            answer: `Thảo luận về các dự án kỹ thuật cụ thể từ CV thể hiện kỹ năng giải quyết vấn đề, công nghệ liên quan và khả năng đem lại kết quả. Kết nối kinh nghiệm này với yêu cầu của vai trò ${interviewSet.position}.`
+          },
+          {
+            question: `Giải pháp sáng tạo nhất bạn đã triển khai là gì, và tư duy tương tự có thể mang lại lợi ích gì cho ${interviewSet.companyName}?`,
+            answer: `Chia sẻ ví dụ cụ thể về giải quyết vấn đề sáng tạo từ kinh nghiệm. Giải thích vấn đề, cách tiếp cận đổi mới, triển khai và kết quả. Thể hiện tư duy này sẽ tạo giá trị như thế nào cho ${interviewSet.companyName}.`
+          }
+        ] : [
           {
             question: `How have your past experiences prepared you for the technical challenges of a ${interviewSet.position} at ${interviewSet.companyName}?`,
             answer: `Discuss specific technical projects from your resume that demonstrate problem-solving skills, relevant technologies, and ability to deliver results. Connect these experiences to the requirements of the ${interviewSet.position} role.`
@@ -231,7 +275,16 @@ Important: Add timestamp ${Date.now()} to ensure uniqueness.`,
       console.error("Invalid AI response format:", parsedResult);
       
       // Random fallback for invalid format
-      const invalidFormatFallbacks = [
+      const invalidFormatFallbacks = language === "vi" ? [
+        {
+          question: `Điều gì khiến bạn quan tâm đến ${interviewSet.companyName}, và kinh nghiệm của bạn phù hợp với vai trò ${interviewSet.position} như thế nào?`,
+          answer: `Nghiên cứu sứ mệnh, sản phẩm và văn hóa của ${interviewSet.companyName}. Kết nối kỹ năng và kinh nghiệm từ CV với nhu cầu của họ. Thể hiện bạn hiểu cả vai trò và công ty, giải thích tại sao bạn phù hợp.`
+        },
+        {
+          question: `Mô tả cách tiếp cận của bạn để cập nhật xu hướng công nghệ liên quan đến lĩnh vực ${interviewSet.position}.`,
+          answer: `Thảo luận về thói quen học: blog kỹ thuật, khóa học, hội nghị, đóng góp mã nguồn mở, dự án cá nhân. Đưa ra ví dụ cụ thể từ CV nơi bạn áp dụng kiến thức mới. Thể hiện tư duy học hỏi liên tục quan trọng cho ${interviewSet.companyName}.`
+        }
+      ] : [
         {
           question: `What makes you interested in ${interviewSet.companyName}, and how does your background align with the ${interviewSet.position} role?`,
           answer: `Research ${interviewSet.companyName}'s mission, products, and culture. Connect your skills and experiences from your resume to their needs. Show you understand both the role and the company, and explain why you're a good fit.`

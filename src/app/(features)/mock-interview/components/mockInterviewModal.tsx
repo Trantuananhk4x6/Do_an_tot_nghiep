@@ -23,10 +23,28 @@ interface Voice {
 
 interface InterviewCard {
   id: string;
+  position: string; // ✅ ADD: position field
   companyName: string;
   resumeName: string;
   createdAt: string;
+  language?: string; // Language of the interview (vi, en, ja, zh, ko)
 }
+
+const LANGUAGE_FLAGS: Record<string, string> = {
+  vi: "🇻🇳",
+  en: "🇺🇸",
+  ja: "🇯🇵",
+  zh: "🇨🇳",
+  ko: "🇰🇷",
+};
+
+const LANGUAGE_NAMES: Record<string, string> = {
+  vi: "Tiếng Việt",
+  en: "English",
+  ja: "日本語",
+  zh: "中文",
+  ko: "한국어",
+};
 
 interface MockInterviewModalProps {
   isOpen: boolean;
@@ -53,7 +71,7 @@ const MockInterviewModal: React.FC<MockInterviewModalProps> = ({
         const [interviewsResponse, voicesResponse] = await Promise.all([
           axios.get("/api/prepare-hub"),
           // axios.get("https://service-api.beatinterview.com/api/voices")
-          axios.get("/voices") 
+          axios.get("/api/voices") 
         ]);
         setInterviews(interviewsResponse.data);
         setVoices(voicesResponse.data);
@@ -154,7 +172,7 @@ const MockInterviewModal: React.FC<MockInterviewModalProps> = ({
                               <Briefcase className="h-6 w-6 text-purple-400" />
                             </div>
                             <div>
-                              <h4 className="text-lg font-semibold text-white">Software Engineer</h4>
+                              <h4 className="text-lg font-semibold text-white">{interview.position}</h4>
                               <div className="flex gap-2 items-center text-gray-400">
                                 <Building2 className="h-4 w-4" />
                                 <p className="text-sm">{interview.companyName}</p>
@@ -178,6 +196,14 @@ const MockInterviewModal: React.FC<MockInterviewModalProps> = ({
                               Added: {new Date(interview.createdAt).toLocaleDateString()}
                             </p>
                           </div>
+                          {interview.language && (
+                            <div className="flex gap-2 items-center">
+                              <span className="text-lg">{LANGUAGE_FLAGS[interview.language] || "🌐"}</span>
+                              <p className="text-sm text-purple-400 font-medium">
+                                {LANGUAGE_NAMES[interview.language] || interview.language}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

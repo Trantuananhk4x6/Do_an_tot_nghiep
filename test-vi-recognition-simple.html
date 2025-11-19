@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Vietnamese Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+        button:hover { background: #45a049; }
+        .status {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .transcript {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            min-height: 100px;
+            font-size: 18px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎤 Test Vietnamese Speech Recognition</h1>
+    
+    <div class="status">
+        <h3>Status: <span id="status">Ready</span></h3>
+        <p>Language: <span id="langStatus">Not started</span></p>
+    </div>
+
+    <button onclick="startVietnamese()">🇻🇳 Start Vietnamese (vi-VN)</button>
+    <button onclick="startEnglish()">🇺🇸 Start English (en-US)</button>
+    <button onclick="stop()">⏹️ Stop</button>
+
+    <h3>Transcript:</h3>
+    <div class="transcript" id="transcript">
+        <em>Speak to see transcript...</em>
+    </div>
+
+    <h3>Console Logs:</h3>
+    <div class="transcript" id="log" style="font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto;"></div>
+
+    <script>
+        let recognition = null;
+        let isListening = false;
+
+        function log(msg) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${msg}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(msg);
+        }
+
+        function initRecognition(language) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                alert('❌ Speech Recognition not supported!');
+                return null;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = language;
+            recognition.maxAlternatives = 1;
+
+            log(`✅ Recognition initialized with lang: ${language}`);
+            log(`   continuous: ${recognition.continuous}`);
+            log(`   interimResults: ${recognition.interimResults}`);
+            log(`   lang: ${recognition.lang}`);
+
+            recognition.onstart = () => {
+                isListening = true;
+                document.getElementById('status').textContent = 'Listening...';
+                document.getElementById('langStatus').textContent = language;
+                log('🎤 Recognition STARTED');
+            };
+
+            recognition.onresult = (event) => {
+                let transcript = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript + ' ';
+                }
+                
+                document.getElementById('transcript').textContent = transcript;
+                log(`📝 Transcript: ${transcript.substring(0, 50)}...`);
+            };
+
+            recognition.onerror = (event) => {
+                log(`❌ Error: ${event.error}`);
+                document.getElementById('status').textContent = `Error: ${event.error}`;
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                document.getElementById('status').textContent = 'Stopped';
+                log('🛑 Recognition ENDED');
+            };
+
+            recognition.onspeechstart = () => log('🗣️ Speech detected!');
+            recognition.onspeechend = () => log('🤐 Speech ended');
+
+            return recognition;
+        }
+
+        function startVietnamese() {
+            if (isListening) {
+                alert('Already listening! Stop first.');
+                return;
+            }
+
+            recognition = initRecognition('vi-VN');
+            if (recognition) {
+                document.getElementById('transcript').innerHTML = '<em>Listening in Vietnamese... Try saying: "Xin chào", "Tôi là developer"</em>';
+                recognition.start();
+            }
+        }
+
+        function startEnglish() {
+            if (isListening) {
+                alert('Already listening! Stop first.');
+                return;
+            }
+
+            recognition = initRecognition('en-US');
+            if (recognition) {
+                document.getElementById('transcript').innerHTML = '<em>Listening in English... Try saying: "Hello", "I am a developer"</em>';
+                recognition.start();
+            }
+        }
+
+        function stop() {
+            if (recognition && isListening) {
+                recognition.stop();
+            } else {
+                alert('Not currently listening.');
+            }
+        }
+
+        log('Page loaded - ready to test');
+    </script>
+</body>
+</html>

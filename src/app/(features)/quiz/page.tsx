@@ -29,6 +29,7 @@ import {
   generatePersonalizedQuestions,
   type SkillAnalysis 
 } from "./services/resumeAnalysisService";
+import NeuralNetworkBg from "@/components/ui/neural-network-bg";
 import { 
   generateComprehensiveFeedback,
   type QuizFeedback,
@@ -1262,7 +1263,9 @@ const EnhancedQuizPage = () => {
     const PerformanceIcon = performance.icon;
 
     return (
-      <div className="relative min-h-screen">
+      <>
+        <NeuralNetworkBg />
+        <div className="relative z-10 min-h-screen">
         {/* Score Card */}
         <div className="glass-effect rounded-2xl p-12 mb-8 text-center animate-fade-in-up">
           <div className="mb-6">
@@ -1666,6 +1669,7 @@ const EnhancedQuizPage = () => {
           </Button>
         </div>
       </div>
+      </>
     );
   }
 

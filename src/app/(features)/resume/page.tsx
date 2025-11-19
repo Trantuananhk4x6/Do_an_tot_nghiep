@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Loading from "@/components/ui/loading";
+import NeuralNetworkBg from "@/components/ui/neural-network-bg";
 import {
   deleteResume,
   fetchResumes,
@@ -63,14 +64,16 @@ const Page = () => {
 
   return (
     <>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold gradient-text mb-2">User Resume</h1>
-        <div className="mt-1 max-w-[640px] text-sm font-medium text-gray-400">
-          Upload your resume, cover letter, notes or any other application
-          materials to prepare for interview. AI will extract content and
-          response during interview.
+      <NeuralNetworkBg />
+      <div className="relative z-10">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold gradient-text mb-2">User Resume</h1>
+          <div className="mt-1 max-w-[640px] text-sm font-medium text-gray-400">
+            Upload your resume, cover letter, notes or any other application
+            materials to prepare for interview. AI will extract content and
+            response during interview.
+          </div>
         </div>
-      </div>
       <div className="mb-6">
         <ResumeDialog onUpload={handleUpload} uploading={uploading} />
       </div>
@@ -90,6 +93,7 @@ const Page = () => {
         ) : (
           <ResumeTable resumes={resumes} onDelete={handleDelete} />
         )}
+        </div>
       </div>
     </>
   );

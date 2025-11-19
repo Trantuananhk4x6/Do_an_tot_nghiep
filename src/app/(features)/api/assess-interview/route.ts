@@ -20,19 +20,41 @@ interface AssessmentAPIResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const { interviewSession }: AssessmentAPIRequest = await request.json();
+    const body = await request.json();
+    const { interviewSession }: AssessmentAPIRequest = body;
 
-    console.log('🔍 Generating assessment for session:', interviewSession.sessionId);
-    console.log('📝 Transcript entries:', interviewSession.transcript.length);
-    console.log('⏱️ Duration:', interviewSession.duration, 'seconds');
+    console.log('🔍 Received assessment request');
+    console.log('📦 Request body:', JSON.stringify(body, null, 2));
 
     // Validate input
-    if (!interviewSession || !interviewSession.transcript || interviewSession.transcript.length === 0) {
+    if (!interviewSession) {
+      console.error('❌ No interview session in request');
       return NextResponse.json({
         success: false,
-        error: 'No interview data provided'
+        error: 'No interview session provided'
       } as AssessmentAPIResponse, { status: 400 });
     }
+
+    if (!interviewSession.transcript || !Array.isArray(interviewSession.transcript)) {
+      console.error('❌ Invalid transcript data');
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid transcript data'
+      } as AssessmentAPIResponse, { status: 400 });
+    }
+
+    if (interviewSession.transcript.length === 0) {
+      console.error('❌ Empty transcript');
+      return NextResponse.json({
+        success: false,
+        error: 'Interview transcript is empty'
+      } as AssessmentAPIResponse, { status: 400 });
+    }
+
+    console.log('✅ Session ID:', interviewSession.sessionId);
+    console.log('📝 Transcript entries:', interviewSession.transcript.length);
+    console.log('⏱️ Duration:', interviewSession.duration, 'seconds');
+    console.log('❓ Questions asked:', interviewSession.questionsAsked?.length || 0);
 
     if (!process.env.GEMINI_API_KEY) {
       console.error('❌ GEMINI_API_KEY not configured');
@@ -46,9 +68,9 @@ export async function POST(request: NextRequest) {
     const prompt = buildAssessmentPrompt(interviewSession);
     console.log('📄 Prompt built, length:', prompt.length);
 
-    // Call Gemini API
+    // Call Gemini API with retry logic for rate limits
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.0-flash',
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 4096,
@@ -56,8 +78,64 @@ export async function POST(request: NextRequest) {
     });
     
     console.log('🤖 Calling Gemini API...');
-    const result = await model.generateContent(prompt);
-    const response = result.response.text();
+    console.log('📄 Prompt length:', prompt.length, 'characters');
+    
+    let result;
+    let retries = 3;
+    let lastError;
+    
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        console.log(`🔄 Attempt ${attempt}/${retries}...`);
+        result = await model.generateContent(prompt);
+        console.log('✅ API call successful!');
+        break; // Success, exit retry loop
+      } catch (geminiError: any) {
+        lastError = geminiError;
+        console.error(`❌ Attempt ${attempt} failed:`, geminiError.message);
+        
+        // Check if it's a rate limit error
+        const errorMessage = geminiError.message?.toLowerCase() || '';
+        const isRateLimit = errorMessage.includes('rate limit') || 
+                           errorMessage.includes('quota') || 
+                           errorMessage.includes('429') ||
+                           geminiError.status === 429;
+        
+        if (isRateLimit) {
+          console.warn('⚠️ Rate limit detected, waiting before retry...');
+          
+          if (attempt < retries) {
+            // Exponential backoff: 2s, 4s, 8s
+            const waitTime = Math.pow(2, attempt) * 1000;
+            console.log(`⏳ Waiting ${waitTime / 1000}s before retry...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+          } else {
+            console.error('❌ Max retries reached, rate limit exceeded');
+            return NextResponse.json({
+              success: false,
+              error: 'AI service rate limit exceeded. Please try again in a few moments.'
+            } as AssessmentAPIResponse, { status: 429 });
+          }
+        } else {
+          // Not a rate limit error, fail immediately
+          console.error('❌ Non-recoverable Gemini API error:', geminiError);
+          return NextResponse.json({
+            success: false,
+            error: `AI service error: ${geminiError.message || 'Unknown error'}`
+          } as AssessmentAPIResponse, { status: 500 });
+        }
+      }
+    }
+    
+    if (!result || !result.response) {
+      console.error('❌ No response from Gemini after retries');
+      return NextResponse.json({
+        success: false,
+        error: lastError ? `AI service error: ${lastError.message}` : 'No response from AI service'
+      } as AssessmentAPIResponse, { status: 500 });
+    }
+    
+    const response = (result as any).response.text();
     console.log('✅ Received response, length:', response.length);
 
     // Parse JSON response

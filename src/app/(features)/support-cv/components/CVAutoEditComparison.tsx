@@ -202,20 +202,38 @@ export default function CVAutoEditComparison({
                       <span className="text-red-400 text-xl">📄</span>
                       <span className="text-sm font-bold text-red-400 uppercase">Before</span>
                     </div>
-                    <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap bg-red-500/5 p-3 rounded border border-red-500/20">
-                      {typeof change.before === 'object' 
-                        ? JSON.stringify(change.before, null, 2) 
-                        : (change.before || '(empty)')}
-                    </div>
+                    {!change.before || change.before.trim() === '' ? (
+                      // Empty state - adding new content
+                      <div className="bg-gray-800/50 p-4 rounded-lg border-2 border-dashed border-gray-600">
+                        <div className="flex flex-col items-center justify-center py-6 text-center">
+                          <span className="text-4xl mb-2">📝</span>
+                          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+                            Adding New Content
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            This section was empty or missing
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      // Has content - show diff
+                      <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap bg-red-500/5 p-3 rounded border border-red-500/20 min-h-[100px]">
+                        {typeof change.before === 'object' 
+                          ? JSON.stringify(change.before, null, 2) 
+                          : change.before}
+                      </div>
+                    )}
                   </div>
 
                   {/* After */}
                   <div className="glass-effect border border-green-500/30 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-green-400 text-xl">✨</span>
-                      <span className="text-sm font-bold text-green-400 uppercase">After (AI Enhanced)</span>
+                      <span className="text-sm font-bold text-green-400 uppercase">
+                        After (AI Enhanced)
+                      </span>
                     </div>
-                    <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap bg-green-500/5 p-3 rounded border border-green-500/20">
+                    <div className="text-sm text-white leading-relaxed whitespace-pre-wrap bg-green-500/10 p-3 rounded border border-green-500/20 min-h-[100px] font-medium">
                       {typeof change.after === 'object'
                         ? JSON.stringify(change.after, null, 2)
                         : change.after}

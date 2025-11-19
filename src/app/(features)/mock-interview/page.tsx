@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import DIDTalkingHead from "./components/DIDTalkingHead";
 import { v4 as uuidv4 } from 'uuid';
 import { AnimatedStars } from "@/components/ui/animated-stars";
+import NeuralNetworkBg from "@/components/ui/neural-network-bg";
 import type { InterviewSession, TranscriptEntry } from './types/assessment';
 interface Voice {
   id: string;
@@ -37,32 +38,45 @@ interface Voice {
   personality: string;
 }
 
-const TRANSITION_PHRASES = [
-  "Thank you for your insight. Let's move on to our next question.",
-  "I appreciate your detailed response. Now, could you tell me...",
-  "Thanks for sharing that. I'd like to ask you another question.",
-  "Your answer is much appreciated. Now, let's discuss...",
-  "Thank you for that explanation. May we explore another aspect?",
-  "I value your perspective. Let's transition to another topic.",
-  "That was very helpful, thank you. Next, I'd like to ask...",
-  "Thanks for your input. Let's proceed to the next question.",
-  "I appreciate your thoughts. Now, can you elaborate on...",
-  "Thank you for sharing your experience. Moving forward, could you...",
-  "Great answer. Now, let's shift focus to another area.",
-  "Thanks for that insight. Can we discuss another point?",
-  "I appreciate your explanation. Let's now consider a different perspective.",
-  "Thank you for your response. Next, I'd like to delve into...",
-  "Your response was very informative. Let's move on to the next topic.",
-  "I appreciate your answer. Now, can you tell me more about...",
-  "Thanks for clarifying that. Let's now explore another question.",
-  "Thank you for sharing your thoughts. Next, could you expand on...",
-  "I value your input. Let's transition to discussing another aspect.",
-  "Great, thanks for your answer. Now, let's take a look at another question."
-];
+const TRANSITION_PHRASES: Record<string, string[]> = {
+  en: [
+    "Thank you for your insight. Let's move on to our next question.",
+    "I appreciate your detailed response. Now, could you tell me...",
+    "Thanks for sharing that. I'd like to ask you another question.",
+    "Your answer is much appreciated. Now, let's discuss...",
+    "Thank you for that explanation. May we explore another aspect?",
+    "I value your perspective. Let's transition to another topic.",
+    "That was very helpful, thank you. Next, I'd like to ask...",
+    "Thanks for your input. Let's proceed to the next question.",
+  ],
+  vi: [
+    "Cảm ơn bạn đã chia sẻ. Chúng ta chuyển sang câu hỏi tiếp theo nhé.",
+    "Tôi đánh giá cao câu trả lời của bạn. Bây giờ, bạn có thể cho tôi biết...",
+    "Cảm ơn vì đã chia sẻ. Tôi muốn hỏi bạn một câu hỏi khác.",
+    "Câu trả lời của bạn rất tốt. Bây giờ, hãy thảo luận về...",
+    "Cảm ơn lời giải thích. Chúng ta có thể khám phá một khía cạnh khác không?",
+    "Tôi đánh giá cao quan điểm của bạn. Hãy chuyển sang chủ đề khác.",
+    "Điều đó rất hữu ích, cảm ơn bạn. Tiếp theo, tôi muốn hỏi...",
+    "Cảm ơn ý kiến của bạn. Hãy tiếp tục với câu hỏi tiếp theo.",
+  ],
+};
 
-const getRandomTransitionPhrase = () => {
-  const randomIndex = Math.floor(Math.random() * TRANSITION_PHRASES.length);
-  return TRANSITION_PHRASES[randomIndex];
+const END_MESSAGES: Record<string, string> = {
+  en: "Thank you for your time. That concludes our interview. We'll be in touch soon!",
+  vi: "Cảm ơn bạn đã dành thời gian. Buổi phỏng vấn của chúng ta đã kết thúc. Chúng tôi sẽ liên lạc sớm!",
+  ja: "お時間をいただきありがとうございました。面接は以上です。また連絡させていただきます。",
+  zh: "感谢您的时间。我们的面试到此结束。我们会尽快与您联系！",
+  ko: "시간 내주셔서 감사합니다. 면접이 끝났습니다. 곧 연락드리겠습니다!",
+};
+
+const getRandomTransitionPhrase = (language: string = 'en') => {
+  const phrases = TRANSITION_PHRASES[language] || TRANSITION_PHRASES.en;
+  const randomIndex = Math.floor(Math.random() * phrases.length);
+  return phrases[randomIndex];
+};
+
+const getEndMessage = (language: string = 'en') => {
+  return END_MESSAGES[language] || END_MESSAGES.en;
 };
 
 const MockInterviewPage = () => {
@@ -79,6 +93,7 @@ const MockInterviewPage = () => {
   const [streaming, setStreaming] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentAIText, setCurrentAIText] = useState<string>(""); // ✅ State cho D-ID video
+  const [interviewLanguage, setInterviewLanguage] = useState<string>("en"); // Language from interview set
   const audioManager = useRef(new AudioManager());
   const speechSynthesis = useRef(SpeechSynthesisManager.getInstance());
   
@@ -151,16 +166,40 @@ const MockInterviewPage = () => {
       const userMessage = addMessage(transcription, true);
       console.log('✅ Added user message');
       
-      // ✅ NEW: Record candidate response in transcript
+      // ✅ NEW: Record candidate response in transcript AND link to question
       if (interviewSession) {
         const timeSinceStart = Date.now() - interviewStartTime.current;
+        const currentQuestion = interviewQuestions[currentQuestionIndex];
+        
         interviewSession.transcript.push({
           speaker: 'candidate',
           message: transcription,
-          timestamp: timeSinceStart
+          timestamp: timeSinceStart,
+          questionId: currentQuestion?.id,
+          expectedAnswer: currentQuestion?.answer
         });
+        
+        // ✅ Track question-answer pair for scoring
+        if (!interviewSession.questionsAsked) {
+          interviewSession.questionsAsked = [];
+        }
+        
+        // Update or add question-answer pair
+        const existingQA = interviewSession.questionsAsked.find(qa => qa.questionId === currentQuestion?.id);
+        if (existingQA) {
+          existingQA.candidateAnswer = transcription;
+        } else {
+          interviewSession.questionsAsked.push({
+            questionId: currentQuestion?.id || currentQuestionIndex,
+            question: currentQuestion?.question || '',
+            expectedAnswer: currentQuestion?.answer || '',
+            candidateAnswer: transcription,
+            timestamp: timeSinceStart
+          });
+        }
+        
         setInterviewSession({...interviewSession});
-        console.log('✅ Recorded candidate response in transcript');
+        console.log('✅ Recorded candidate response with question link');
       }
 
       // Logic chuyển sang câu hỏi tiếp theo
@@ -169,7 +208,7 @@ const MockInterviewPage = () => {
       
       if (nextQuestionIndex < interviewQuestions.length) {
         // Có câu hỏi tiếp theo
-        const transitionPhrase = getRandomTransitionPhrase();
+        const transitionPhrase = getRandomTransitionPhrase(interviewLanguage);
         const nextQuestion = interviewQuestions[nextQuestionIndex];
         const fullResponse = `${transitionPhrase} ${nextQuestion.question}`;
         
@@ -188,8 +227,23 @@ const MockInterviewPage = () => {
           interviewSession.transcript.push({
             speaker: 'interviewer',
             message: fullResponse,
+            timestamp: timeSinceStart,
+            isQuestion: true,
+            questionId: nextQuestion?.id
+          });
+          
+          // ✅ Pre-register question in questionsAsked (will be updated when user answers)
+          if (!interviewSession.questionsAsked) {
+            interviewSession.questionsAsked = [];
+          }
+          interviewSession.questionsAsked.push({
+            questionId: nextQuestion?.id || nextQuestionIndex,
+            question: nextQuestion?.question || '',
+            expectedAnswer: nextQuestion?.answer || '',
+            candidateAnswer: undefined, // Will be filled when user answers
             timestamp: timeSinceStart
           });
+          
           setInterviewSession({...interviewSession});
           console.log('✅ Recorded next question in transcript');
         }
@@ -198,14 +252,14 @@ const MockInterviewPage = () => {
         setCurrentQuestionIndex(nextQuestionIndex);
         console.log('✅ Updated question index to:', nextQuestionIndex);
         
-        // Speak với đúng giọng nói
+        // Speak với đúng giọng nói và ngôn ngữ
         const voiceGender = selectedVoice?.gender || 'female';
-        await speechSynthesis.current.speak(fullResponse, voiceGender);
+        await speechSynthesis.current.speak(fullResponse, voiceGender, interviewLanguage);
         
       } else {
         // Hết câu hỏi - kết thúc phỏng vấn
         console.log('🏁 Interview finished - no more questions');
-        const endMessage = "Thank you for your time. That concludes our interview. We'll be in touch soon!";
+        const endMessage = getEndMessage(interviewLanguage);
         
         // ✅ Set text cho D-ID video
         setCurrentAIText(endMessage);
@@ -213,7 +267,7 @@ const MockInterviewPage = () => {
         const aiMessage = addMessage(endMessage, false);
         
         const voiceGender = selectedVoice?.gender || 'female';
-        await speechSynthesis.current.speak(endMessage, voiceGender);
+        await speechSynthesis.current.speak(endMessage, voiceGender, interviewLanguage);
         
         // Tự động chuyển đến trang báo cáo sau 3 giây
         setTimeout(() => {
@@ -226,7 +280,7 @@ const MockInterviewPage = () => {
     } finally {
       setIsProcessing(false);
     }
-  }, [addMessage, isProcessing, selectedVoice, currentQuestionIndex, interviewQuestions, router, interviewSession]);
+  }, [addMessage, isProcessing, selectedVoice, currentQuestionIndex, interviewQuestions, router, interviewSession, interviewLanguage]);
 
   // Khai báo handleTranscript - CHỈ update UI, KHÔNG submit
   const handleTranscript = useCallback((text: string) => {
@@ -236,11 +290,31 @@ const MockInterviewPage = () => {
     // ✅ BỎ tự động submit - để InterviewInput xử lý
   }, []);
 
-  // ✅ SỬA DÒNG NÀY: Truyền handleTranscript vào useSpeechRecognition
+  // ✅ SỬA DÒNG NÀY: Truyền handleTranscript và language code vào useSpeechRecognition
+  const languageCodeMap: Record<string, string> = {
+    vi: 'vi-VN',
+    en: 'en-US',
+    ja: 'ja-JP',
+    zh: 'zh-CN',
+    ko: 'ko-KR',
+  };
+  const speechLang = languageCodeMap[interviewLanguage] || 'en-US';
+  
+  console.log('🎤 Speech Recognition Language:', {
+    interviewLanguage,
+    speechLang,
+    mapping: languageCodeMap
+  });
 
-
-   const { isListening, isSupported, startListening, stopListening } =
-    useSpeechRecognition(handleTranscript, "en-US");
+   const { isListening, isSupported, startListening, stopListening, error: speechError } =
+    useSpeechRecognition(handleTranscript, speechLang);
+  
+  // ✅ Sync speech recognition error to micError state
+  useEffect(() => {
+    if (speechError) {
+      setMicError(speechError);
+    }
+  }, [speechError]);
 
   const handleToggleRecording = useCallback(() => {
     if (!isSupported) {
@@ -332,8 +406,13 @@ const MockInterviewPage = () => {
   }, [isListening, stopListening]);
 
 
-  const handleStart = useCallback(async (questions: any[]) => {
+  const handleStart = useCallback(async (questions: any[], language?: string) => {
     console.log('🚀 Starting interview with questions:', questions);
+    console.log('🌐 handleStart language parameter:', language);
+    
+    const finalLanguage = language || interviewLanguage || 'en';
+    console.log('🌐 Using language:', finalLanguage);
+    
     setIsStarted(true);
     setCurrentQuestionIndex(0);
     setInterviewQuestions(questions); // ✅ QUAN TRỌNG: Set questions vào state
@@ -346,6 +425,7 @@ const MockInterviewPage = () => {
     const session: InterviewSession = {
       sessionId,
       startTime,
+      language: finalLanguage, // Add language to session
       interviewer: {
         name: selectedVoice?.name || 'AI Interviewer',
         title: selectedVoice?.title || 'Senior Interviewer',
@@ -368,18 +448,39 @@ const MockInterviewPage = () => {
       setCurrentAIText(firstQuestion.question); // ✅ Set text cho D-ID
       addMessage(firstQuestion.question, false);
       
-      // ✅ Record first question in transcript
+      // ✅ Record first question in transcript AND track for scoring
       session.transcript.push({
         speaker: 'interviewer',
         message: firstQuestion.question,
-        timestamp: 0 // First question at time 0
+        timestamp: 0, // First question at time 0
+        isQuestion: true,
+        questionId: firstQuestion?.id
       });
+      
+      // ✅ Initialize questionsAsked array with first question
+      session.questionsAsked = [{
+        questionId: firstQuestion?.id || 0,
+        question: firstQuestion?.question || '',
+        expectedAnswer: firstQuestion?.answer || '',
+        candidateAnswer: undefined, // Will be filled when user answers
+        timestamp: 0
+      }];
+      
       setInterviewSession({...session});
       
       const voiceGender = selectedVoice?.gender || 'female';
-      await speechSynthesis.current.speak(firstQuestion.question, voiceGender);
+      console.log('🔊 Speaking with:', { 
+        voiceGender, 
+        language: finalLanguage,
+        selectedVoice: {
+          name: selectedVoice?.name,
+          gender: selectedVoice?.gender,
+          title: selectedVoice?.title
+        }
+      });
+      await speechSynthesis.current.speak(firstQuestion.question, voiceGender, finalLanguage);
     }
-  }, [setIsStarted, addMessage, selectedVoice]);
+  }, [setIsStarted, addMessage, selectedVoice, interviewLanguage]);
 
   const handleEnd = useCallback(() => {
     if (isListening) {
@@ -395,12 +496,24 @@ const MockInterviewPage = () => {
     async (voice: Voice, interviewId: string) => {
       try {
         console.log('⚙️ Setting up interview with ID:', interviewId);
+        
+        // Fetch interview set to get language
+        const interviewSetResponse = await axios.get(`/api/prepare-hub?Id=${interviewId}`);
+        const interviewSet = Array.isArray(interviewSetResponse.data) 
+          ? interviewSetResponse.data.find((set: any) => set.id === parseInt(interviewId))
+          : interviewSetResponse.data;
+        
+        const language = interviewSet?.language || 'en';
+        console.log('🌐 Interview language:', language);
+        setInterviewLanguage(language);
+        
+        // Fetch questions
         const response = await axios.get(`/api/interview-set?id=${interviewId}`);
         console.log('📥 Received questions from API:', response.data);
         
         setSelectedVoice(voice);
-        // Truyền questions trực tiếp vào handleStart
-        await handleStart(response.data);
+        // ✅ Truyền language trực tiếp vào handleStart để tránh race condition
+        await handleStart(response.data, language);
       } catch (error) {
         console.error("❌ Error fetching interview questions:", error);
       }
@@ -425,43 +538,64 @@ const MockInterviewPage = () => {
       const endTime = Date.now();
       const durationInSeconds = Math.floor((endTime - interviewStartTime.current) / 1000);
       
-      if (interviewSession && interviewSession.transcript.length > 0) {
-        // Complete the session data
-        const completeSession = {
-          ...interviewSession,
-          endTime,
-          duration: durationInSeconds
-        };
-        
-        console.log('📊 Session stats:');
-        console.log('  - Duration:', durationInSeconds, 'seconds');
-        console.log('  - Transcript entries:', completeSession.transcript.length);
-        console.log('  - Questions answered:', Math.floor(completeSession.transcript.length / 2));
-        
-        // Call AI assessment API
-        console.log('🤖 Calling assessment API...');
-        const response = await axios.post('/api/assess-interview', {
-          interviewSession: completeSession
-        });
-        
-        if (response.data.success && response.data.assessment) {
-          console.log('✅ Assessment generated successfully!');
-          console.log('  - Overall Score:', response.data.assessment.overallScore);
-          console.log('  - Readiness Level:', response.data.assessment.readinessLevel);
-          
-          // Save assessment to sessionStorage
-          sessionStorage.setItem('latestAssessment', JSON.stringify(response.data.assessment));
-          sessionStorage.setItem('interviewSession', JSON.stringify(completeSession));
-          
-          console.log('💾 Saved assessment to sessionStorage');
-        } else {
-          console.error('❌ Assessment API returned error:', response.data.error);
-          alert('Failed to generate assessment. Please try again.');
-          return;
-        }
-      } else {
+      // Validate interview session data
+      if (!interviewSession || !interviewSession.transcript || interviewSession.transcript.length === 0) {
         console.warn('⚠️ No interview data to assess');
-        alert('No interview data available for assessment.');
+        alert('No interview data available for assessment. Please start and complete an interview first.');
+        handleEnd();
+        return;
+      }
+      
+      // Complete the session data with proper defaults
+      const completeSession = {
+        ...interviewSession,
+        endTime,
+        duration: durationInSeconds,
+        questionsAsked: interviewSession.questionsAsked || [],
+        interviewer: {
+          ...interviewSession.interviewer,
+          yearsOfExperience: interviewSession.interviewer.yearsOfExperience || 10,
+          focusAreas: interviewSession.interviewer.focusAreas || ['Technical Skills'],
+          interviewStyle: interviewSession.interviewer.interviewStyle || 'Professional'
+        }
+      };
+      
+      console.log('📊 Session stats:');
+      console.log('  - Duration:', durationInSeconds, 'seconds');
+      console.log('  - Transcript entries:', completeSession.transcript.length);
+      console.log('  - Questions asked:', completeSession.questionsAsked?.length || 0);
+      
+      // Call AI assessment API with timeout
+      console.log('🤖 Calling assessment API...');
+      const response = await axios.post('/api/assess-interview', {
+        interviewSession: completeSession
+      }, {
+        timeout: 90000 // 90 seconds timeout (increased for retries)
+      });
+      
+      if (response.data.success && response.data.assessment) {
+        console.log('✅ Assessment generated successfully!');
+        console.log('  - Overall Score:', response.data.assessment.overallScore);
+        console.log('  - Readiness Level:', response.data.assessment.readinessLevel);
+        
+        // Save assessment to sessionStorage
+        sessionStorage.setItem('latestAssessment', JSON.stringify(response.data.assessment));
+        sessionStorage.setItem('interviewSession', JSON.stringify(completeSession));
+        
+        console.log('💾 Saved assessment to sessionStorage');
+      } else {
+        console.error('❌ Assessment API returned error:', response.data.error);
+        const errorMsg = response.data.error || 'Unknown error';
+        
+        // Special handling for rate limit
+        if (errorMsg.includes('rate limit') || errorMsg.includes('quota')) {
+          alert('⚠️ AI service is currently busy. Please wait a moment and try again.\n\nYour interview data has been saved.');
+        } else {
+          alert(`Failed to generate assessment: ${errorMsg}`);
+        }
+        
+        // Still save the session data even if assessment failed
+        sessionStorage.setItem('interviewSession', JSON.stringify(completeSession));
         return;
       }
       
@@ -470,14 +604,37 @@ const MockInterviewPage = () => {
       setElapsedTime(0);
       router.push('/assessment-report');
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error generating assessment:', error);
-      alert('Failed to generate assessment. Redirecting to report page...');
       
-      // Still navigate even on error
-      handleEnd();
-      setElapsedTime(0);
-      router.push('/assessment-report');
+      // More detailed error message
+      let errorMessage = 'Failed to generate assessment. ';
+      let isRateLimit = false;
+      
+      if (error.response) {
+        const status = error.response.status;
+        const serverError = error.response.data?.error || 'Unknown error';
+        
+        if (status === 429 || serverError.includes('rate limit') || serverError.includes('quota')) {
+          errorMessage = '⚠️ AI service is currently busy. Please wait a few moments and try again.\n\nYour interview data has been saved.';
+          isRateLimit = true;
+        } else {
+          errorMessage += `Server error: ${status} - ${serverError}`;
+        }
+      } else if (error.request) {
+        errorMessage += 'No response from server. Please check your connection.';
+      } else {
+        errorMessage += error.message || 'Unknown error occurred.';
+      }
+      
+      alert(errorMessage + (isRateLimit ? '' : ' Redirecting to report page...'));
+      
+      // Still navigate even on error (unless it's rate limit)
+      if (!isRateLimit) {
+        handleEnd();
+        setElapsedTime(0);
+        router.push('/assessment-report');
+      }
     }
   }, [handleEnd, router, interviewSession, isListening, stopListening]);
 
@@ -500,7 +657,9 @@ const MockInterviewPage = () => {
   }, []);
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden relative">
+    <>
+      <NeuralNetworkBg />
+      <div className="relative z-10 h-screen bg-background flex flex-col overflow-hidden">
       {/* Animated Stars Background */}
       <AnimatedStars />
       
@@ -617,6 +776,7 @@ const MockInterviewPage = () => {
                     isProcessing={isProcessing}
                     onSubmit={handleSubmit}
                     error={micError}
+                    language={interviewLanguage}
                   />
                 </div>
               </div>
@@ -637,6 +797,7 @@ const MockInterviewPage = () => {
         />
       </div>
     </div>
+    </>
   );
 };
 

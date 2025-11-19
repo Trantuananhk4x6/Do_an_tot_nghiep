@@ -8,7 +8,22 @@ import CVAutoEditComparison from '@/app/(features)/support-cv/components/CVAutoE
 import CVEditor from '@/app/(features)/support-cv/components/CVEditor';
 import CVPreview from '@/app/(features)/support-cv/components/CVPreview_NEW';
 import ExportPanel from '@/app/(features)/support-cv/components/ExportPanel';
-import { autoEditCVWithAI, applySelectedChanges, CVEditChange } from '@/app/(features)/support-cv/services/aiCVAutoEditor';
+import AutoEditLoadingDialog from '@/app/(features)/support-cv/components/AutoEditLoadingDialog';
+import { QueueStatus } from '@/components/ui/queue-status';
+import { QuotaStatusBanner } from '@/components/ui/quota-status-banner';
+import { cvEditor } from '@/app/(features)/support-cv/services/ai/editor.service';
+
+// Temporary type definition (will be replaced by new architecture)
+interface CVEditChange {
+  id: string;
+  section: string;
+  field: string;
+  itemLabel: string;
+  before: string;
+  after: string;
+  reason: string;
+  accepted: boolean;
+}
 
 const initialCVData: CVData = {
   personalInfo: {
@@ -43,11 +58,14 @@ export default function SupportCVPage() {
   // Review state
   const [review, setReview] = useState<any | null>(null);
   const [isAutoEditing, setIsAutoEditing] = useState(false);
+  const [autoEditProgress, setAutoEditProgress] = useState(0);
+  const [autoEditStep, setAutoEditStep] = useState('');
   
   // Auto-edit state
   const [originalCVBeforeEdit, setOriginalCVBeforeEdit] = useState<CVData | null>(null);
   const [editedCV, setEditedCV] = useState<CVData | null>(null);
   const [autoEditChanges, setAutoEditChanges] = useState<CVEditChange[]>([]);
+  const [rawSuggestions, setRawSuggestions] = useState<any[]>([]); // Store raw AI suggestions
 
   const updateState = (updates: Partial<CVBuilderState>) => {
     setState(prev => ({ ...prev, ...updates }));
@@ -74,41 +92,108 @@ export default function SupportCVPage() {
 
   const handleAutoEdit = async () => {
     setIsAutoEditing(true);
+    setAutoEditProgress(0);
+    setAutoEditStep('Initializing...');
     
     try {
       // Save original CV before editing
       setOriginalCVBeforeEdit(state.cvData);
       
-      // Call AI auto-edit service
-      const result = await autoEditCVWithAI(state.cvData, review);
+      // Simulate progress updates
+      setAutoEditProgress(10);
+      setAutoEditStep('Analyzing CV content...');
       
-      setEditedCV(result.editedCV);
-      setAutoEditChanges(result.changes);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setAutoEditProgress(30);
+      setAutoEditStep('Generating improvements...');
       
-      // Move to comparison screen
-      setState(prev => ({ ...prev, currentStep: 'auto-edit-comparison' as any }));
+      // Create minimal review if not available
+      const reviewData = review || {
+        overallScore: 60,
+        atsScore: 60,
+        impactScore: 60,
+        clarityScore: 60,
+        strengths: [],
+        weaknesses: [],
+        suggestions: []
+      };
       
-    } catch (error) {
+      // Use new editor service
+      const result = await cvEditor.autoEdit(state.cvData, reviewData, (progress, step) => {
+        setAutoEditProgress(30 + (progress * 0.6));
+        setAutoEditStep(step);
+      });
+      
+      if (!result.success) {
+        const error = (result as { success: false; error: Error }).error;
+        throw new Error(error.message || 'Failed to auto-edit');
+      }
+      
+      setAutoEditProgress(95);
+      setAutoEditStep('Finalizing changes...');
+      
+      // Convert changes to old format
+      const convertedChanges: CVEditChange[] = result.data.changes.map(change => ({
+        id: change.id,
+        section: change.section,
+        field: change.field,
+        itemLabel: change.itemLabel || `${change.section} - ${change.field}`,
+        before: change.original,
+        after: change.suggestion,
+        reason: change.reason,
+        accepted: true
+      }));
+      
+      // Apply results
+      setEditedCV(result.data.editedCV);
+      setAutoEditChanges(convertedChanges);
+      setRawSuggestions(result.data.suggestions); // Store raw suggestions
+      
+      setAutoEditProgress(100);
+      setAutoEditStep('Complete!');
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Move to auto-edit-comparison step to review changes
+      setState(prev => ({ ...prev, currentStep: 'auto-edit-comparison' }));
+      
+    } catch (error: any) {
       console.error('Auto-edit failed:', error);
-      alert('❌ Auto-edit failed. Please try manual edit instead.');
+      
+      if (error?.message?.includes('EMERGENCY_BLOCK')) {
+        alert('🔴 API Quota Exceeded\n\nThe Gemini API has been temporarily blocked due to too many requests. Please try again in 30 minutes, or use the Manual Edit option instead.\n\n💡 Tip: The app will continue to work with basic improvements during this time.');
+      } else {
+        alert('❌ Auto-edit failed. Please try manual edit instead.');
+      }
     } finally {
       setIsAutoEditing(false);
+      setAutoEditProgress(0);
     }
   };
 
   const handleAcceptAutoEditChanges = (selectedIds: string[]) => {
-    if (!originalCVBeforeEdit || !editedCV) return;
+    if (!originalCVBeforeEdit || !rawSuggestions) {
+      console.warn('[Support CV] Missing original CV or suggestions');
+      return;
+    }
     
-    // Apply only selected changes
-    const finalCV = applySelectedChanges(
+    console.log('[Support CV] Applying', selectedIds.length, 'selected changes');
+    
+    // Apply only selected suggestions to original CV
+    const finalCV = cvEditor.applySelectedSuggestions(
       originalCVBeforeEdit,
-      editedCV,
-      autoEditChanges,
+      rawSuggestions,
       selectedIds
     );
     
-    // Update state with final CV
+    // Update state with final CV and go back to edit
     updateState({ cvData: finalCV, currentStep: 'edit' });
+    
+    // Clear auto-edit state
+    setOriginalCVBeforeEdit(null);
+    setEditedCV(null);
+    setAutoEditChanges([]);
+    setRawSuggestions([]);
   };
 
   const handleRejectAllAutoEdit = () => {
@@ -148,6 +233,16 @@ export default function SupportCVPage() {
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Quota Status Banner */}
+      <QuotaStatusBanner />
+      
+      {/* Auto-Edit Loading Dialog */}
+      <AutoEditLoadingDialog 
+        isOpen={isAutoEditing}
+        progress={autoEditProgress}
+        currentStep={autoEditStep}
+      />
+      
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
@@ -280,6 +375,9 @@ export default function SupportCVPage() {
           />
         )}
       </div>
+
+      {/* Queue Status Indicator */}
+      <QueueStatus />
     </div>
   );
 }

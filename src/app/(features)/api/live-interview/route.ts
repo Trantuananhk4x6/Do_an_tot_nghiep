@@ -127,97 +127,49 @@ export async function POST(req: Request) {
     }
   }
 
-  // Prepare and call the model. Keep tools (getInformation) available but rely on pre-transcription so model sees user audio.
+  // Prepare and call the model - optimized for speed
   try {
     console.log("[Live Interview] Calling AI model with", messages.length, "messages");
-    console.log("[Live Interview] Final messages:", JSON.stringify(messages, null, 2));
+    console.log("[Live Interview] Last message:", messages[messages.length - 1]?.content);
     
     const result = streamText({
       model: google("gemini-2.5-flash"),
       messages: messages as any,
-      system: `You are a job candidate being interviewed. You are a real person with experiences, skills, and personality.
+      system: `You are a helpful AI interview assistant. Answer interview questions quickly and professionally.
 
-IMPORTANT ROLE:
-- You are NOT an AI assistant or chatbot
-- You are a professional candidate answering interview questions
-- Respond as a human would in an actual interview setting
-- Use personal pronouns (I, me, my) naturally
-- Share experiences, examples, and stories from "your background"
+KEY INSTRUCTIONS:
+- Respond naturally and conversationally as a job candidate
+- Keep answers concise but informative (2-4 sentences for most questions)
+- Use the getInformation tool ONLY when you need specific details from the user's background
+- If the question is general knowledge or about common topics, answer directly without using tools
+- Be professional, friendly, and show enthusiasm
 
-RESPONSE STYLE:
-- Answer naturally and conversationally, like a real person
-- Use the getInformation tool to retrieve relevant information from your resume/background
-- Incorporate retrieved information as if it's your own experience
-- Add human touches: "In my previous role...", "I remember when...", "I've found that..."
-- Show enthusiasm and personality
-- Be honest if you don't know something: "That's a great question. While I haven't had direct experience with that, I'm eager to learn..."
-
-NEVER say things like:
-- "I am a large language model"
-- "I am an AI"
-- "I don't have physical location"
-- "I am trained by..."
-- "As an AI assistant..."
-
-Instead, respond as the candidate whose information is in the knowledge base. Use their skills, experiences, and background as your own.`,
+EXAMPLES:
+- "Tell me about Flask" → Answer directly about Flask framework
+- "What's your experience with Python?" → Use getInformation tool to check user's background
+- "How do you handle pressure?" → Answer with general best practices`,
       tools: {
         getInformation: tool({
-          description: `Get information from the user's knowledge base to answer questions.`,
+          description: `Get specific information from the user's resume/background. Use this ONLY for questions about personal experience, skills, or background.`,
           parameters: z.object({
-            question: z.string().describe("The user's question"),
+            question: z.string().describe("The specific question about user's background"),
           }),
           execute: async ({ question }) => {
             try {
+              console.log("[Live Interview] Getting user info for:", question);
               const email = user.primaryEmailAddress?.emailAddress;
               if (!email) return "User email not found";
               const res = await findRelevantContent(question, email);
+              console.log("[Live Interview] Retrieved info:", JSON.stringify(res).substring(0, 200));
               return JSON.stringify(res);
             } catch (err) {
               console.error("getInformation exec error:", err);
-              return "Error retrieving information";
-            }
-          },
-        }),
-        transcribeAudio: tool({
-          description: `(optional) Transcribe base64 audio using Deepgram.`,
-          parameters: z.object({
-            audioBase64: z.string().describe("Base64 encoded audio"),
-          }),
-          execute: async ({ audioBase64 }) => {
-            try {
-              if (!DEEPGRAM_KEY) return "Deepgram key not configured";
-              const base64 = audioBase64.replace(/^data:audio\/[a-zA-Z-+.]+;base64,/, "");
-              const buffer = Buffer.from(base64, "base64");
-              const { result, error } = await deepgram.listen.prerecorded.transcribeFile(buffer, {
-                model: "nova-2",
-                language: "en",
-                punctuate: true,
-                smart_format: true,
-              });
-              if (error) {
-                console.error("Deepgram tool error:", error);
-                return "Error transcribing audio";
-              }
-              const t = result?.results?.channels?.[0]?.alternatives?.[0]?.transcript || "";
-              try {
-                const r = await generateText({
-                  model: google("gemini-1.5-flash"),
-                  prompt: `Refine this transcript (punctuation & question marks only):\n\n${t}`,
-                  maxTokens: 300,
-                });
-                if (!r) return t;
-                if (typeof r === "string") return r;
-                return (r as any).text || t;
-              } catch {
-                return t;
-              }
-            } catch (err) {
-              console.error("transcribeAudio tool exception:", err);
-              return "Error transcribing audio";
+              return "No specific information available";
             }
           },
         }),
       },
+      maxSteps: 2, // Limit tool calls to speed up response
     });
 
     console.log("[Live Interview] Stream result ready, returning response");

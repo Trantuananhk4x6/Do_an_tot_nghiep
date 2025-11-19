@@ -38,6 +38,20 @@ CREATE TABLE "resume" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp NOT NULL
 );
+CREATE TABLE IF NOT EXISTS "rating" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "userEmail" text NOT NULL,
+  "userName" text NOT NULL,
+  "rating" integer NOT NULL,
+  "comment" text,
+  "created_at" timestamp DEFAULT now() NOT NULL,
+  "updated_at" timestamp DEFAULT now() NOT NULL
+);
+
+-- Tạo index để query nhanh hơn
+CREATE INDEX IF NOT EXISTS "rating_userEmail_idx" ON "rating" ("userEmail");
+CREATE INDEX IF NOT EXISTS "rating_rating_idx" ON "rating" ("rating");
+
 --> statement-breakpoint
 ALTER TABLE "interviewSet" ADD CONSTRAINT "interviewSet_resumeId_resume_id_fk" FOREIGN KEY ("resumeId") REFERENCES "public"."resume"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "interviewSetEmbeddings" ADD CONSTRAINT "interviewSetEmbeddings_interviewSetId_interviewSet_id_fk" FOREIGN KEY ("interviewSetId") REFERENCES "public"."interviewSet"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

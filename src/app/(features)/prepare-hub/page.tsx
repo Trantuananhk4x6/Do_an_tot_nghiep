@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import Loading from "@/components/ui/loading";
+import { LanguageSelector, Language, LANGUAGES } from "@/components/ui/language-selector";
 import {
   Dialog,
   DialogClose,
@@ -28,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import InterviewCard from "./components/InterviewCard";
 import { Resume } from "@/models/resume";
 import { InterviewSet } from "@/models/interviewSet";
+import NeuralNetworkBg from "@/components/ui/neural-network-bg";
 
 const Page = () => {
   const { toast } = useToast();
@@ -41,6 +43,7 @@ const Page = () => {
   const [loading, setLoading] = useState(true);
   const [resumeLoading, setResumeLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>("en");
 
   const getInterviewSet = async () => {
     try {
@@ -88,6 +91,7 @@ const Page = () => {
     formData.append("jobDescription", jobDescription);
     formData.append("companyName", companyName);
     formData.append("position", position);
+    formData.append("language", selectedLanguage);
     try {
       await axios.post("/api/prepare-hub", formData, {
         headers: {
@@ -129,6 +133,8 @@ const Page = () => {
   };
   return (
     <>
+      <NeuralNetworkBg />
+      <div className="relative z-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold gradient-text mb-2">Interview Preparation Hub</h1>
         <div className="mt-1 max-w-[640px] text-sm font-medium text-gray-400">
@@ -159,6 +165,16 @@ const Page = () => {
             ) : (
               <>
                 <div className="flex flex-col space-y-4">
+                  <div className="flex-1 gap-2">
+                    <Label className="text-gray-300">
+                      Output Language <span className="text-red-400">*</span>
+                    </Label>
+                    <LanguageSelector
+                      value={selectedLanguage}
+                      onChange={setSelectedLanguage}
+                      disabled={uploading}
+                    />
+                  </div>
                   <div className="flex-1 gap-2">
                     <Label className="text-gray-300">
                       Resume <span className="text-red-400">*</span>
@@ -274,6 +290,7 @@ const Page = () => {
             ))}
           </div>
         )}
+      </div>
       </div>
     </>
   );

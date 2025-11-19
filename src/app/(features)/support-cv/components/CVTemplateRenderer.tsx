@@ -87,20 +87,26 @@ export default function CVTemplateRenderer({ cvData, template, sectionOrder }: C
             </h2>
             <div className="space-y-6">
               {cvData.experiences.map(exp => (
-                <div key={exp.id}>
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900">{exp.position}</h3>
-                      <p className="text-gray-700">{exp.company}</p>
+                <div key={exp.id} className="break-inside-avoid">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2 gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-gray-900 break-words">{exp.position}</h3>
+                      <p className="text-gray-700 break-words">{exp.company}</p>
+                      {exp.location && (
+                        <p className="text-sm text-gray-600 break-words">{exp.location}</p>
+                      )}
                     </div>
-                    <span className="text-sm text-gray-600 whitespace-nowrap ml-4">
+                    <span className="text-sm text-gray-600 shrink-0">
                       {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
                     </span>
                   </div>
+                  {exp.description && (
+                    <p className="text-gray-700 mb-2 break-words">{exp.description}</p>
+                  )}
                   {exp.achievements && exp.achievements.length > 0 && (
                     <ul className="list-disc list-inside space-y-1 text-gray-700">
                       {exp.achievements.filter(a => a).map((achievement, i) => (
-                        <li key={i}>{achievement}</li>
+                        <li key={i} className="break-words leading-relaxed">{achievement}</li>
                       ))}
                     </ul>
                   )}
@@ -118,20 +124,35 @@ export default function CVTemplateRenderer({ cvData, template, sectionOrder }: C
             </h2>
             <div className="space-y-4">
               {cvData.education.map(edu => (
-                <div key={edu.id}>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900">
-                        {edu.degree} in {edu.field}
+                <div key={edu.id} className="break-inside-avoid">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-1">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-gray-900 break-words">
+                        {edu.school}
                       </h3>
-                      <p className="text-gray-700">{edu.school}</p>
+                      <p className="text-gray-700 break-words">
+                        {edu.degree}{edu.field && ` in ${edu.field}`}
+                      </p>
+                      {edu.location && (
+                        <p className="text-sm text-gray-600 break-words">{edu.location}</p>
+                      )}
                     </div>
-                    <span className="text-sm text-gray-600 whitespace-nowrap ml-4">
-                      {edu.startDate} - {edu.endDate}
-                    </span>
+                    {(edu.startDate || edu.endDate) && (
+                      <span className="text-sm text-gray-600 shrink-0">
+                        {edu.startDate} {edu.endDate && `- ${edu.endDate}`}
+                      </span>
+                    )}
                   </div>
                   {edu.gpa && (
                     <p className="text-sm text-gray-600 mt-1">GPA: {edu.gpa}</p>
+                  )}
+                  {edu.achievements && edu.achievements.length > 0 && edu.achievements.filter(a => a && a.trim()).length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-sm font-medium text-gray-700 mb-1">Relevant Coursework:</p>
+                      <p className="text-sm text-gray-700">
+                        {edu.achievements.filter(a => a && a.trim()).join('; ')}
+                      </p>
+                    </div>
                   )}
                 </div>
               ))}
@@ -147,13 +168,22 @@ export default function CVTemplateRenderer({ cvData, template, sectionOrder }: C
             </h2>
             <div className="space-y-3">
               {Object.entries(
-                cvData.skills.reduce((acc, skill) => {
-                  if (!acc[skill.category]) acc[skill.category] = [];
-                  acc[skill.category].push(skill.name);
-                  return acc;
-                }, {} as Record<string, string[]>)
+                cvData.skills
+                  // Filter out invalid skills (too long text, likely parsing errors)
+                  .filter(skill => {
+                    const isValidSkill = skill.name && 
+                                       skill.name.length < 50 && // Skill names shouldn't be super long
+                                       skill.category && 
+                                       skill.category.length < 30; // Category names shouldn't be super long
+                    return isValidSkill;
+                  })
+                  .reduce((acc, skill) => {
+                    if (!acc[skill.category]) acc[skill.category] = [];
+                    acc[skill.category].push(skill.name);
+                    return acc;
+                  }, {} as Record<string, string[]>)
               ).map(([category, skills]) => (
-                <div key={category}>
+                <div key={category} className="break-inside-avoid">
                   <span className="font-bold text-gray-900">{category}:</span>{' '}
                   <span className="text-gray-700">{skills.join(', ')}</span>
                 </div>
@@ -169,27 +199,37 @@ export default function CVTemplateRenderer({ cvData, template, sectionOrder }: C
               Projects
             </h2>
             <div className="space-y-6">
-              {cvData.projects.map(project => (
-                <div key={project.id}>
+              {cvData.projects
+                .filter(project => {
+                  // Filter out invalid projects (generic names, missing data)
+                  const isValidProject = project.name && 
+                                        project.name !== 'PROJECTS' &&
+                                        project.name !== 'Projects' &&
+                                        project.name.length > 0 &&
+                                        project.name.length < 100;
+                  return isValidProject;
+                })
+                .map(project => (
+                <div key={project.id} className="break-inside-avoid">
                   <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900">{project.name}</h3>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-gray-900 break-words">{project.name}</h3>
                       {project.link && (
-                        <a href={project.link} target="_blank" rel="noopener noreferrer" className={`text-sm ${styles.accentColor} hover:underline`}>
+                        <a href={project.link} target="_blank" rel="noopener noreferrer" className={`text-sm ${styles.accentColor} hover:underline break-all`}>
                           {project.link}
                         </a>
                       )}
                     </div>
                     {(project.startDate || project.endDate) && (
-                      <span className="text-sm text-gray-600 whitespace-nowrap ml-4">
+                      <span className="text-sm text-gray-600 whitespace-nowrap ml-4 shrink-0">
                         {project.startDate} {project.endDate && `- ${project.endDate}`}
                       </span>
                     )}
                   </div>
                   {project.description && (
-                    <p className="text-gray-700 mb-2">{project.description}</p>
+                    <p className="text-gray-700 mb-2 break-words leading-relaxed">{project.description}</p>
                   )}
-                  {project.technologies.length > 0 && (
+                  {project.technologies && project.technologies.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-2">
                       {project.technologies.map((tech, i) => (
                         <span key={i} className={`text-xs px-2 py-1 ${styles.sectionBg} ${styles.accentColor} rounded`}>
@@ -197,6 +237,13 @@ export default function CVTemplateRenderer({ cvData, template, sectionOrder }: C
                         </span>
                       ))}
                     </div>
+                  )}
+                  {project.achievements && project.achievements.length > 0 && (
+                    <ul className="list-disc list-inside space-y-1 text-gray-700 mt-2">
+                      {project.achievements.filter(a => a).map((achievement, i) => (
+                        <li key={i} className="break-words leading-relaxed">{achievement}</li>
+                      ))}
+                    </ul>
                   )}
                 </div>
               ))}
@@ -236,6 +283,33 @@ export default function CVTemplateRenderer({ cvData, template, sectionOrder }: C
                 <div key={lang.id} className="flex items-center justify-between">
                   <span className="font-medium text-gray-900">{lang.name}</span>
                   <span className="text-sm text-gray-600 capitalize">{lang.proficiency}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null;
+
+      case 'awards':
+        return cvData.awards && cvData.awards.length > 0 ? (
+          <div>
+            <h2 className={`text-xl font-bold ${styles.accentColor} mb-4 uppercase border-b-2 ${styles.borderColor} pb-2`}>
+              Awards & Honors
+            </h2>
+            <div className="space-y-4">
+              {cvData.awards.map(award => (
+                <div key={award.id} className="break-inside-avoid">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2 gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-gray-900 break-words">{award.title}</h3>
+                      <p className="text-gray-700 break-words">{award.issuer}</p>
+                    </div>
+                    <span className="text-sm text-gray-600 shrink-0">
+                      {award.date}
+                    </span>
+                  </div>
+                  {award.description && (
+                    <p className="text-gray-700 leading-relaxed break-words">{award.description}</p>
+                  )}
                 </div>
               ))}
             </div>

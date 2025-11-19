@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CVData, CVTemplate, ExportFormat } from '@/app/(features)/support-cv/types/cv.types';
 import { exportCV, downloadBlob } from '@/app/(features)/support-cv/services/cvExporter';
+import CVTemplateRenderer from './CVTemplateRenderer';
 
 interface ExportPanelProps {
   cvData: CVData;
@@ -13,12 +14,22 @@ interface ExportPanelProps {
 export default function ExportPanel({ cvData, template, onBackToPreview }: ExportPanelProps) {
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('pdf');
   const [isExporting, setIsExporting] = useState(false);
+  const cvPreviewRef = useRef<HTMLDivElement>(null);
 
   const handleExport = async () => {
     setIsExporting(true);
     
     try {
-      const blob = await exportCV(cvData, template, selectedFormat);
+      let blob: Blob;
+      
+      if (selectedFormat === 'pdf' && cvPreviewRef.current) {
+        // Use HTML-to-PDF for beautiful export matching preview design
+        blob = await exportCV(cvData, template, 'pdf', cvPreviewRef.current);
+      } else {
+        // Fallback to manual render for DOCX or if element not available
+        blob = await exportCV(cvData, template, selectedFormat);
+      }
+      
       const filename = `${cvData.personalInfo.fullName.replace(/\s+/g, '_')}_CV.${selectedFormat}`;
       downloadBlob(blob, filename);
       
@@ -134,6 +145,28 @@ export default function ExportPanel({ cvData, template, onBackToPreview }: Expor
             </li>
           </ul>
         </div>
+      </div>
+
+      {/* Hidden CV Preview for HTML-to-PDF Export */}
+      <div 
+        ref={cvPreviewRef}
+        className="fixed -left-[9999px] top-0 w-[210mm] bg-white"
+        style={{ minHeight: '297mm' }}
+      >
+        <CVTemplateRenderer
+          cvData={cvData}
+          template={template}
+          sectionOrder={[
+            { id: 'summary', label: 'Summary', visible: !!cvData.personalInfo.summary },
+            { id: 'experience', label: 'Experience', visible: cvData.experiences.length > 0 },
+            { id: 'education', label: 'Education', visible: cvData.education.length > 0 },
+            { id: 'skills', label: 'Skills', visible: cvData.skills.length > 0 },
+            { id: 'projects', label: 'Projects', visible: cvData.projects.length > 0 },
+            { id: 'awards', label: 'Awards & Honors', visible: (cvData.awards && cvData.awards.length > 0) || false },
+            { id: 'certifications', label: 'Certifications', visible: cvData.certifications.length > 0 },
+            { id: 'languages', label: 'Languages', visible: cvData.languages.length > 0 }
+          ]}
+        />
       </div>
     </div>
   );

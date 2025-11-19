@@ -14,6 +14,7 @@ import { generateSummary } from "./services/summaryService";
 import FileUpload from "./components/fileUpload";
 import { Button } from "@/components/ui/button";
 import { LanguageSelector, Language } from "@/components/ui/language-selector";
+import NeuralNetworkBg from "@/components/ui/neural-network-bg";
 
 const SummarizePage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -31,9 +32,8 @@ const SummarizePage = () => {
       uploadDesc: "Định dạng hỗ trợ: PDF, DOCX, TXT, MP3, WAV, OGG",
       uploadError: "Vui lòng tải lên tài liệu hoặc file âm thanh trước khi tạo tóm tắt",
       generateError: "Không thể tạo tóm tắt. Vui lòng thử lại.",
-      apiOverloaded: "API đang quá tải. Vui lòng đợi 1-2 phút và thử lại.",
       processing: "Đang xử lý file...",
-      generateBtn: "Generate Summary",
+      generateBtn: "Tạo tóm tắt",
       wordCount: "Số từ",
       readingTime: "Thời gian đọc",
       overview: "Tóm tắt tổng quan",
@@ -52,7 +52,6 @@ const SummarizePage = () => {
       uploadDesc: "Supported formats: PDF, DOCX, TXT, MP3, WAV, OGG",
       uploadError: "Please upload a document or audio file before generating a summary",
       generateError: "Failed to generate summary. Please try again.",
-      apiOverloaded: "API is overloaded. Please wait 1-2 minutes and try again.",
       processing: "Processing file...",
       generateBtn: "Generate Summary",
       wordCount: "Word Count",
@@ -73,7 +72,6 @@ const SummarizePage = () => {
       uploadDesc: "サポート形式: PDF、DOCX、TXT、MP3、WAV、OGG",
       uploadError: "要約を生成する前にドキュメントまたは音声ファイルをアップロードしてください",
       generateError: "要約の生成に失敗しました。もう一度お試しください。",
-      apiOverloaded: "APIが過負荷状態です。1〜2分待ってから再試行してください。",
       processing: "ファイルを処理中...",
       generateBtn: "要約を生成",
       wordCount: "単語数",
@@ -94,7 +92,6 @@ const SummarizePage = () => {
       uploadDesc: "支持格式：PDF、DOCX、TXT、MP3、WAV、OGG",
       uploadError: "请在生成摘要之前上传文档或音频文件",
       generateError: "生成摘要失败。请重试。",
-      apiOverloaded: "API过载。请等待1-2分钟后重试。",
       processing: "正在处理文件...",
       generateBtn: "生成摘要",
       wordCount: "字数",
@@ -115,7 +112,6 @@ const SummarizePage = () => {
       uploadDesc: "지원 형식: PDF, DOCX, TXT, MP3, WAV, OGG",
       uploadError: "요약을 생성하기 전에 문서 또는 오디오 파일을 업로드하세요",
       generateError: "요약 생성에 실패했습니다. 다시 시도하세요.",
-      apiOverloaded: "API가 과부하 상태입니다. 1-2분 기다린 후 다시 시도하세요.",
       processing: "파일 처리 중...",
       generateBtn: "요약 생성",
       wordCount: "단어 수",
@@ -146,7 +142,9 @@ const SummarizePage = () => {
 
   const handleSummarize = async () => {
     if (!uploadedFile) {
-      setError(t.uploadError);
+      setError(
+        "Please upload a document or audio file before generating a summary"
+      );
       return;
     }
 
@@ -156,26 +154,24 @@ const SummarizePage = () => {
     try {
       const response = await generateSummary(uploadedFile, 5, language);
       setSummary(response);
-    } catch (err: any) {
-      // Check for specific error messages
-      if (err.message?.includes("quá tải") || err.message?.includes("overload")) {
-        setError(t.apiOverloaded);
-      } else {
-        setError(err.message || t.generateError);
-      }
+    } catch (err) {
+      setError("Failed to generate summary. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <>
+      <NeuralNetworkBg />
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-12 animate-fade-in-up">
         <h3 className="text-4xl font-bold mb-4 gradient-text">
-          {t.title}
+          Summarize Knowledge
         </h3>
         <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-          {t.subtitle}
+          Transform your documents or audio files into concise, actionable
+          summaries with AI
         </p>
       </div>
 
@@ -192,8 +188,8 @@ const SummarizePage = () => {
             "audio/wav",
             "audio/ogg",
           ]}
-          title={t.uploadTitle}
-          description={t.uploadDesc}
+          title="Upload your document or audio file"
+          description="Supported formats: PDF, DOCX, TXT, MP3, WAV, OGG"
           icon={<Upload className="h-12 w-12 text-purple-500 animate-float" />}
         />
       </div>
@@ -224,12 +220,12 @@ const SummarizePage = () => {
           {isLoading ? (
             <>
               <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5" />
-              {t.processing}
+              Processing file...
             </>
           ) : (
             <>
               <span className="mr-2">✨</span>
-              {t.generateBtn}
+              Generate Summary
             </>
           )}
         </Button>
@@ -245,7 +241,7 @@ const SummarizePage = () => {
                   <BookOpen className="h-6 w-6 text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 mb-1">{t.wordCount}</p>
+                  <p className="text-sm text-gray-400 mb-1">Word Count</p>
                   <p className="text-2xl font-bold text-white">{summary.wordCount}</p>
                 </div>
               </div>
@@ -256,7 +252,7 @@ const SummarizePage = () => {
                   <Clock className="h-6 w-6 text-pink-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 mb-1">{t.readingTime}</p>
+                  <p className="text-sm text-gray-400 mb-1">Reading Time</p>
                   <p className="text-2xl font-bold text-white">{formatReadingTime(summary.readingTime)}</p>
                 </div>
               </div>
@@ -266,7 +262,7 @@ const SummarizePage = () => {
           {/* Main Summary - Tree Structure */}
           <div className="glass-effect rounded-xl border border-white/10 overflow-hidden">
             <div className="px-6 py-4 border-b border-white/10 bg-gradient-to-r from-purple-500/10 to-transparent">
-              <h2 className="text-xl font-semibold text-white">📝 {t.overview}</h2>
+              <h2 className="text-xl font-semibold text-white">📝 Tóm tắt tổng quan</h2>
             </div>
             <div className="p-6">
               {/* Parse and display summary as tree structure */}
@@ -334,7 +330,7 @@ const SummarizePage = () => {
             <div className="px-6 py-4 border-b border-white/10 bg-gradient-to-r from-purple-500/10 to-transparent">
               <div className="flex items-center gap-2">
                 <List className="h-5 w-5 text-purple-400" />
-                <h2 className="text-xl font-semibold text-white">{t.keyPoints}</h2>
+                <h2 className="text-xl font-semibold text-white">Các điểm chính</h2>
               </div>
             </div>
             <div className="p-6">
@@ -366,7 +362,7 @@ const SummarizePage = () => {
               <div className="px-6 py-4 border-b border-white/10 bg-gradient-to-r from-red-500/10 to-transparent">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="h-5 w-5 text-red-400" />
-                  <h2 className="text-xl font-semibold text-white">{t.weaknesses}</h2>
+                  <h2 className="text-xl font-semibold text-white">Nhược điểm & Gợi ý cải thiện</h2>
                 </div>
               </div>
               <div className="p-6">
@@ -397,6 +393,7 @@ const SummarizePage = () => {
         </div>
       )}
     </main>
+    </>
   );
 };
 

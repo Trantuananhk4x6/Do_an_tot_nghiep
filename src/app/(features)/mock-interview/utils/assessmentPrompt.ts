@@ -4,7 +4,41 @@ import { InterviewSession, InterviewerProfile } from "../types/assessment";
  * Build AI prompt for interview assessment
  */
 export function buildAssessmentPrompt(session: InterviewSession): string {
-  const { interviewer, transcript, duration } = session;
+  const { interviewer, transcript, duration, questionsAsked, language = 'en' } = session;
+  
+  // Language detection for output
+  const languageInstruction = language === 'vi' 
+    ? '\n\n⚠️ CRITICAL: You MUST provide ALL assessment content in VIETNAMESE language. All feedback, comments, suggestions, and recommendations must be written in Vietnamese.'
+    : language === 'ja'
+    ? '\n\n⚠️ CRITICAL: You MUST provide ALL assessment content in JAPANESE language. All feedback, comments, suggestions, and recommendations must be written in Japanese.'
+    : language === 'zh'
+    ? '\n\n⚠️ CRITICAL: You MUST provide ALL assessment content in CHINESE language. All feedback, comments, suggestions, and recommendations must be written in Chinese.'
+    : language === 'ko'
+    ? '\n\n⚠️ CRITICAL: You MUST provide ALL assessment content in KOREAN language. All feedback, comments, suggestions, and recommendations must be written in Korean.'
+    : '\n\n⚠️ CRITICAL: You MUST provide ALL assessment content in ENGLISH language.';
+  
+  // ✅ Format questions with expected vs actual answers for comparison
+  let questionsComparison = '';
+  if (questionsAsked && questionsAsked.length > 0) {
+    questionsComparison = '\n\n## QUESTIONS WITH EXPECTED VS ACTUAL ANSWERS\n\n';
+    questionsComparison += questionsAsked.map((qa, idx) => {
+      const candidateAnswer = qa.candidateAnswer || '[NO ANSWER PROVIDED]';
+      const answerLength = candidateAnswer.trim().length;
+      const hasAnswer = answerLength > 20; // Minimum 20 chars to be considered a real answer
+      
+      return `### Question ${idx + 1}:
+**Question:** ${qa.question}
+
+**Expected Answer (Reference):**
+${qa.expectedAnswer}
+
+**Candidate's Actual Answer:**
+${candidateAnswer}
+${!hasAnswer ? '\n⚠️ WARNING: Candidate provided NO valid answer (empty or too short - less than 20 characters)\n' : ''}
+
+---`;
+    }).join('\n\n');
+  }
   
   // Format transcript for AI
   const formattedTranscript = transcript
@@ -21,6 +55,7 @@ export function buildAssessmentPrompt(session: InterviewSession): string {
   const interviewStyle = interviewer.interviewStyle || 'Professional';
 
   return `You are an expert technical interviewer conducting a comprehensive performance assessment.
+${languageInstruction}
 
 ## Interview Context
 
@@ -36,6 +71,9 @@ export function buildAssessmentPrompt(session: InterviewSession): string {
 - Duration: ${durationMinutes} minutes
 - Position: Software Engineer (assumed based on technical questions)
 - Total Exchanges: ${transcript.length}
+- Total Questions Asked: ${questionsAsked?.length || 0}
+
+${questionsComparison}
 
 ## Complete Interview Transcript
 
@@ -47,11 +85,20 @@ ${formattedTranscript}
 
 Analyze the **entire interview transcript** thoroughly and provide a comprehensive, **objective** assessment.
 
+### ⚠️ CRITICAL SCORING RULES:
+
+1. **NO ANSWER = 0 POINTS**: If candidate provided NO answer or answer is too short (< 20 characters), that question gets 0 points
+2. **WRONG ANSWER = Low Score**: Compare candidate's answer with expected answer. If completely wrong or irrelevant, give very low score (0-30)
+3. **PARTIALLY CORRECT = Medium Score**: If answer is on the right track but missing key points, give medium score (40-65)
+4. **CORRECT ANSWER = High Score**: If answer matches expected answer well, give high score (70-100)
+5. **EXCELLENT ANSWER = Full Score**: If answer exceeds expectations with great examples and depth, give 90-100
+
 ### Scoring Criteria (Each category: 0-100 points)
 
 #### 1. Technical Skills (0-100)
-Evaluate:
-- **Accuracy** of technical answers
+Evaluate BY COMPARING WITH EXPECTED ANSWERS:
+- **Accuracy** - Does answer match expected answer?
+- **Correctness** - Are technical facts correct?
 - **Depth** of knowledge (surface vs. deep understanding)
 - **Best practices** awareness
 - **Tools/frameworks** familiarity
@@ -59,11 +106,11 @@ Evaluate:
 - **Explanation clarity** of technical concepts
 
 Scoring Guide:
-- 90-100: Expert - Deep understanding, best practices, accurate terminology
-- 75-89: Advanced - Strong knowledge, mostly accurate
-- 60-74: Intermediate - Basic understanding, some gaps
-- 40-59: Beginner - Superficial knowledge, missing key concepts
-- 0-39: Weak - Incorrect or very incomplete
+- 90-100: Expert - Answers match or exceed expected answers, deep understanding
+- 75-89: Advanced - Most answers correct, strong knowledge
+- 60-74: Intermediate - Some correct answers, some gaps
+- 40-59: Beginner - Many wrong answers, missing key concepts
+- 0-39: Weak - Most answers wrong, empty, or no answers provided
 
 #### 2. Problem-Solving & Analytical Thinking (0-100)
 Evaluate:
@@ -78,14 +125,14 @@ Scoring Guide:
 - 75-89: Good structure, considers alternatives
 - 60-74: Basic approach, some analysis
 - 40-59: Unstructured, limited depth
-- 0-39: No clear methodology
+- 0-39: No clear methodology or no answers
 
 #### 3. Communication Skills (0-100)
 Evaluate:
 - **Clarity** - Easy to understand
 - **Structure** - Organized (e.g., "First... Second... Finally...")
 - **Conciseness** - Not rambling or overly verbose
-- **Relevance** - Stays on topic, answers the question
+- **Relevance** - Stays on topic, answers the question asked
 - **Examples** - Uses concrete examples when appropriate
 
 Scoring Guide:
@@ -93,22 +140,23 @@ Scoring Guide:
 - 75-89: Clear, structured, easy to follow
 - 60-74: Understandable, somewhat organized
 - 40-59: Unclear, lacks structure
-- 0-39: Confusing, hard to follow
+- 0-39: Confusing, hard to follow, or no communication
 
 #### 4. Experience & Practical Knowledge (0-100)
-Evaluate:
+Evaluate BY COMPARING WITH EXPECTED ANSWERS:
 - **Real-world examples** from past projects
 - **Specific details** (not just "I worked on X")
 - **Measurable results** (metrics, improvements, "reduced by 40%")
 - **Tools/technologies** actually used
 - **Implementation challenges** and solutions
+- **Match with expected answer** - Does experience align with what was asked?
 
 Scoring Guide:
-- 90-100: Specific examples with measurable impact, detailed
-- 75-89: Good examples, clear context
-- 60-74: Basic examples, limited details
-- 40-59: Vague, mostly theoretical
-- 0-39: No examples or purely hypothetical
+- 90-100: Specific examples with measurable impact, matches expected answer perfectly
+- 75-89: Good examples, clear context, mostly relevant
+- 60-74: Basic examples, limited details, somewhat relevant
+- 40-59: Vague, mostly theoretical, doesn't match expected
+- 0-39: No examples, purely hypothetical, or no answer
 
 #### 5. Professionalism & Soft Skills (0-100)
 Evaluate:
@@ -117,13 +165,14 @@ Evaluate:
 - **Adaptability** - Learning and flexibility
 - **Growth mindset** - Continuous improvement
 - **Professionalism** - Respectful, mature attitude
+- **Engagement** - Actually answered questions vs. stayed silent
 
 Scoring Guide:
-- 90-100: Highly professional, team-oriented, growth-focused
-- 75-89: Professional, collaborative
+- 90-100: Highly professional, team-oriented, growth-focused, actively engaged
+- 75-89: Professional, collaborative, participates
 - 60-74: Adequate professionalism
-- 40-59: Some attitude concerns
-- 0-39: Unprofessional
+- 40-59: Some attitude concerns or minimal participation
+- 0-39: Unprofessional or did not participate (no answers)
 
 ---
 
@@ -261,23 +310,33 @@ Return ONLY valid JSON with this exact structure:
 }
 
 ### Critical Requirements:
-1. **Be objective and fair** - Base scores on actual transcript evidence
-2. **Provide specific examples** - Reference actual statements from the transcript
-3. **Balance feedback** - Include both strengths and areas for improvement
-4. **Actionable suggestions** - Give concrete steps for improvement
-5. **Consider context** - Account for interviewer's focus areas (${Array.isArray(focusAreas) ? focusAreas.join(', ') : 'General'})
-6. **JSON only** - Return ONLY valid JSON, no markdown code blocks or additional text
-7. **Be encouraging** - Frame feedback constructively while being honest
+1. **STRICT SCORING BASED ON ANSWERS** - Compare each answer with expected answer. NO ANSWER = 0 points for that question.
+2. **Validate Answer Quality**:
+   - If answer is empty or < 20 characters → Consider as NO ANSWER
+   - If answer is completely off-topic or irrelevant → Very low score (0-20)
+   - If answer is wrong but shows effort → Low score (20-40)
+   - If answer is partially correct → Medium score (40-70)
+   - If answer matches expected answer → High score (70-100)
+3. **Be objective and fair** - Base scores on actual transcript evidence and answer comparison
+4. **Provide specific examples** - Reference actual statements from the transcript and compare with expected answers
+5. **Balance feedback** - Include both strengths and areas for improvement
+6. **Actionable suggestions** - Give concrete steps for improvement
+7. **Consider context** - Account for interviewer's focus areas (${Array.isArray(focusAreas) ? focusAreas.join(', ') : 'General'})
+8. **JSON only** - Return ONLY valid JSON, no markdown code blocks or additional text
+9. **Be encouraging but honest** - Frame feedback constructively while being truthful about gaps
 
 Calculate overallScore as: (technicalSkills * 0.25) + (problemSolving * 0.25) + (communication * 0.20) + (experience * 0.15) + (professionalism * 0.15)
+
+⚠️ IMPORTANT: If candidate provided NO answers or very few answers (< 50% of questions), overall score should be very low (0-30).
 
 Readiness levels:
 - 85-100: "Strong Hire"
 - 70-84: "Hire"  
 - 55-69: "Maybe"
-- 0-54: "No Hire"
+- 40-54: "Weak Maybe"
+- 0-39: "No Hire"
 
-Now analyze the interview and return the assessment JSON:`;
+Now analyze the interview BY COMPARING EXPECTED VS ACTUAL ANSWERS and return the assessment JSON:`;
 }
 
 /**

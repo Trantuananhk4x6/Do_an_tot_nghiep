@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { CVData, CVTemplate } from '@/app/(features)/support-cv/types/cv.types';
 import CVTemplateRenderer from './CVTemplateRenderer';
 
@@ -11,7 +12,7 @@ interface CVPreviewProps {
   onExport: () => void;
 }
 
-type SectionType = 'summary' | 'experience' | 'education' | 'skills' | 'projects' | 'certifications' | 'languages';
+type SectionType = 'summary' | 'experience' | 'education' | 'skills' | 'projects' | 'certifications' | 'languages' | 'awards';
 
 interface SectionOrder {
   id: SectionType;
@@ -22,6 +23,7 @@ interface SectionOrder {
 export default function CVPreview({ cvData, template, onBackToEdit, onExport }: CVPreviewProps) {
   const [localCVData, setLocalCVData] = useState<CVData>(cvData);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const cvPreviewRef = useRef<HTMLDivElement>(null);
   
   const [sectionOrder, setSectionOrder] = useState<SectionOrder[]>([
     { id: 'summary', label: 'Summary', visible: !!cvData.personalInfo.summary },
@@ -29,6 +31,7 @@ export default function CVPreview({ cvData, template, onBackToEdit, onExport }: 
     { id: 'education', label: 'Education', visible: cvData.education.length > 0 },
     { id: 'skills', label: 'Skills', visible: cvData.skills.length > 0 },
     { id: 'projects', label: 'Projects', visible: cvData.projects.length > 0 },
+    { id: 'awards', label: 'Awards & Honors', visible: (cvData.awards && cvData.awards.length > 0) || false },
     { id: 'certifications', label: 'Certifications', visible: cvData.certifications.length > 0 },
     { id: 'languages', label: 'Languages', visible: cvData.languages.length > 0 }
   ]);
@@ -102,7 +105,7 @@ export default function CVPreview({ cvData, template, onBackToEdit, onExport }: 
 
       <div className="grid grid-cols-12 gap-6">
         {/* Section Order Controller */}
-        <div className="col-span-3">
+        <div className="col-span-3 print:hidden">
           <div className="glass-effect border border-white/10 rounded-xl p-4 sticky top-4">
             <h3 className="font-bold text-white mb-4 flex items-center gap-2">
               <span>📋</span>
@@ -131,24 +134,29 @@ export default function CVPreview({ cvData, template, onBackToEdit, onExport }: 
                       e.stopPropagation();
                       toggleSectionVisibility(section.id);
                     }}
-                    className="text-xs"
+                    className="p-1 hover:bg-white/10 rounded transition-colors print:hidden"
+                    title={section.visible ? 'Hide section' : 'Show section'}
                   >
-                    {section.visible ? '👁️' : '🚫'}
+                    {section.visible ? (
+                      <Eye className="w-4 h-4 text-blue-400" />
+                    ) : (
+                      <EyeOff className="w-4 h-4 text-gray-500" />
+                    )}
                   </button>
                 </div>
               ))}
             </div>
 
-            <div className="mt-6 glass-effect border border-blue-500/30 rounded-lg p-3">
-              <p className="text-xs text-blue-300">
-                💡 <strong>Tip:</strong> Drag sections to reorder. Click eye icon to hide/show.
+            <div className="mt-6 glass-effect border border-blue-500/30 rounded-lg p-3 print:hidden">
+              <p className="text-xs text-blue-300 flex items-center gap-1">
+                💡 <strong>Tip:</strong> Drag sections to reorder. Click <Eye className="inline w-3 h-3" /> icon to toggle visibility.
               </p>
             </div>
           </div>
         </div>
 
         {/* CV Preview */}
-        <div className="col-span-9">
+        <div className="col-span-9" ref={cvPreviewRef}>
           <CVTemplateRenderer
             cvData={localCVData}
             template={template}

@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { Message } from "../models/Interview";
 import { AudioManager } from "../utils/audioUtils";
+import { v4 as uuidv4 } from 'uuid';
 
 export const useInterviewState = (audioManager: AudioManager) => {
   const [isStarted, setIsStarted] = useState(false);
@@ -11,10 +12,11 @@ export const useInterviewState = (audioManager: AudioManager) => {
 
   const addMessage = useCallback((text: string, isUser: boolean) => {
     const newMessage: Message = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       text,
       isUser,
       timestamp: new Date().toLocaleTimeString(),
+      content: ""
     };
     setMessages((prev) => [...prev, newMessage]);
   }, []);

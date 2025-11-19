@@ -1,7 +1,11 @@
 const Footer = () => {
   return (
-    <footer className="glass-effect border-t border-white/10">
-      <div className="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8">
+    <footer className="glass-effect border-t border-white/10 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-purple-500/5 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-pink-500/5 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+      
+      <div className="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 relative z-10">
         <div className="lg:flex lg:items-start lg:gap-8 gap-4">
           <div>
             <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-neon">
@@ -103,6 +107,15 @@ const Footer = () => {
               <p className="font-medium text-gray-300">Helpful Links</p>
 
               <ul className="mt-6 space-y-4 text-sm">
+                <li>
+                  <a
+                    href="/reviews"
+                    className="text-gray-400 transition hover:text-purple-400"
+                  >
+                    Reviews
+                  </a>
+                </li>
+
                 <li>
                   <a
                     href="#"

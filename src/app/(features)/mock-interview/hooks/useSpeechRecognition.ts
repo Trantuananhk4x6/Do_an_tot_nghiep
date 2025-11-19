@@ -42,6 +42,13 @@ export const useSpeechRecognition = (
         recognition.interimResults = true;
         recognition.lang = language;
         recognition.maxAlternatives = 1;
+        
+        console.log('🎤 Speech Recognition configured:', {
+          continuous: recognition.continuous,
+          interimResults: recognition.interimResults,
+          lang: recognition.lang,
+          maxAlternatives: recognition.maxAlternatives
+        });
 
         recognition.onstart = () => {
           console.log('🎤 Speech recognition STARTED');
@@ -103,33 +110,51 @@ export const useSpeechRecognition = (
         };
 
         recognition.onerror = (event: any) => {
-          console.error('❌ Speech recognition error:', event.error, event);
-          
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-          }
-          
-          // ✅ Chỉ restart cho lỗi no-speech, giữ lại transcript cũ
+          // ✅ Xử lý error dựa trên type
           if (event.error === 'no-speech') {
-            console.log('🔄 No speech detected, but keeping transcript');
-            // Không set error để không làm mất transcript
-            setTimeout(() => {
-              if (recognitionRef.current && isListening) {
-                try {
-                  recognitionRef.current.start();
-                } catch (e) {
-                  console.error('Failed to restart:', e);
-                  setIsListening(false);
-                }
-              }
-            }, 500);
+            // ⚠️ Không phải lỗi nghiêm trọng - chỉ là không nghe thấy giọng nói
+            console.warn('⚠️ No speech detected, waiting for audio input...');
+            
+            // ❌ KHÔNG restart - để recognition tự xử lý!
+            // Recognition sẽ tự động tiếp tục lắng nghe vì continuous = true
+            // Restart liên tục sẽ làm nó không kịp nghe giọng nói
+            
+            setError('Đang lắng nghe... Hãy bắt đầu nói');
+            // Không set isListening = false, vẫn để = true
+            
           } else if (event.error === 'aborted') {
             // User chủ động dừng, không cần báo lỗi
-            console.log('✅ Recognition aborted by user');
+            console.log('✅ Recognition stopped by user');
             setIsListening(false);
+            
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+            }
+          } else if (event.error === 'audio-capture') {
+            console.error('❌ Microphone access error - check permissions');
+            setError('Không thể truy cập microphone. Vui lòng kiểm tra quyền truy cập.');
+            setIsListening(false);
+            
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+            }
+          } else if (event.error === 'not-allowed') {
+            console.error('❌ Microphone permission denied');
+            setError('Bạn cần cấp quyền truy cập microphone để sử dụng tính năng này.');
+            setIsListening(false);
+            
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+            }
           } else {
-            setError(`Speech error: ${event.error}`);
+            // Các lỗi khác
+            console.error('❌ Speech recognition error:', event.error, event);
+            setError(`Lỗi nhận dạng giọng nói: ${event.error}`);
             setIsListening(false);
+            
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+            }
           }
         };
 
@@ -163,7 +188,7 @@ export const useSpeechRecognition = (
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [language]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [language]);
 
   const startListening = useCallback(() => {
     console.log('🚀 startListening called, isListening:', isListening);

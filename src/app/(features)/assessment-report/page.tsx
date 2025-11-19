@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { AnimatedStars } from "@/components/ui/animated-stars";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -87,64 +88,66 @@ const AssessmentReport = () => {
   
   if (loading || !assessmentReport) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading assessment report...</p>
+      <div className="min-h-screen bg-background flex items-center justify-center relative">
+        <AnimatedStars />
+        <div className="text-center relative z-10">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading assessment report...</p>
         </div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white p-4 lg:p-6 xl:p-8">
+    <div className="min-h-screen bg-background p-4 lg:p-6 xl:p-8 relative">
+      <AnimatedStars />
       {/* Header with enhanced styling */}
-      <div className="max-w-7xl mx-auto mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white rounded-2xl p-4 shadow-sm">
+      <div className="max-w-7xl mx-auto mb-8 relative z-10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 glass-effect rounded-2xl p-4 border border-white/10">
           <div className="flex items-center gap-4">
             <Link href="/mock-interview">
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="hover:bg-gray-50 hover:text-indigo-600 transition-all duration-200"
+                className="hover:bg-white/10 hover:text-purple-400 transition-all duration-200"
                 aria-label="Go back"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
             <div className="space-y-1">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-indigo-800 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold gradient-text">
                 Interview Performance Analysis
               </h1>
-              <p className="text-sm text-gray-500">Detailed insights into your interview performance</p>
+              <p className="text-sm text-gray-400">Detailed insights into your interview performance</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-gray-500 bg-gray-50 px-4 py-2 rounded-full hover:bg-gray-100 transition-colors">
-            <Clock className="h-4 w-4 text-indigo-500" />
+          <div className="flex items-center gap-2 text-gray-400 bg-white/5 px-4 py-2 rounded-full hover:bg-white/10 transition-colors border border-white/10">
+            <Clock className="h-4 w-4 text-purple-400" />
             <span className="text-sm font-medium">{new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true, month: 'short', day: '2-digit' })}</span>
           </div>
         </div>
       </div>
 
       {/* Enhanced Tabs */}
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto relative z-10">
         <Tabs defaultValue="recap" className="mb-8">
-          <TabsList className="bg-white p-1 rounded-xl shadow-sm border border-gray-100">
+          <TabsList className="glass-effect p-1 rounded-xl border border-white/10">
             <TabsTrigger 
               value="recap" 
-              className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-600 rounded-lg transition-all duration-200"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white rounded-lg transition-all duration-200"
             >
               Recap
             </TabsTrigger>
             <TabsTrigger 
               value="detail"
-              className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-600 rounded-lg transition-all duration-200"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white rounded-lg transition-all duration-200"
             >
               Detail
             </TabsTrigger>
             <TabsTrigger 
               value="coach"
-              className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-600 rounded-lg transition-all duration-200"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white rounded-lg transition-all duration-200"
             >
               Coach
             </TabsTrigger>
@@ -153,25 +156,25 @@ const AssessmentReport = () => {
           <TabsContent value="recap">
             <div className="space-y-6">
               {/* Overview Card with enhanced design */}
-              <Card className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm">
+              <Card className="glass-effect hover:shadow-neon transition-all duration-200 border border-white/10">
                 <CardContent className="p-6 sm:p-8">
-                  <h2 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+                  <h2 className="text-xl font-bold mb-6 gradient-text flex items-center gap-2">
                     Overview
-                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-600"></span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-purple-600"></span>
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
-                    <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl border border-indigo-100/50">
-                      <p className="text-sm font-medium text-gray-600 mb-2">Overall Readiness Score</p>
+                    <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 p-6 rounded-2xl border border-purple-500/30">
+                      <p className="text-sm font-medium text-gray-300 mb-2">Overall Readiness Score</p>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-5xl font-bold text-indigo-600 animate-in fade-in duration-700">
+                        <span className="text-5xl font-bold gradient-text animate-in fade-in duration-700">
                           {assessmentReport.overallScore}
                         </span>
-                        <span className="text-gray-500 text-lg">/100</span>
+                        <span className="text-gray-400 text-lg">/100</span>
                       </div>
                     </div>
-                    <div className="bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl border border-indigo-100/50">
-                      <p className="text-sm font-medium text-gray-600 mb-2">Your Readiness Level</p>
-                      <div className="text-5xl font-bold text-indigo-600 animate-in fade-in duration-700">
+                    <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 p-6 rounded-2xl border border-purple-500/30">
+                      <p className="text-sm font-medium text-gray-300 mb-2">Your Readiness Level</p>
+                      <div className="text-5xl font-bold gradient-text animate-in fade-in duration-700">
                         {assessmentReport.readinessLevel.toFixed(2)}%
                       </div>
                     </div>
@@ -180,40 +183,58 @@ const AssessmentReport = () => {
               </Card>
 
               {/* Enhanced Feedback Section */}
-              <Card className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm overflow-hidden">
+              <Card className="glass-effect hover:shadow-neon transition-all duration-200 border border-white/10 overflow-hidden">
                 <CardContent className="p-6 sm:p-8">
-                  <h2 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+                  <h2 className="text-xl font-bold mb-6 gradient-text flex items-center gap-2">
                     Key Feedback
-                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-600"></span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-purple-600"></span>
                   </h2>
                   <div className="space-y-4">
-                    {assessmentReport.feedback.map((feedback, index) => (
-                      <div 
-                        key={index}
-                        className="group p-4 rounded-xl bg-gradient-to-r from-gray-50 to-white border border-gray-100 hover:border-indigo-100 transition-all duration-200"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="mt-1 h-2 w-2 rounded-full bg-indigo-500 group-hover:bg-indigo-600 transition-colors" />
-                          <p className="text-gray-600 group-hover:text-gray-700 transition-colors">{feedback}</p>
+                    {assessmentReport.feedback.map((feedback, index) => {
+                      // Determine if it's strength (✓) or weakness (✗)
+                      const isStrength = feedback.startsWith('✓');
+                      const isWeakness = feedback.startsWith('✗');
+                      
+                      return (
+                        <div 
+                          key={index}
+                          className={`group p-4 rounded-xl backdrop-blur-sm border transition-all duration-200 ${
+                            isStrength 
+                              ? 'bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/30 hover:border-green-400/50 hover:from-green-500/20 hover:to-emerald-500/20'
+                              : isWeakness
+                              ? 'bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/30 hover:border-red-400/50 hover:from-red-500/20 hover:to-orange-500/20'
+                              : 'bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/30 hover:border-purple-400/50 hover:from-purple-500/20 hover:to-pink-500/20'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`mt-1 h-2 w-2 rounded-full transition-colors ${
+                              isStrength 
+                                ? 'bg-green-500 group-hover:bg-green-400'
+                                : isWeakness
+                                ? 'bg-red-500 group-hover:bg-red-400'
+                                : 'bg-purple-500 group-hover:bg-purple-400'
+                            }`} />
+                            <p className="text-gray-200 group-hover:text-white transition-colors leading-relaxed">{feedback}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
 
               {/* Enhanced Interview Summary */}
-              <Card className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm">
+              <Card className="glass-effect hover:shadow-neon transition-all duration-200 border border-white/10">
                 <CardContent className="p-6 sm:p-8">
-                  <h2 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+                  <h2 className="text-xl font-bold mb-6 gradient-text flex items-center gap-2">
                     Interview Summary
-                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-600"></span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-purple-600"></span>
                   </h2>
-                  <div className="space-y-4 bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl border border-gray-100">
+                  <div className="space-y-4 bg-gradient-to-br from-purple-500/10 to-blue-500/10 backdrop-blur-sm p-6 rounded-xl border border-purple-500/30">
                     {assessmentReport.interviewSummary.map((sentence, index) => (
                       <p 
                         key={index} 
-                        className="text-gray-600 leading-relaxed animate-in fade-in slide-in-from-bottom-2"
+                        className="text-gray-200 leading-relaxed animate-in fade-in slide-in-from-bottom-2"
                       >
                         {sentence}
                       </p>
@@ -223,23 +244,23 @@ const AssessmentReport = () => {
               </Card>
 
               {/* Enhanced Suggestions for Improvement */}
-              <Card className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm">
+              <Card className="glass-effect hover:shadow-neon transition-all duration-200 border border-white/10">
                 <CardContent className="p-6 sm:p-8">
-                  <h2 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+                  <h2 className="text-xl font-bold mb-6 gradient-text flex items-center gap-2">
                     Improvement Areas
-                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-600"></span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-purple-600"></span>
                   </h2>
                   <div className="grid gap-4 sm:grid-cols-2">
                     {assessmentReport.suggestions?.map((suggestion, index) => (
                       <div 
                         key={index}
-                        className="group p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-white border border-indigo-100/50 hover:shadow-md transition-all duration-200"
+                        className="group p-4 rounded-xl bg-gradient-to-br from-purple-900/30 to-pink-900/30 border border-purple-500/30 hover:shadow-neon transition-all duration-200"
                       >
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
-                            <span className="text-indigo-600 font-semibold text-sm">{index + 1}</span>
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/30 flex items-center justify-center group-hover:bg-purple-500/50 transition-colors border border-purple-500/50">
+                            <span className="text-purple-300 font-semibold text-sm">{index + 1}</span>
                           </div>
-                          <p className="text-gray-600 group-hover:text-gray-700 transition-colors">
+                          <p className="text-gray-300 group-hover:text-gray-200 transition-colors">
                             {suggestion}
                           </p>
                         </div>
@@ -250,32 +271,32 @@ const AssessmentReport = () => {
               </Card>
 
               {/* Analysis Section with enhanced visualization */}
-              <Card className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm">
+              <Card className="glass-effect hover:shadow-neon transition-all duration-200 border border-white/10">
                 <CardContent className="p-6 sm:p-8">
-                  <h2 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+                  <h2 className="text-xl font-bold mb-6 gradient-text flex items-center gap-2">
                     Skill Analysis
-                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-600"></span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-purple-600"></span>
                   </h2>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="h-[300px] bg-gradient-to-br from-gray-50 to-white rounded-2xl p-4 border border-gray-100">
+                    <div className="h-[300px] bg-gradient-to-br from-purple-500/10 to-pink-500/10 backdrop-blur-sm rounded-2xl p-4 border border-purple-500/30">
                       <RadarChart data={assessmentReport.skills} />
                     </div>
                     <div className="space-y-6">
                       {assessmentReport.skills.map((skill) => (
                         <div key={skill.name} className="group">
                           <div className="flex justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors duration-200">
+                            <span className="text-sm font-medium text-gray-300 group-hover:text-purple-400 transition-colors duration-200">
                               {skill.name}
                             </span>
-                            <span className="text-sm text-gray-500">{skill.score}</span>
+                            <span className="text-sm text-gray-400">{skill.score}</span>
                           </div>
-                          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full transition-all duration-500 ease-out group-hover:from-indigo-600 group-hover:to-indigo-700"
+                              className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500 ease-out group-hover:from-purple-600 group-hover:to-pink-600"
                               style={{ width: `${(skill.score / skill.maxScore) * 100}%` }}
                             />
                           </div>
-                          <p className="text-xs text-gray-500 mt-1.5 group-hover:text-indigo-500 transition-colors duration-200">
+                          <p className="text-xs text-gray-500 mt-1.5 group-hover:text-purple-400 transition-colors duration-200">
                             {skill.maxScore}% of total score
                           </p>
                         </div>
@@ -295,10 +316,10 @@ const AssessmentReport = () => {
                 const assessmentJSON = sessionStorage.getItem('latestAssessment');
                 if (!assessmentJSON) {
                   return (
-                    <Card>
+                    <Card className="glass-effect border border-white/10">
                       <CardContent className="p-8 text-center">
-                        <p className="text-gray-600">No detailed assessment data available.</p>
-                        <p className="text-sm text-gray-500 mt-2">Complete a mock interview to see detailed feedback.</p>
+                        <p className="text-gray-300">No detailed assessment data available.</p>
+                        <p className="text-sm text-gray-400 mt-2">Complete a mock interview to see detailed feedback.</p>
                       </CardContent>
                     </Card>
                   );
@@ -345,19 +366,19 @@ const AssessmentReport = () => {
 
                   // Get rating based on score
                   let rating = 'Fair';
-                  let ratingColor = 'text-yellow-600 bg-yellow-50';
+                  let ratingColor = 'text-yellow-400 bg-yellow-900/30 border border-yellow-500/30';
                   if (score >= 90) {
                     rating = 'Excellent';
-                    ratingColor = 'text-emerald-600 bg-emerald-50';
+                    ratingColor = 'text-emerald-400 bg-emerald-900/30 border border-emerald-500/30';
                   } else if (score >= 80) {
                     rating = 'Strong';
-                    ratingColor = 'text-green-600 bg-green-50';
+                    ratingColor = 'text-green-400 bg-green-900/30 border border-green-500/30';
                   } else if (score >= 70) {
                     rating = 'Good';
-                    ratingColor = 'text-blue-600 bg-blue-50';
+                    ratingColor = 'text-blue-400 bg-blue-900/30 border border-blue-500/30';
                   } else if (score < 60) {
                     rating = 'Needs Improvement';
-                    ratingColor = 'text-red-600 bg-red-50';
+                    ratingColor = 'text-red-400 bg-red-900/30 border border-red-500/30';
                   }
 
                   // Find detailed feedback for this category
@@ -367,23 +388,23 @@ const AssessmentReport = () => {
                   );
 
                   return (
-                    <Card key={idx} className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm">
+                    <Card key={idx} className="glass-effect hover:shadow-neon transition-all duration-200 border border-white/10">
                       <CardContent className="p-6 sm:p-8">
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
                             <span className="text-3xl">{category.icon}</span>
                             <div>
-                              <h3 className="text-xl font-bold text-gray-800">{category.title}</h3>
-                              <p className="text-sm text-gray-500">{category.description}</p>
+                              <h3 className="text-xl font-bold gradient-text">{category.title}</h3>
+                              <p className="text-sm text-gray-400">{category.description}</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-3xl font-bold text-indigo-600">{score}</div>
-                            <div className="text-sm text-gray-500">/ 100</div>
+                            <div className="text-3xl font-bold gradient-text">{score}</div>
+                            <div className="text-sm text-gray-400">/ 100</div>
                           </div>
                         </div>
 
-                        <Separator className="my-4" />
+                        <Separator className="my-4 bg-white/10" />
 
                         {/* Rating Badge */}
                         <div className="mb-4">
@@ -393,24 +414,24 @@ const AssessmentReport = () => {
                         </div>
 
                         {/* AI Justification */}
-                        <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-100 mb-4">
-                          <h4 className="text-sm font-semibold text-gray-700 mb-2">AI Assessment:</h4>
-                          <p className="text-gray-600 leading-relaxed">{justification}</p>
+                        <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 backdrop-blur-sm p-4 rounded-xl border border-purple-500/30 mb-4">
+                          <h4 className="text-sm font-semibold text-purple-300 mb-2">AI Assessment:</h4>
+                          <p className="text-gray-200 leading-relaxed">{justification}</p>
                         </div>
 
                         {/* Detailed Feedback if available */}
                         {detailedFeedbackItem && (
-                          <div className="bg-gradient-to-br from-indigo-50 to-white p-4 rounded-xl border border-indigo-100">
-                            <h4 className="text-sm font-semibold text-indigo-700 mb-2">Detailed Review:</h4>
-                            <p className="text-gray-600 leading-relaxed">{detailedFeedbackItem.comment}</p>
+                          <div className="bg-gradient-to-r from-purple-500/15 to-pink-500/15 backdrop-blur-sm p-4 rounded-xl border border-purple-400/40">
+                            <h4 className="text-sm font-semibold text-purple-300 mb-2">Detailed Review:</h4>
+                            <p className="text-gray-200 leading-relaxed">{detailedFeedbackItem.comment}</p>
                           </div>
                         )}
 
                         {/* Progress Bar */}
                         <div className="mt-4">
-                          <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-3 bg-white/10 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full transition-all duration-500"
+                              className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500"
                               style={{ width: `${score}%` }}
                             />
                           </div>
@@ -430,10 +451,10 @@ const AssessmentReport = () => {
                 const assessmentJSON = sessionStorage.getItem('latestAssessment');
                 if (!assessmentJSON) {
                   return (
-                    <Card>
+                    <Card className="glass-effect border border-white/10">
                       <CardContent className="p-8 text-center">
-                        <p className="text-gray-600">No coaching recommendations available.</p>
-                        <p className="text-sm text-gray-500 mt-2">Complete a mock interview to receive personalized coaching.</p>
+                        <p className="text-gray-300">No coaching recommendations available.</p>
+                        <p className="text-sm text-gray-400 mt-2">Complete a mock interview to receive personalized coaching.</p>
                       </CardContent>
                     </Card>
                   );
@@ -444,27 +465,27 @@ const AssessmentReport = () => {
                 return (
                   <>
                     {/* Strengths Card */}
-                    <Card className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm border-l-4 border-l-green-500">
+                    <Card className="glass-effect hover:shadow-neon transition-all duration-200 border-l-4 border-l-green-500 border-t border-r border-b border-white/10">
                       <CardContent className="p-6 sm:p-8">
                         <div className="flex items-center gap-3 mb-6">
-                          <div className="p-3 bg-green-50 rounded-lg">
+                          <div className="p-3 bg-green-900/30 rounded-lg border border-green-500/30">
                             <span className="text-2xl">💪</span>
                           </div>
                           <div>
-                            <h2 className="text-xl font-bold text-gray-800">Your Strengths</h2>
-                            <p className="text-sm text-gray-500">Areas where you excel</p>
+                            <h2 className="text-xl font-bold gradient-text">Your Strengths</h2>
+                            <p className="text-sm text-gray-400">Areas where you excel</p>
                           </div>
                         </div>
                         <div className="space-y-3">
                           {assessment.strengths.map((strength, idx) => (
                             <div 
                               key={idx}
-                              className="flex items-start gap-3 p-4 bg-gradient-to-r from-green-50 to-white rounded-xl border border-green-100"
+                              className="flex items-start gap-3 p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 backdrop-blur-sm rounded-xl border border-green-500/30 hover:border-green-400/50 hover:from-green-500/20 hover:to-emerald-500/20 transition-all"
                             >
-                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold">
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold shadow-lg">
                                 ✓
                               </div>
-                              <p className="text-gray-700 leading-relaxed">{strength}</p>
+                              <p className="text-gray-200 leading-relaxed">{strength}</p>
                             </div>
                           ))}
                         </div>
@@ -472,27 +493,27 @@ const AssessmentReport = () => {
                     </Card>
 
                     {/* Weaknesses Card */}
-                    <Card className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm border-l-4 border-l-orange-500">
+                    <Card className="glass-effect hover:shadow-neon transition-all duration-200 border-l-4 border-l-orange-500 border-t border-r border-b border-white/10">
                       <CardContent className="p-6 sm:p-8">
                         <div className="flex items-center gap-3 mb-6">
-                          <div className="p-3 bg-orange-50 rounded-lg">
+                          <div className="p-3 bg-orange-900/30 rounded-lg border border-orange-500/30">
                             <span className="text-2xl">⚠️</span>
                           </div>
                           <div>
-                            <h2 className="text-xl font-bold text-gray-800">Areas for Growth</h2>
-                            <p className="text-sm text-gray-500">Opportunities to improve</p>
+                            <h2 className="text-xl font-bold gradient-text">Areas for Growth</h2>
+                            <p className="text-sm text-gray-400">Opportunities to improve</p>
                           </div>
                         </div>
                         <div className="space-y-3">
                           {assessment.weaknesses.map((weakness, idx) => (
                             <div 
                               key={idx}
-                              className="flex items-start gap-3 p-4 bg-gradient-to-r from-orange-50 to-white rounded-xl border border-orange-100"
+                              className="flex items-start gap-3 p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 backdrop-blur-sm rounded-xl border border-orange-500/30 hover:border-orange-400/50 hover:from-orange-500/20 hover:to-red-500/20 transition-all"
                             >
-                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-white text-sm font-bold">
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-white text-sm font-bold shadow-lg">
                                 !
                               </div>
-                              <p className="text-gray-700 leading-relaxed">{weakness}</p>
+                              <p className="text-gray-200 leading-relaxed">{weakness}</p>
                             </div>
                           ))}
                         </div>
@@ -500,37 +521,37 @@ const AssessmentReport = () => {
                     </Card>
 
                     {/* Improvement Areas with Priority */}
-                    <Card className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm border-l-4 border-l-indigo-500">
+                    <Card className="glass-effect hover:shadow-neon transition-all duration-200 border-l-4 border-l-purple-500 border-t border-r border-b border-white/10">
                       <CardContent className="p-6 sm:p-8">
                         <div className="flex items-center gap-3 mb-6">
-                          <div className="p-3 bg-indigo-50 rounded-lg">
+                          <div className="p-3 bg-purple-900/30 rounded-lg border border-purple-500/30">
                             <span className="text-2xl">🎯</span>
                           </div>
                           <div>
-                            <h2 className="text-xl font-bold text-gray-800">Actionable Improvement Plan</h2>
-                            <p className="text-sm text-gray-500">Specific steps to enhance your skills</p>
+                            <h2 className="text-xl font-bold gradient-text">Actionable Improvement Plan</h2>
+                            <p className="text-sm text-gray-400">Specific steps to enhance your skills</p>
                           </div>
                         </div>
                         <div className="space-y-4">
                           {assessment.improvementAreas?.map((area, idx) => {
                             const priorityColors = {
-                              'High': 'bg-red-100 text-red-700 border-red-200',
-                              'Medium': 'bg-yellow-100 text-yellow-700 border-yellow-200',
-                              'Low': 'bg-blue-100 text-blue-700 border-blue-200'
+                              'High': 'bg-red-500/20 text-red-300 border-red-400/50',
+                              'Medium': 'bg-yellow-500/20 text-yellow-300 border-yellow-400/50',
+                              'Low': 'bg-blue-500/20 text-blue-300 border-blue-400/50'
                             };
                             
                             return (
                               <div 
                                 key={idx}
-                                className="p-5 bg-gradient-to-br from-indigo-50 to-white rounded-xl border border-indigo-100 hover:shadow-md transition-all"
+                                className="p-5 bg-gradient-to-br from-purple-500/10 to-pink-500/10 backdrop-blur-sm rounded-xl border border-purple-500/30 hover:border-purple-400/50 hover:from-purple-500/20 hover:to-pink-500/20 hover:shadow-neon transition-all"
                               >
                                 <div className="flex items-start justify-between mb-3">
-                                  <h3 className="text-lg font-semibold text-gray-800">{area.area}</h3>
+                                  <h3 className="text-lg font-semibold gradient-text">{area.area}</h3>
                                   <span className={`px-3 py-1 rounded-full text-xs font-bold border ${priorityColors[area.priority]}`}>
                                     {area.priority} Priority
                                   </span>
                                 </div>
-                                <p className="text-gray-600 leading-relaxed">{area.suggestion}</p>
+                                <p className="text-gray-200 leading-relaxed">{area.suggestion}</p>
                               </div>
                             );
                           })}
@@ -540,27 +561,27 @@ const AssessmentReport = () => {
 
                     {/* Recommended Actions */}
                     {assessment.recommendedActions && assessment.recommendedActions.length > 0 && (
-                      <Card className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm bg-gradient-to-br from-purple-50 to-white">
+                      <Card className="glass-effect hover:shadow-neon transition-all duration-200 border border-purple-500/30">
                         <CardContent className="p-6 sm:p-8">
                           <div className="flex items-center gap-3 mb-6">
-                            <div className="p-3 bg-purple-100 rounded-lg">
+                            <div className="p-3 bg-purple-900/30 rounded-lg border border-purple-500/30">
                               <span className="text-2xl">📋</span>
                             </div>
                             <div>
-                              <h2 className="text-xl font-bold text-gray-800">Next Steps</h2>
-                              <p className="text-sm text-gray-500">Concrete actions you can take today</p>
+                              <h2 className="text-xl font-bold gradient-text">Next Steps</h2>
+                              <p className="text-sm text-gray-400">Concrete actions you can take today</p>
                             </div>
                           </div>
                           <div className="space-y-3">
                             {assessment.recommendedActions.map((action, idx) => (
                               <div 
                                 key={idx}
-                                className="flex items-start gap-3 p-4 bg-white rounded-xl border border-purple-100 hover:border-purple-200 transition-all"
+                                className="flex items-start gap-3 p-4 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 backdrop-blur-sm rounded-xl border border-indigo-500/30 hover:border-indigo-400/50 hover:from-indigo-500/20 hover:to-purple-500/20 transition-all"
                               >
-                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">
+                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-500/30 flex items-center justify-center text-indigo-300 font-bold text-sm border border-indigo-500/50">
                                   {idx + 1}
                                 </div>
-                                <p className="text-gray-700 leading-relaxed pt-1">{action}</p>
+                                <p className="text-gray-200 leading-relaxed pt-1">{action}</p>
                               </div>
                             ))}
                           </div>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Speech Synthesis Direct</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .info {
+            background: #2a2a3a;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .log {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔊 Test Speech Synthesis Direct</h1>
+    
+    <div class="info">
+        <h3>Test với đúng code như app</h3>
+        <p>Test xem speechSynthesis có hoạt động đúng với language parameter không</p>
+    </div>
+
+    <button onclick="testVietnameseVoice()">🇻🇳 Test Vietnamese (vi)</button>
+    <button onclick="testEnglishVoice()">🇺🇸 Test English (en)</button>
+    <button onclick="testVietnameseCode()">🇻🇳 Test Vietnamese (vi-VN)</button>
+    <button onclick="testWithUndefined()">⚠️ Test with undefined language</button>
+
+    <div class="log" id="log">
+        <strong>Console Log:</strong><br>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        async function speak(text, voiceGender, language) {
+            log(`🔊 speak() called with: text="${text.substring(0, 30)}...", gender="${voiceGender}", language="${language}"`);
+            
+            return new Promise((resolve, reject) => {
+                const synthesis = window.speechSynthesis;
+                synthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(text);
+
+                // Language code mapping - GIỐNG TRONG APP
+                const languageCodes = {
+                    vi: 'vi-VN',
+                    en: 'en-US',
+                    ja: 'ja-JP',
+                    zh: 'zh-CN',
+                    ko: 'ko-KR',
+                };
+                const targetLang = languageCodes[language || 'en'] || 'en-US';
+
+                log(`🌐 Language mapping: input="${language}" → targetLang="${targetLang}"`);
+
+                const setVoice = () => {
+                    const voices = synthesis.getVoices();
+                    log(`📢 Found ${voices.length} voices total`);
+
+                    if (voices.length > 0) {
+                        let selectedVoice;
+
+                        const languageVoices = voices.filter(voice => voice.lang.startsWith(targetLang.split('-')[0]));
+                        log(`🇻🇳 Found ${languageVoices.length} voices for language: ${targetLang}`);
+
+                        if (languageVoices.length > 0) {
+                            if (targetLang === 'vi-VN') {
+                                if (voiceGender === 'female') {
+                                    selectedVoice = languageVoices.find(voice => 
+                                        voice.name.toLowerCase().includes('google') && voice.name.toLowerCase().includes('female')
+                                    ) || languageVoices.find(voice => 
+                                        voice.name.toLowerCase().includes('microsoft') && voice.name.toLowerCase().includes('female')
+                                    ) || languageVoices.find(voice => 
+                                        voice.name.toLowerCase().includes('female') ||
+                                        voice.name.toLowerCase().includes('linh') ||
+                                        voice.name.toLowerCase().includes('chi')
+                                    );
+                                } else {
+                                    selectedVoice = languageVoices.find(voice => 
+                                        voice.name.toLowerCase().includes('google') && voice.name.toLowerCase().includes('male')
+                                    ) || languageVoices.find(voice => 
+                                        voice.name.toLowerCase().includes('microsoft') && voice.name.toLowerCase().includes('male')
+                                    ) || languageVoices.find(voice => 
+                                        voice.name.toLowerCase().includes('male') ||
+                                        voice.name.toLowerCase().includes('nam') ||
+                                        voice.name.toLowerCase().includes('hoang')
+                                    );
+                                }
+                            }
+
+                            if (!selectedVoice) {
+                                selectedVoice = languageVoices.find(voice => 
+                                    voice.name.toLowerCase().includes('google') || voice.name.toLowerCase().includes('microsoft')
+                                ) || languageVoices[0];
+                            }
+                        }
+
+                        if (!selectedVoice) {
+                            selectedVoice = voices[0];
+                            log(`⚠️ No voice for ${targetLang}, using default: ${selectedVoice.name}`);
+                        }
+
+                        utterance.voice = selectedVoice;
+                        utterance.lang = targetLang;
+                        utterance.rate = targetLang === 'vi-VN' ? 1.0 : 0.95;
+                        utterance.pitch = targetLang === 'vi-VN' ? 1.0 : (voiceGender === 'female' ? 1.2 : 0.8);
+                        utterance.volume = 1;
+
+                        log(`✅ Selected voice: ${selectedVoice.name} (${selectedVoice.lang})`);
+                        log(`⚙️ Settings: rate=${utterance.rate}, pitch=${utterance.pitch}`);
+
+                        utterance.onstart = () => log('🎤 Speech started');
+                        utterance.onend = () => {
+                            log('✅ Speech ended');
+                            resolve();
+                        };
+                        utterance.onerror = (error) => {
+                            log(`❌ Speech error: ${error.error}`);
+                            resolve();
+                        };
+
+                        synthesis.speak(utterance);
+                    }
+                };
+
+                if (synthesis.getVoices().length > 0) {
+                    setVoice();
+                } else {
+                    synthesis.onvoiceschanged = setVoice;
+                }
+            });
+        }
+
+        async function testVietnameseVoice() {
+            log('\n=== TEST 1: Vietnamese with "vi" ===');
+            await speak('Cảm ơn bạn đã chia sẻ. Chúng ta chuyển sang câu hỏi tiếp theo nhé.', 'female', 'vi');
+        }
+
+        async function testEnglishVoice() {
+            log('\n=== TEST 2: English with "en" ===');
+            await speak('Thank you for sharing. Let us move on to the next question.', 'female', 'en');
+        }
+
+        async function testVietnameseCode() {
+            log('\n=== TEST 3: Vietnamese with "vi-VN" ===');
+            await speak('Xin chào, đây là bài kiểm tra với mã ngôn ngữ đầy đủ.', 'female', 'vi-VN');
+        }
+
+        async function testWithUndefined() {
+            log('\n=== TEST 4: Undefined language (should default to en-US) ===');
+            await speak('This should be in English by default.', 'female', undefined);
+        }
+
+        log('✅ Page loaded - ready to test');
+    </script>
+</body>
+</html>

@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import { Mic, Send, Loader2, Square } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
+import { useDeepgramRecognition } from "../hooks/useDeepgramRecognition";
 
 interface InterviewInputProps {
   isProcessing: boolean;
   onSubmit: (transcription: string) => Promise<void>;
   error: string | null;
+  language?: string; // 'vi', 'en', 'ja', 'zh', 'ko'
 }
 
 const WaveformAnimation = () => (
@@ -32,26 +34,51 @@ const InterviewInput: React.FC<InterviewInputProps> = ({
   isProcessing,
   onSubmit,
   error,
+  language = 'en',
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inputText, setInputText] = useState("");
   const lastTranscriptRef = useRef<string>(""); // ✅ Track last transcript
+
+  // Map language codes
+  const languageMap: Record<string, string> = {
+    vi: 'vi-VN',
+    en: 'en-US',
+    ja: 'ja-JP',
+    zh: 'zh-CN',
+    ko: 'ko-KR'
+  };
+  const speechLang = languageMap[language] || 'en-US';
+  const useDeepgram = language === 'vi'; // Use Deepgram for Vietnamese
+
+  console.log('🎙️ InterviewInput language config:', { language, speechLang, useDeepgram });
 
   // ✅ Transcript handler - CHỈ update UI, KHÔNG tự động submit
   const handleTranscript = (text: string) => {
     console.log('🎤 InterviewInput received transcript:', text);
     setInputText(text);
     lastTranscriptRef.current = text;
-
-    // ✅ BỎ auto-submit timeout - chỉ submit khi user bấm Stop
   };
 
+  // Chrome Web Speech API (for non-Vietnamese)
+  const chromeRecognition = useSpeechRecognition(
+    useDeepgram ? undefined : handleTranscript, 
+    speechLang
+  );
+
+  // Deepgram API (for Vietnamese)
+  const deepgramRecognition = useDeepgramRecognition(
+    useDeepgram ? handleTranscript : undefined,
+    speechLang
+  );
+
+  // Select appropriate recognition system
   const { 
     isListening, 
     isSupported, 
     startListening, 
     stopListening 
-  } = useSpeechRecognition(handleTranscript, "en-US");
+  } = useDeepgram ? deepgramRecognition : chromeRecognition;
 
   const handleSubmission = async (text: string) => {
     if (!text || isSubmitting) return;
@@ -99,14 +126,24 @@ const InterviewInput: React.FC<InterviewInputProps> = ({
   return (
     <div className="flex flex-col items-center">
       <AnimatePresence>
-        {error && (
+        {error && !error.includes('Không thể truy cập') && !error.includes('permission') && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="text-red-500 text-sm mb-2"
+            className="text-orange-500 text-sm mb-2 px-4 py-2 bg-orange-50 rounded-lg border border-orange-200"
           >
-            {error}
+            ⚠️ {error}
+          </motion.div>
+        )}
+        {error && (error.includes('Không thể truy cập') || error.includes('permission')) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="text-red-500 text-sm mb-2 px-4 py-2 bg-red-50 rounded-lg border border-red-200"
+          >
+            ❌ {error}
           </motion.div>
         )}
         {isListening && (
@@ -123,10 +160,15 @@ const InterviewInput: React.FC<InterviewInputProps> = ({
                 "{inputText}"
               </div>
             )}
-            {/* ✅ Instruction */}
-            <div className="text-center text-xs text-gray-500 mt-2">
-              Speak your answer. Click Stop when you're done to submit.
-            </div>
+            {/* ✅ Instruction - với animation để dễ nhận biết */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="text-center text-xs text-gray-500 mt-2"
+            >
+              🎤 Microphone is listening. Speak clearly and click <strong>Stop</strong> when done.
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

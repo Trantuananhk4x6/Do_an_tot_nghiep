@@ -2,14 +2,363 @@
 
 import React, { useState, useCallback } from 'react';
 import { CVTemplate, CVData } from '@/app/(features)/support-cv/types/cv.types';
-import { extractTextFromPDF } from '@/app/(features)/support-cv/services/pdfExtractor';
-import { analyzeCVWithAI } from '@/app/(features)/support-cv/services/aiCVAnalyzer';
-import { reviewCVWithAI } from '@/app/(features)/support-cv/services/aiCVReviewer';
+import { pdfExtractor } from '@/app/(features)/support-cv/services/pdf/extractor.service';
+import { cvAnalyzer } from '@/app/(features)/support-cv/services/ai/analyzer.service';
+import { cvReviewer } from '@/app/(features)/support-cv/services/ai/reviewer.service';
+
+/**
+ * Smart CV Parser - Extract structured CV data from raw text
+ * Handles messy PDFs with proper line break detection
+ */
+function parseExtractedText(text: string): CVData {
+  console.log('🔍 RAW TEXT LENGTH:', text.length);
+  console.log('🔍 LINE BREAKS IN RAW TEXT:', (text.match(/\n/g) || []).length);
+  console.log('🔍 FIRST 200 CHARS:', JSON.stringify(text.substring(0, 200)));
+  
+  // FORCE line breaks before section headers to ensure proper splitting
+  const textWithLineBreaks = text
+    .replace(/\s+(SKILLS|WORK EXPERIENCE|EXPERIENCE|EDUCATION|PROJECTS?|AWARDS?|CERTIFICATIONS?)/gi, '\n$1')
+    .replace(/\s+-\s+/g, '\n- ') // Force breaks before bullet points
+    .replace(/([.!?])\s+([A-Z])/g, '$1\n$2'); // Break after sentences before capitals
+  
+  // Split by line breaks
+  const lines = textWithLineBreaks
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
+  
+  console.log('📝 Total lines after split:', lines.length);
+  console.log('📝 First 10 lines:', lines.slice(0, 10));
+  
+  // ==================== EXTRACT PERSONAL INFO ====================
+  
+  const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  const phoneMatch = text.match(/[\+]?\d{1,3}[\s\-]?\d{3,4}[\s\-]?\d{3,4}[\s\-]?\d{3,4}/);
+  const linkedinMatch = text.match(/(?:linkedin\.com\/in\/|linkedin:?\s*)([a-zA-Z0-9\-]+)/i);
+  const githubMatch = text.match(/(?:github\.com\/|github:?\s*)([a-zA-Z0-9\-]+)/i);
+  
+  // Extract name (first significant line before email)
+  let fullName = 'Your Name';
+  const emailIndex = lines.findIndex(l => l.includes(emailMatch?.[0] || '@@'));
+  const nameCandidates = lines.slice(0, Math.max(3, emailIndex));
+  
+  for (const line of nameCandidates) {
+    if (line.length >= 2 && line.length <= 50 && 
+        !line.includes('@') && 
+        !line.match(/[\d\+]{8,}/) &&
+        !/skills|experience|education|resume|cv/i.test(line)) {
+      fullName = line;
+      break;
+    }
+  }
+  
+  // Extract title (job title keywords near name)
+  let title = '';
+  const titleKeywords = ['engineer', 'developer', 'designer', 'manager', 'analyst', 'architect', 'lead', 'senior'];
+  for (const line of lines.slice(0, 8)) {
+    if (line !== fullName && titleKeywords.some(kw => line.toLowerCase().includes(kw)) && line.length < 100) {
+      title = line;
+      break;
+    }
+  }
+  
+  // Extract summary (look for summary section or first paragraph)
+  let summary = '';
+  const summaryKeywords = ['summary', 'objective', 'profile', 'about'];
+  for (let i = 0; i < Math.min(lines.length, 20); i++) {
+    const lineLower = lines[i].toLowerCase();
+    if (summaryKeywords.some(kw => lineLower.includes(kw)) && lines[i].length < 100) {
+      const summaryLines = lines.slice(i + 1, i + 6).filter(l => l.length > 50);
+      if (summaryLines.length > 0) {
+        summary = summaryLines.join(' ').substring(0, 500);
+        break;
+      }
+    }
+  }
+  
+  // ==================== EXTRACT SKILLS ====================
+  
+  const skills: CVData['skills'] = [];
+  const skillsIndex = lines.findIndex(l => /^skills/i.test(l.trim()) && l.length < 50);
+  
+  if (skillsIndex >= 0) {
+    const nextSection = lines.findIndex((l, idx) => 
+      idx > skillsIndex && /^(projects?|certifications?|languages?)/i.test(l.trim())
+    );
+    const skillsEnd = nextSection > 0 ? nextSection : Math.min(skillsIndex + 15, lines.length);
+    const skillsText = lines.slice(skillsIndex + 1, skillsEnd).join(' ');
+    
+    const skillTokens = skillsText.split(/[,;•\-\n]/).map(s => s.trim()).filter(s => s.length > 1 && s.length < 50);
+    
+    const categories = {
+      'Languages': ['java', 'python', 'javascript', 'typescript', 'c++', 'c#', 'ruby', 'go'],
+      'Frameworks': ['react', 'angular', 'vue', 'spring', 'django', 'flask', 'express', 'next.js'],
+      'Databases': ['sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'oracle'],
+      'Tools': ['git', 'docker', 'kubernetes', 'jenkins', 'aws', 'azure', 'gcp']
+    };
+    
+    let skillId = 0;
+    for (const token of skillTokens) {
+      const tokenLower = token.toLowerCase();
+      let category = 'Other';
+      
+      for (const [cat, keywords] of Object.entries(categories)) {
+        if (keywords.some(kw => tokenLower.includes(kw))) {
+          category = cat;
+          break;
+        }
+      }
+      
+      skills.push({
+        id: `skill-${skillId++}`,
+        name: token,
+        category
+      });
+    }
+  }
+  
+  // ==================== EXTRACT EXPERIENCE ====================
+  
+  console.log('🔍 DEBUG PARSER - Looking for EXPERIENCE section...');
+  
+  const experiences: CVData['experiences'] = [];
+  // Match "EXPERIENCE" or "WORK EXPERIENCE" or "WORK" at start of line
+  const expIndex = lines.findIndex(l => {
+    const trimmed = l.trim().toLowerCase();
+    return (trimmed === 'experience' || 
+            trimmed === 'work experience' || 
+            trimmed === 'work' ||
+            trimmed.startsWith('experience') ||
+            trimmed.startsWith('work experience')) && 
+           l.length < 100;
+  });
+  
+  console.log('Experience section found at index:', expIndex);
+  
+  if (expIndex >= 0) {
+    const eduIndex = lines.findIndex((l, idx) => idx > expIndex && /^education/i.test(l.trim()));
+    const expEnd = eduIndex > 0 ? eduIndex : Math.min(expIndex + 50, lines.length);
+    
+    let currentExp: any = null;
+    let expId = 0;
+    
+    for (let i = expIndex + 1; i < expEnd; i++) {
+      const line = lines[i];
+      const lineLower = line.toLowerCase();
+      
+      // Stop at education section
+      if (/^education/i.test(line.trim())) break;
+      
+      // Detect job title (capitalized, contains job keywords)
+      const isJobTitle = (
+        line.length > 5 && line.length < 150 &&
+        /[A-Z]/.test(line[0]) &&
+        /(engineer|developer|designer|manager|analyst|lead|director|specialist|architect)/i.test(line) &&
+        !/(university|college|bachelor|master)/i.test(line)
+      );
+      
+      if (isJobTitle) {
+        if (currentExp) experiences.push(currentExp);
+        
+        currentExp = {
+          id: `exp-${expId++}`,
+          position: line,
+          company: '',
+          location: '',
+          startDate: '',
+          endDate: '',
+          current: false,
+          description: '',
+          achievements: []
+        };
+      }
+      else if (currentExp && !currentExp.company) {
+        const yearMatch = line.match(/\b(19|20)\d{2}\b/);
+        if (yearMatch) {
+          currentExp.company = line.substring(0, line.indexOf(yearMatch[0])).trim().replace(/[•\-–|]/g, '').trim();
+          const dateMatch = line.match(/((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{4})\s*[-–to]\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{4}|Present|Current)/i);
+          if (dateMatch) {
+            currentExp.startDate = dateMatch[1];
+            currentExp.endDate = dateMatch[2];
+            currentExp.current = /present|current/i.test(dateMatch[2]);
+          }
+        } else {
+          currentExp.company = line.replace(/[•\-–|]/g, '').trim();
+        }
+      }
+      else if (currentExp && line.length > 20) {
+        if (/^[•\-–*]/.test(line)) {
+          currentExp.achievements.push(line.replace(/^[•\-–*]\s*/, '').trim());
+        } else if (!currentExp.description && line.length > 50) {
+          currentExp.description = line.substring(0, 300);
+        }
+      }
+    }
+    
+    if (currentExp) experiences.push(currentExp);
+  }
+  
+  // ==================== EXTRACT EDUCATION ====================
+  
+  console.log('🔍 DEBUG PARSER - Looking for EDUCATION section...');
+  
+  const education: CVData['education'] = [];
+  // Match "EDUCATION" at start of line
+  const eduIndex = lines.findIndex(l => {
+    const trimmed = l.trim().toLowerCase();
+    return (trimmed === 'education' || trimmed.startsWith('education')) && l.length < 100;
+  });
+  
+  console.log('Education section found at index:', eduIndex);
+  
+  if (eduIndex >= 0) {
+    const skillsStart = lines.findIndex((l, idx) => idx > eduIndex && /^skills/i.test(l.trim()));
+    const eduEnd = skillsStart > 0 ? skillsStart : Math.min(eduIndex + 20, lines.length);
+    
+    let currentEdu: any = null;
+    let eduId = 0;
+    
+    for (let i = eduIndex + 1; i < eduEnd; i++) {
+      const line = lines[i];
+      
+      if (/^skills/i.test(line.trim())) break;
+      
+      const isDegree = /bachelor|master|phd|b\.?s\.?|m\.?s\.?/i.test(line);
+      
+      if (isDegree && line.length < 150) {
+        if (currentEdu) education.push(currentEdu);
+        
+        const degreeMatch = line.match(/(bachelor|master|phd|b\.?s\.?|m\.?s\.?)(?:\s+(?:of|in)\s+)?(.+)?/i);
+        currentEdu = {
+          id: `edu-${eduId++}`,
+          degree: degreeMatch ? degreeMatch[1] : line,
+          field: degreeMatch && degreeMatch[2] ? degreeMatch[2].trim() : '',
+          school: '',
+          location: '',
+          startDate: '',
+          endDate: '',
+          gpa: '',
+          achievements: []
+        };
+      }
+      else if (currentEdu && !currentEdu.school && line.length > 3) {
+        const yearMatch = line.match(/\b(19|20)\d{2}\b/);
+        if (yearMatch) {
+          currentEdu.school = line.substring(0, line.indexOf(yearMatch[0])).trim().replace(/[•\-–|]/g, '').trim();
+          currentEdu.endDate = yearMatch[0];
+        } else {
+          currentEdu.school = line.replace(/[•\-–|]/g, '').trim();
+        }
+      }
+    }
+    
+    if (currentEdu) education.push(currentEdu);
+  }
+  
+  // ==================== EXTRACT PROJECTS ====================
+  
+  console.log('🔍 DEBUG PARSER - Looking for PROJECTS section...');
+  
+  const projects: CVData['projects'] = [];
+  // Match "PROJECTS" or "PROJECT" at start of line
+  const projectIndex = lines.findIndex(l => {
+    const trimmed = l.trim().toLowerCase();
+    return (trimmed === 'projects' || 
+            trimmed === 'project' || 
+            trimmed.startsWith('projects') || 
+            trimmed.startsWith('project')) && 
+           l.length < 100;
+  });
+  
+  console.log('Projects section found at index:', projectIndex);
+  
+  if (projectIndex >= 0) {
+    const certsIndex = lines.findIndex((l, idx) => idx > projectIndex && /^certifications?/i.test(l.trim()));
+    const projectEnd = certsIndex > 0 ? certsIndex : Math.min(projectIndex + 30, lines.length);
+    
+    let currentProject: any = null;
+    let projId = 0;
+    
+    for (let i = projectIndex + 1; i < projectEnd; i++) {
+      const line = lines[i];
+      
+      if (/^certifications?/i.test(line.trim())) break;
+      
+      const isProjectTitle = (
+        line.length > 5 && line.length < 150 &&
+        /[A-Z]/.test(line[0]) &&
+        !/bachelor|master|phd/i.test(line)
+      );
+      
+      if (isProjectTitle && (!currentProject || currentProject.description)) {
+        if (currentProject) projects.push(currentProject);
+        
+        currentProject = {
+          id: `project-${projId++}`,
+          name: line,
+          description: '',
+          technologies: [],
+          role: '',
+          duration: '',
+          achievements: []
+        };
+      }
+      else if (currentProject && line.length > 20) {
+        if (/^[•\-–*]/.test(line)) {
+          currentProject.achievements.push(line.replace(/^[•\-–*]\s*/, '').trim());
+        } else if (!currentProject.description) {
+          currentProject.description = line.substring(0, 300);
+        }
+      }
+    }
+    
+    if (currentProject) projects.push(currentProject);
+  }
+  
+  const result = {
+    personalInfo: {
+      fullName,
+      title: title || 'Your Professional Title',
+      email: emailMatch?.[0] || '',
+      phone: phoneMatch?.[0] || '',
+      location: '',
+      linkedin: linkedinMatch ? `https://linkedin.com/in/${linkedinMatch[1]}` : '',
+      github: githubMatch ? `https://github.com/${githubMatch[1]}` : '',
+      website: '',
+      summary: summary || 'Add your professional summary here. Click "Auto Edit" to get AI-powered improvements.'
+    },
+    experiences,
+    education,
+    skills,
+    projects,
+    certifications: [],
+    languages: []
+  };
+  
+  console.log('═══════════════════════════════════════════════════');
+  console.log('📋 PARSED CV DATA:');
+  console.log('═══════════════════════════════════════════════════');
+  console.log('Personal Info:', {
+    name: result.personalInfo.fullName,
+    title: result.personalInfo.title,
+    email: result.personalInfo.email,
+    phone: result.personalInfo.phone,
+    linkedin: result.personalInfo.linkedin,
+    github: result.personalInfo.github,
+    summaryLength: result.personalInfo.summary?.length || 0
+  });
+  console.log('Experiences:', result.experiences.length, result.experiences);
+  console.log('Education:', result.education.length, result.education);
+  console.log('Projects:', result.projects.length, result.projects);
+  console.log('Skills:', result.skills.length, result.skills.slice(0, 5));
+  console.log('═══════════════════════════════════════════════════');
+  
+  return result;
+}
 
 interface CVUploaderProps {
   selectedTemplate: CVTemplate;
   onCVUploaded: (cvData: CVData) => void;
-  // Called when AI review is ready (after analysis)
   onReviewReady?: (reviewData: any) => void;
   onStartFromScratch: () => void;
 }
@@ -43,295 +392,143 @@ export default function CVUploader({
     setProgress('📄 Reading PDF file...');
 
     try {
-      // Step 1: Extract text from PDF
-      const extractResult = await extractTextFromPDF(file);
+      // Step 1: Extract text from PDF (Local - No API)
+      const extractResult = await pdfExtractor.extractText(file);
       
       if (!extractResult.success) {
-        throw new Error(extractResult.error || 'Failed to extract text from PDF');
+        const error = (extractResult as { success: false; error: Error }).error;
+        throw error || new Error('Failed to extract text from PDF');
       }
 
-      setProgress('🤖 AI analyzing your CV... (This may take 10-30 seconds)');
+      setProgress('📝 Parsing CV structure...');
       
-      // Step 2: Analyze with AI (with automatic retry)
-      const analysisResult = await analyzeCVWithAI(extractResult.extractedText);
-
-      setProgress('✨ Generating suggestions...');
-
-      // Run AI review on the extracted/parsed CV data
-      const cvParsed = analysisResult.cvData as CVData;
-      const review = await reviewCVWithAI(cvParsed);
-
-      // Step 3: Complete - notify parent with CV data and review
-      setTimeout(() => {
-        onCVUploaded(cvParsed);
-        if (onReviewReady) onReviewReady(review);
-        setRetryCount(0);
-      }, 500);
-
-    } catch (err) {
-      console.error('Error processing CV:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to process CV';
+      const extractedData = (extractResult as { success: true; data: any }).data;
+      const extractedText = extractedData.text; // PDFExtractionResult has { text, pageCount, metadata }
       
-      // Check if this is a rate limit error that returned fallback data
-      // In this case, we should still proceed but show a warning
-      if (errorMessage.includes('AI-enhanced suggestions')) {
-        console.log('[CVUploader] Proceeding with basic parsed data');
-        // Error is actually a success with limited data - no need to show error
-        setIsProcessing(false);
-        setProgress('');
-        return;
-      }
+      // Step 2: AI Parse CV structure (1 API call)
+      console.log('[CVUploader] Calling AI analyzer...');
+      const analyzeResult = await cvAnalyzer.analyze(extractedText);
       
-      // Show user-friendly error message
-      if (errorMessage.includes('429') || 
-          errorMessage.includes('Resource exhausted') || 
-          errorMessage.includes('temporarily busy') ||
-          errorMessage.includes('quota exceeded')) {
-        setError('⚠️ AI service is temporarily busy due to high usage.\n\n💡 Options:\n\n1️⃣ Wait 1-2 minutes and try uploading again\n2️⃣ Click "Start from Blank" below to fill in manually\n3️⃣ The system is auto-retrying in background...');
-      } else if (errorMessage.includes('API key') || errorMessage.includes('configuration')) {
-        setError('❌ AI service configuration error.\n\nPlease contact support or use "Start from Blank" option.');
+      let parsedCV: CVData;
+      
+      if (analyzeResult.success) {
+        parsedCV = (analyzeResult as { success: true; data: any }).data.cvData;
+        console.log('[CVUploader] ✓ AI parsing successful');
       } else {
-        setError(`❌ ${errorMessage}\n\n💡 You can still create your CV by clicking "Start from Blank" below.`);
+        console.warn('[CVUploader] AI parsing failed, using fallback:', analyzeResult);
+        // Fallback to basic parsing if AI fails
+        parsedCV = parseExtractedText(extractedText);
+      }
+      
+      // Pass CV data to parent immediately (for display)
+      onCVUploaded(parsedCV);
+      
+      setProgress('✨ Analyzing CV quality (AI Review)...');
+      
+      // Step 3: AI Review (1 API call)
+      const reviewResult = await cvReviewer.review(parsedCV);
+      
+      if (reviewResult.success) {
+        const reviewData = (reviewResult as { success: true; data: any }).data;
+        if (onReviewReady) {
+          onReviewReady(reviewData);
+        }
+        setProgress('✅ CV uploaded and reviewed successfully!');
+      } else {
+        // Review failed but CV is already displayed
+        console.warn('[CVUploader] Review failed:', reviewResult);
+        setProgress('✅ CV uploaded (review skipped due to API limit)');
       }
       
       setIsProcessing(false);
-      setProgress('');
+    } catch (err: any) {
+      console.error('[CVUploader] Error:', err);
+      setError(err?.message || 'Failed to process CV. Please try again.');
+      setIsProcessing(false);
     }
   }, [onCVUploaded, onReviewReady]);
 
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
-    const files = Array.from(e.dataTransfer.files);
-    const pdfFile = files.find(file => file.type === 'application/pdf');
-    
-    if (pdfFile) {
-      await processCV(pdfFile);
+
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf') {
+      processCV(file);
     } else {
       setError('Please upload a PDF file');
     }
   }, [processCV]);
 
-  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type === 'application/pdf') {
-      await processCV(file);
-    } else {
-      setError('Please select a PDF file');
+    if (file) {
+      processCV(file);
     }
   }, [processCV]);
 
   return (
-    <div className="max-w-4xl mx-auto animate-fade-in-up">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold gradient-text mb-2">
-          Upload Your CV
-        </h2>
-        <p className="text-gray-300">
-          Upload your existing CV or start from scratch
-        </p>
-      </div>
-
-      {/* Drag & Drop Area */}
+    <div className="w-full max-w-2xl mx-auto p-6">
+      {/* Upload Area */}
       <div
-        className={`relative border-4 border-dashed rounded-3xl p-12 transition-all duration-300 ${
-          isDragging
-            ? 'border-purple-500 glass-effect scale-105 glow-effect'
-            : 'glass-effect border-white/20 hover:border-purple-400'
-        } ${isProcessing ? 'pointer-events-none opacity-60' : ''}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        className={`
+          border-2 border-dashed rounded-lg p-12 text-center transition-all
+          ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+          ${isProcessing ? 'opacity-50 pointer-events-none' : ''}
+        `}
       >
-        {!isProcessing ? (
-          <>
-            <div className="text-center">
-              <div className="text-8xl mb-6 animate-float">📎</div>
-              <h3 className="text-2xl font-bold text-white mb-2">
-                Drop your CV PDF here
-              </h3>
-              <p className="text-gray-300 mb-6">
-                AI will automatically extract and optimize your information
-              </p>
-
-              {/* Upload Button */}
-              <label className="inline-block">
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  disabled={isProcessing}
-                />
-                <span className="px-8 py-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl font-medium cursor-pointer hover:from-purple-600 hover:to-blue-600 transition-all duration-300 inline-block shadow-lg hover:shadow-xl glow-effect">
-                  📤 Choose PDF File
-                </span>
-              </label>
-
-              {/* Divider */}
-              <div className="flex items-center gap-4 my-8">
-                <div className="flex-1 border-t border-white/20" />
-                <span className="text-gray-400 font-medium">OR</span>
-                <div className="flex-1 border-t border-white/20" />
-              </div>
-
-              {/* Start from Scratch */}
-              <button
-                onClick={onStartFromScratch}
-                className="px-8 py-4 border-2 border-purple-500 text-purple-400 rounded-xl font-medium hover:bg-purple-500/20 transition-all duration-300"
-                disabled={isProcessing}
-              >
-                ✏️ Start from Blank Template
-              </button>
-            </div>
-
-            {/* Features */}
-            <div className="mt-12 grid grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-3xl mb-2">🤖</div>
-                <p className="text-sm text-white font-medium">AI Auto-Extract</p>
-                <p className="text-xs text-gray-400">Automatic data extraction</p>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl mb-2">⭐</div>
-                <p className="text-sm text-white font-medium">STAR Method</p>
-                <p className="text-xs text-gray-400">Optimize achievements</p>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl mb-2">📊</div>
-                <p className="text-sm text-white font-medium">Smart Metrics</p>
-                <p className="text-xs text-gray-400">Add quantifiable results</p>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="text-center">
-            <div className="text-8xl mb-6 animate-bounce">🚀</div>
-            <h3 className="text-2xl font-bold text-white mb-4">
-              Processing Your CV
-            </h3>
-            <p className="text-gray-300 mb-8">
-              {progress}
-            </p>
-            
-            {/* Progress Bar */}
-            <div className="max-w-md mx-auto">
-              <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-purple-500 to-blue-500 animate-pulse" 
-                     style={{ width: '70%' }} />
-              </div>
-            </div>
-
-            <p className="text-sm text-gray-500 mt-4">
-              {retryCount > 0 
-                ? `🔄 Auto-retrying due to high server load... (attempt ${retryCount + 1}/3)` 
-                : 'This may take 10-30 seconds...'}
-            </p>
-            
-            {retryCount > 0 && (
-              <div className="mt-3 glass-effect border border-yellow-500/30 rounded-lg p-3 max-w-md mx-auto">
-                <p className="text-xs text-yellow-300 text-center">
-                  ⚠️ AI service is busy. Waiting before retry...
-                </p>
-              </div>
-            )}
+        {isProcessing ? (
+          <div className="space-y-4">
+            <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+            <p className="text-gray-700 font-medium">{progress}</p>
           </div>
+        ) : (
+          <>
+            <div className="mb-4">
+              <svg className="w-16 h-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              Upload Your CV
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Drag and drop your CV (PDF) here, or click to browse
+            </p>
+            <label className="inline-block">
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <span className="px-6 py-3 bg-blue-500 text-white rounded-lg cursor-pointer hover:bg-blue-600 transition-colors inline-block">
+                Choose File
+              </span>
+            </label>
+          </>
         )}
       </div>
 
-      {/* Error Message */}
+      {/* Error Display */}
       {error && (
-        <div className={`mt-6 glass-effect rounded-xl p-6 flex items-start gap-4 animate-fade-in ${
-          error.includes('⚠️') 
-            ? 'border-2 border-yellow-500/50 bg-yellow-500/10' 
-            : 'border-2 border-red-500/50 bg-red-500/10'
-        }`}>
-          <span className="text-4xl flex-shrink-0">
-            {error.includes('⚠️') ? '⚠️' : '❌'}
-          </span>
-          <div className="flex-1">
-            <h4 className={`font-bold mb-2 text-lg ${
-              error.includes('⚠️') ? 'text-yellow-400' : 'text-red-400'
-            }`}>
-              {error.includes('⚠️') ? 'Temporary Issue' : 'Upload Failed'}
-            </h4>
-            <div className={`whitespace-pre-line text-sm leading-relaxed ${
-              error.includes('⚠️') ? 'text-yellow-200' : 'text-red-300'
-            }`}>
-              {error}
-            </div>
-            
-            {/* Retry button for rate limit errors */}
-            {(error.includes('429') || error.includes('busy') || error.includes('quota')) && (
-              <div className="mt-4 flex gap-3">
-                <button
-                  onClick={() => {
-                    setError('');
-                    // Re-trigger upload if we have the file
-                  }}
-                  className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-2"
-                >
-                  <span>🔄</span>
-                  <span>Try Again</span>
-                </button>
-                <button
-                  onClick={onStartFromScratch}
-                  className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-2"
-                >
-                  <span>✏️</span>
-                  <span>Start from Blank</span>
-                </button>
-              </div>
-            )}
-          </div>
+        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700">{error}</p>
         </div>
       )}
 
-      {/* Tips */}
-      <div className="mt-8 glass-effect border border-purple-500/30 rounded-xl p-6 glow-effect-pink">
-        <div className="flex items-start gap-4">
-          <span className="text-3xl animate-float">💡</span>
-          <div>
-            <h4 className="font-bold text-purple-300 mb-2">Tips for Best Results</h4>
-            <ul className="space-y-1 text-gray-300 text-sm">
-              <li className="flex items-start gap-2">
-                <span>•</span>
-                <span>Upload a clear, text-based PDF (not scanned images)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span>•</span>
-                <span>Make sure your CV includes contact info, experience, and skills</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span>•</span>
-                <span>AI will optimize your content using STAR method and action verbs</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span>•</span>
-                <span className="text-yellow-300">If AI is busy, the system will auto-retry or use basic parsing</span>
-              </li>
-            </ul>
-          </div>
-        </div>
+      {/* Start from Scratch Option */}
+      <div className="mt-6 text-center">
+        <button
+          onClick={onStartFromScratch}
+          className="text-blue-600 hover:text-blue-700 underline"
+        >
+          Or start building from scratch →
+        </button>
       </div>
-      
-      {/* Service Status Info */}
-      {error && (error.includes('429') || error.includes('busy') || error.includes('quota')) && (
-        <div className="mt-4 glass-effect border border-blue-500/30 rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">ℹ️</span>
-            <div>
-              <h4 className="font-bold text-blue-300 mb-2">Why is this happening?</h4>
-              <p className="text-sm text-gray-300 leading-relaxed">
-                Google's AI service has usage limits to ensure fair access for all users. 
-                This is temporary and typically resolves within 1-2 minutes. 
-                The system is designed to automatically retry and fall back to basic parsing if needed.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

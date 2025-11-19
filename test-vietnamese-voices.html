@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Vietnamese Speech Voices</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        .voice-card {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .voice-card.vietnamese {
+            background: #1a3a1a;
+            border-color: #4CAF50;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .info {
+            background: #2a2a3a;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .test-text {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎤 Test Vietnamese Speech Voices</h1>
+    
+    <div class="info">
+        <h3>Test Text</h3>
+        <textarea class="test-text" id="testText" rows="3">Cảm ơn bạn đã chia sẻ. Chúng ta chuyển sang câu hỏi tiếp theo nhé.</textarea>
+        <button onclick="testAllVietnameseVoices()">🔊 Test All Vietnamese Voices</button>
+        <button onclick="testBestVoice()">⭐ Test Best Voice (Google/Microsoft)</button>
+    </div>
+
+    <h2>Available Voices:</h2>
+    <div id="voiceList"></div>
+
+    <script>
+        let voices = [];
+        
+        function loadVoices() {
+            voices = window.speechSynthesis.getVoices();
+            console.log('📢 Total voices available:', voices.length);
+            
+            const voiceList = document.getElementById('voiceList');
+            voiceList.innerHTML = '';
+            
+            // Vietnamese voices
+            const vietnameseVoices = voices.filter(v => v.lang.startsWith('vi'));
+            console.log('🇻🇳 Vietnamese voices:', vietnameseVoices.length);
+            
+            if (vietnameseVoices.length > 0) {
+                const header = document.createElement('h3');
+                header.textContent = `🇻🇳 Vietnamese Voices (${vietnameseVoices.length})`;
+                header.style.color = '#4CAF50';
+                voiceList.appendChild(header);
+                
+                vietnameseVoices.forEach(voice => {
+                    const card = createVoiceCard(voice, true);
+                    voiceList.appendChild(card);
+                });
+            } else {
+                const warning = document.createElement('div');
+                warning.className = 'info';
+                warning.style.background = '#3a1a1a';
+                warning.style.borderColor = '#f44336';
+                warning.innerHTML = '<h3>⚠️ No Vietnamese voices found!</h3><p>Your browser/system does not have Vietnamese TTS voices installed.</p>';
+                voiceList.appendChild(warning);
+            }
+            
+            // All other voices
+            const otherVoices = voices.filter(v => !v.lang.startsWith('vi'));
+            const otherHeader = document.createElement('h3');
+            otherHeader.textContent = `🌐 Other Voices (${otherVoices.length})`;
+            voiceList.appendChild(otherHeader);
+            
+            otherVoices.slice(0, 20).forEach(voice => { // Show only first 20
+                const card = createVoiceCard(voice, false);
+                voiceList.appendChild(card);
+            });
+        }
+        
+        function createVoiceCard(voice, isVietnamese) {
+            const card = document.createElement('div');
+            card.className = 'voice-card' + (isVietnamese ? ' vietnamese' : '');
+            
+            const isGoogle = voice.name.toLowerCase().includes('google');
+            const isMicrosoft = voice.name.toLowerCase().includes('microsoft');
+            const quality = isGoogle || isMicrosoft ? '⭐ HIGH QUALITY' : '';
+            
+            card.innerHTML = `
+                <strong>${voice.name}</strong> ${quality}<br>
+                <small>Language: ${voice.lang} | Local: ${voice.localService ? 'Yes' : 'No'} | Default: ${voice.default ? 'Yes' : 'No'}</small><br>
+                <button onclick="testVoice('${voice.name}')">🔊 Test</button>
+                <button onclick="testVoice('${voice.name}', 1.0, 1.0)">🔊 Rate 1.0 Pitch 1.0</button>
+                <button onclick="testVoice('${voice.name}', 0.9, 1.2)">🔊 Rate 0.9 Pitch 1.2</button>
+            `;
+            
+            return card;
+        }
+        
+        function testVoice(voiceName, rate = 1.0, pitch = 1.0) {
+            const text = document.getElementById('testText').value;
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voice = voices.find(v => v.name === voiceName);
+            
+            if (voice) {
+                utterance.voice = voice;
+                utterance.lang = voice.lang;
+                utterance.rate = rate;
+                utterance.pitch = pitch;
+                utterance.volume = 1.0;
+                
+                console.log('🔊 Testing voice:', {
+                    name: voice.name,
+                    lang: voice.lang,
+                    rate,
+                    pitch,
+                    text
+                });
+                
+                window.speechSynthesis.cancel(); // Stop any current speech
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+        
+        function testAllVietnameseVoices() {
+            const vietnameseVoices = voices.filter(v => v.lang.startsWith('vi'));
+            
+            if (vietnameseVoices.length === 0) {
+                alert('❌ No Vietnamese voices available!');
+                return;
+            }
+            
+            let index = 0;
+            const text = document.getElementById('testText').value;
+            
+            function speakNext() {
+                if (index >= vietnameseVoices.length) {
+                    console.log('✅ Finished testing all Vietnamese voices');
+                    return;
+                }
+                
+                const voice = vietnameseVoices[index];
+                console.log(`🔊 Testing voice ${index + 1}/${vietnameseVoices.length}: ${voice.name}`);
+                
+                const utterance = new SpeechSynthesisUtterance(`Giọng nói ${index + 1}: ${voice.name}. ${text}`);
+                utterance.voice = voice;
+                utterance.lang = voice.lang;
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                
+                utterance.onend = () => {
+                    index++;
+                    setTimeout(speakNext, 1000); // Wait 1 second between voices
+                };
+                
+                window.speechSynthesis.speak(utterance);
+            }
+            
+            speakNext();
+        }
+        
+        function testBestVoice() {
+            const vietnameseVoices = voices.filter(v => v.lang.startsWith('vi'));
+            
+            if (vietnameseVoices.length === 0) {
+                alert('❌ No Vietnamese voices available!');
+                return;
+            }
+            
+            // Find best voice: Google > Microsoft > Others
+            let bestVoice = vietnameseVoices.find(v => v.name.toLowerCase().includes('google')) ||
+                           vietnameseVoices.find(v => v.name.toLowerCase().includes('microsoft')) ||
+                           vietnameseVoices[0];
+            
+            console.log('⭐ Best voice found:', bestVoice.name);
+            
+            const text = document.getElementById('testText').value;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.voice = bestVoice;
+            utterance.lang = bestVoice.lang;
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+            
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        }
+        
+        // Load voices on page load
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+        loadVoices();
+    </script>
+</body>
+</html>

@@ -19,6 +19,17 @@ export interface TranscriptEntry {
   message: string;
   timestamp: number; // milliseconds since interview start
   isQuestion?: boolean;
+  // ✅ NEW: Link to question for accurate scoring
+  questionId?: number;
+  expectedAnswer?: string;
+}
+
+export interface QuestionAnswerPair {
+  questionId: number;
+  question: string;
+  expectedAnswer: string;
+  candidateAnswer?: string;
+  timestamp: number;
 }
 
 export interface InterviewSession {
@@ -26,8 +37,12 @@ export interface InterviewSession {
   startTime: number; // Unix timestamp in milliseconds
   endTime?: number; // Unix timestamp in milliseconds
   duration?: number; // in seconds
+  language?: string; // Interview language (vi, en, ja, zh, ko)
   
   interviewer: {
+    yearsOfExperience: any;
+    focusAreas: any;
+    interviewStyle: any;
     name: string;
     title: string;
     gender: string; // Changed from "male" | "female" to allow flexibility
@@ -42,6 +57,9 @@ export interface InterviewSession {
   };
   
   transcript: TranscriptEntry[];
+  
+  // ✅ NEW: Store questions with expected answers for accurate scoring
+  questionsAsked?: QuestionAnswerPair[];
   
   assessment?: AssessmentResult;
 }
