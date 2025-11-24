@@ -112,6 +112,7 @@ export const UserProfile = pgTable("userProfile", {
   linkedIn: text("linkedIn"),
   github: text("github"),
   avatar: text("avatar"),
+  location: text("location"), // User's city/location
   isMentor: boolean("isMentor").default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")

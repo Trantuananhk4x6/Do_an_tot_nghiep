@@ -423,8 +423,8 @@ Remember: Every answer must include ACTUAL data from the resume in parentheses o
         companyName: companyName,
         resumeName: resumeReponse[0].name,
         resumeId: parseInt(resumeId),
-        language: language, // Save the selected language
-      })
+        language: language || "en", // Save the selected language
+      } as any)
       .returning();
 
     console.log("Interview set created:", interviewSet[0]);

@@ -17,9 +17,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Email not found' }, { status: 400 });
     }
 
-    const courses = await db.query.MentorCourse.findMany({
-      where: eq(MentorCourse.mentorEmail, userEmail),
-    });
+    const courses = await db
+      .select()
+      .from(MentorCourse)
+      .where(eq(MentorCourse.mentorEmail, userEmail));
 
     return NextResponse.json({ courses }, { status: 200 });
   } catch (error) {
@@ -51,10 +52,13 @@ export async function POST(request: NextRequest) {
     console.log('[CREATE COURSE] User email:', userEmail);
 
     // Check if user is a mentor, auto-create profile if not exists
-    let profile = await db.query.UserProfile.findFirst({
-      where: eq(UserProfile.userEmail, userEmail),
-    });
-
+    const profiles = await db
+      .select()
+      .from(UserProfile)
+      .where(eq(UserProfile.userEmail, userEmail))
+      .limit(1);
+    
+    let profile = profiles[0];
     console.log('[CREATE COURSE] Existing profile:', profile);
 
     if (!profile) {
@@ -82,8 +86,17 @@ export async function POST(request: NextRequest) {
       console.log('[CREATE COURSE] Profile updated:', profile);
     }
 
-    const body = await request.json();
-    console.log('[CREATE COURSE] Request body:', body);
+    let body;
+    try {
+      body = await request.json();
+      console.log('[CREATE COURSE] Request body:', body);
+    } catch (parseError) {
+      console.error('[CREATE COURSE] JSON parse error:', parseError);
+      return NextResponse.json(
+        { message: 'Invalid request body', error: 'Failed to parse JSON' },
+        { status: 400 }
+      );
+    }
     
     const {
       title,
@@ -96,6 +109,35 @@ export async function POST(request: NextRequest) {
       portfolio,
       tags,
     } = body;
+
+    // Validate required fields
+    if (!title || !description || !industry || !scheduledDate) {
+      return NextResponse.json(
+        { message: 'Missing required fields: title, description, industry, and scheduledDate are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!maxParticipants || maxParticipants < 1) {
+      return NextResponse.json(
+        { message: 'maxParticipants must be at least 1' },
+        { status: 400 }
+      );
+    }
+
+    if (price === undefined || price < 0) {
+      return NextResponse.json(
+        { message: 'price must be a non-negative number' },
+        { status: 400 }
+      );
+    }
+
+    if (!duration || duration < 30) {
+      return NextResponse.json(
+        { message: 'duration must be at least 30 minutes' },
+        { status: 400 }
+      );
+    }
 
     // Generate Google Meet link (simplified - in production, use Google Calendar API)
     const meetingLink = `https://meet.google.com/${Math.random().toString(36).substring(7)}`;
@@ -126,8 +168,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ course: course[0] }, { status: 201 });
   } catch (error) {
     console.error('[CREATE COURSE] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorDetails = error instanceof Error ? error.stack : String(error);
+    console.error('[CREATE COURSE] Error details:', errorDetails);
     return NextResponse.json(
-      { message: 'Failed to create course', error: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        message: 'Failed to create course', 
+        error: errorMessage 
+      },
       { status: 500 }
     );
   }

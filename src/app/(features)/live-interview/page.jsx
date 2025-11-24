@@ -31,6 +31,8 @@ const Page = () => {
   const videoRef = useRef(null);
   const timerRef = useRef(null);
   const autoModeTimeoutRef = useRef(null);
+  const transcriptContainerRef = useRef(null);
+  const messageRefs = useRef(new Map());
 
   // Debug: Log messages whenever they change
   useEffect(() => {
@@ -50,6 +52,14 @@ const Page = () => {
     }
     return () => clearInterval(timerRef.current);
   }, [isSharing]);
+
+  // Auto-scroll transcript to bottom when new transcript lines are added
+  useEffect(() => {
+    if (transcriptContainerRef.current) {
+      // Scroll to bottom after the component has rendered the new text
+      transcriptContainerRef.current.scrollTop = transcriptContainerRef.current.scrollHeight;
+    }
+  }, [transcript]);
 
   // Auto mode: Detect questions and auto-answer with minimal delay
   useEffect(() => {
@@ -446,7 +456,7 @@ const Page = () => {
             </svg>
             Transcript from your interview
           </h2>
-          <div id="transcript" onMouseUp={handleTextSelection}>
+          <div id="transcript" ref={transcriptContainerRef} onMouseUp={handleTextSelection} className="overflow-auto max-h-[28rem]">
             <div className={`bg-white/5 backdrop-blur-sm p-4 rounded-xl border min-h-[200px] transition-all duration-300 ${
               mode === "manual" && selectedText 
                 ? "border-purple-500/50 shadow-lg shadow-purple-500/20" 
@@ -538,6 +548,17 @@ const Page = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                         </svg>
                         AI Assistant
+                        {/* Nút Copy chỉ hiển thị với câu trả lời của AI */}
+                        <button
+                          className="ml-2 px-2 py-1 text-xs rounded bg-purple-600 hover:bg-purple-700 text-white transition-all duration-200"
+                          style={{ display: message.role === "assistant" ? "inline-block" : "none" }}
+                          onClick={() => {
+                            navigator.clipboard.writeText(message.content);
+                            alert("Đã copy câu trả lời của AI!");
+                          }}
+                        >
+                          Copy
+                        </button>
                       </>
                     )}
                   </div>
@@ -546,7 +567,59 @@ const Page = () => {
                       ? "bg-purple-500/10 border-purple-500/30" 
                       : "bg-pink-500/10 border-pink-500/30"
                   }`}>
-                    <Markdown>{message.content}</Markdown>
+                    <div ref={(el) => {
+                      if (el) messageRefs.current.set(message.id, el);
+                      else messageRefs.current.delete(message.id);
+                    }}>
+                      <Markdown>{message.content}</Markdown>
+                    </div>
+                    {/* Ask AI (selection-aware) button below the message content for assistant responses */}
+                    {message.role === "assistant" && (
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          className="px-3 py-1 text-xs rounded bg-white/5 hover:bg-white/10 text-gray-200 border border-white/10 transition-all duration-200"
+                          aria-label="Ask AI about selection"
+                          disabled={isLoading}
+                          onClick={async () => {
+                            try {
+                              // Check selection within this message's content
+                              let selectedText = "";
+                              try {
+                                const sel = window.getSelection();
+                                if (sel && !sel.isCollapsed) {
+                                  const container = messageRefs.current.get(message.id);
+                                  if (container && container.contains(sel.anchorNode) && container.contains(sel.focusNode)) {
+                                    selectedText = sel.toString().trim();
+                                  }
+                                }
+                              } catch (selErr) {
+                                console.error("Selection check failed:", selErr);
+                              }
+
+                              if (selectedText && selectedText.length > 1) {
+                                // Send selected text
+                                await append({ role: "user", content: selectedText });
+                                setLastQuestionSent(selectedText);
+                                console.log("[Live Interview] Sent selected text as question:", selectedText.substring(0, 120));
+                              } else if (!selectedText) {
+                                // No selection; send full AI answer content
+                                await append({ role: "user", content: message.content });
+                                setLastQuestionSent(message.content);
+                                console.log("[Live Interview] Sent full AI answer as question:", message.content.substring(0, 120));
+                              } else {
+                                // Selected text too short
+                                alert("⚠️ Please select a more substantial portion of the AI answer to ask about (or just click Ask to send the full answer). ");
+                              }
+                            } catch (err) {
+                              console.error("[Live Interview] Error sending message from AI answer selection:", err);
+                              alert("⚠️ Không thể gửi câu hỏi: " + (err.message || "Unknown error"));
+                            }
+                          }}
+                        >
+                          Ask AI
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Message } from '../../types';
 import { toast } from '@/hooks/use-toast';
 import { useSearchParams } from 'next/navigation';
 
-export default function MessagesPage() {
+function MessagesContent() {
   const { user } = useUser();
   const searchParams = useSearchParams();
   const selectedEmail = searchParams.get('email');
@@ -213,5 +213,19 @@ export default function MessagesPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto p-6 max-w-7xl h-[calc(100vh-200px)] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Loading messages...</p>
+        </div>
+      </div>
+    }>
+      <MessagesContent />
+    </Suspense>
   );
 }

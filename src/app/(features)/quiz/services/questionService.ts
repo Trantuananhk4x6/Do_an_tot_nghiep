@@ -28,14 +28,6 @@
 
 // };
 // utils/pdfUtils.ts
-// @ts-ignore
-let pdfjsLib: any;
-if (typeof window !== "undefined") {
-  // @ts-ignore
-  pdfjsLib = require("pdfjs-dist/build/pdf");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
-}
-//pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
 import { QuestionResponse } from "../models/Question";
 import type { QuizQuestion, QuizLevel } from "@/data/quiz-questions";
@@ -103,34 +95,12 @@ export const extractTextFromPDF = async (file: File): Promise<string> => {
   try {
     console.log("[extractTextFromPDF] Bắt đầu đọc file PDF:", file);
 
-    const arrayBuffer = await file.arrayBuffer();
-    console.log("[extractTextFromPDF] Đã đọc arrayBuffer:", arrayBuffer);
-console.log("[extractTextFromPDF] Chuẩn bị gọi getDocument");
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    console.log("[extractTextFromPDF] Đã load PDF, số trang:", pdf.numPages);
+    // Dynamically import PDF utilities (client-side only)
+    const { extractTextFromPDF: extractPDF } = await import('@/lib/pdf-utils.client');
+    const text = await extractPDF(file);
 
-    let fullText = "";
-
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      try {
-        console.log(`[extractTextFromPDF] Đang đọc trang ${pageNum}`);
-        const page = await pdf.getPage(pageNum);
-        const textContent = await page.getTextContent();
-        console.log(`[extractTextFromPDF] textContent trang ${pageNum}:`, textContent);
-
-        const pageText = textContent.items
-          .map((item: any) => ("str" in item ? item.str : ""))
-          .join(" ");
-
-        fullText += pageText + "\n";
-      } catch (pageErr) {
-        console.error(`[extractTextFromPDF] Lỗi khi đọc trang ${pageNum}:`, pageErr);
-      }
-    }
-
-    console.log("[extractTextFromPDF] Kết quả fullText:", fullText);
-
-    return fullText.trim();
+    console.log("[extractTextFromPDF] Kết quả fullText:", text);
+    return text;
   } catch (err) {
     console.error("[extractTextFromPDF] Lỗi tổng thể khi đọc PDF:", err);
     throw new Error("Không thể trích xuất nội dung từ file PDF");
@@ -507,8 +477,8 @@ Return ONLY valid JSON in this exact format (no markdown code blocks, no extra t
   };
 
   try {
-    // Use gemini-2.0-flash-exp (experimental but working) or fall back to gemini-pro
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+    // Use gemini-2.0-flash stable version
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
     
     console.log(`[generateQuestionsWithAI] Generating ${count} questions in ${language} for skills:`, skills);
     

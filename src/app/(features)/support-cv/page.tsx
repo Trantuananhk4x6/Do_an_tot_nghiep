@@ -12,6 +12,9 @@ import AutoEditLoadingDialog from '@/app/(features)/support-cv/components/AutoEd
 import { QueueStatus } from '@/components/ui/queue-status';
 import { QuotaStatusBanner } from '@/components/ui/quota-status-banner';
 import { cvEditor } from '@/app/(features)/support-cv/services/ai/editor.service';
+import { motion } from 'framer-motion';
+import Animated3DBackground from '@/components/ui/Animated3DBackground';
+import { FileText, Sparkles } from 'lucide-react';
 
 // Temporary type definition (will be replaced by new architecture)
 interface CVEditChange {
@@ -66,6 +69,7 @@ export default function SupportCVPage() {
   const [editedCV, setEditedCV] = useState<CVData | null>(null);
   const [autoEditChanges, setAutoEditChanges] = useState<CVEditChange[]>([]);
   const [rawSuggestions, setRawSuggestions] = useState<any[]>([]); // Store raw AI suggestions
+  const [showLanding, setShowLanding] = useState(state.currentStep === 'upload');
 
   const updateState = (updates: Partial<CVBuilderState>) => {
     setState(prev => ({ ...prev, ...updates }));
@@ -79,6 +83,7 @@ export default function SupportCVPage() {
 
   const handleCVUploaded = (cvData: CVData) => {
     // After upload, go to review step if review data available
+    setShowLanding(false);
     updateState({ cvData });
     // If review already produced (fallback or AI), go to review step
     setState(prev => ({ ...prev, cvData }));
@@ -232,7 +237,9 @@ export default function SupportCVPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="relative min-h-screen">
+      <Animated3DBackground />
+      
       {/* Quota Status Banner */}
       <QuotaStatusBanner />
       
@@ -243,34 +250,83 @@ export default function SupportCVPage() {
         currentStep={autoEditStep}
       />
       
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-      </div>
-      
       {/* Header */}
       <div className="relative z-10">
-        <div className="glass-effect border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center glow-effect">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
+        <motion.div 
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="border-b border-white/10"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex items-center gap-4 mb-8">
+              <motion.div
+                animate={{ 
+                  rotate: [0, 360],
+                  y: [0, -10, 0]
+                }}
+                transition={{ 
+                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
+                  y: { duration: 3, repeat: Infinity, ease: "easeInOut" }
+                }}
+                className="relative w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center"
+              >
+                {/* Animated glow effect */}
+                <motion.div
+                  animate={{ 
+                    boxShadow: [
+                      "0 0 20px rgba(139, 92, 246, 0.3)",
+                      "0 0 60px rgba(139, 92, 246, 0.8)",
+                      "0 0 20px rgba(139, 92, 246, 0.3)"
+                    ],
+                    scale: [1, 1.1, 1]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="absolute inset-0 rounded-xl"
+                />
+                {/* Rotating border */}
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                  className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-xl opacity-75 blur"
+                />
+                <FileText className="w-8 h-8 text-white relative z-10" />
+              </motion.div>
               <div>
-                <h1 className="text-3xl font-bold gradient-text">
+                <motion.h1 
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                  className="text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent"
+                >
                   CV Support
-                </h1>
-                <p className="text-gray-300 mt-1">
-                  AI-powered CV builder with STAR method optimization
-                </p>
+                </motion.h1>
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.6, delay: 0.4 }}
+                  className="flex items-center gap-2 mt-2"
+                >
+                  <motion.div
+                    animate={{ rotate: [0, 15, -15, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <Sparkles className="w-5 h-5 text-purple-400" />
+                  </motion.div>
+                  <p className="text-gray-300 text-lg">
+                    AI-powered CV builder with STAR method optimization
+                  </p>
+                </motion.div>
               </div>
             </div>
 
-            {/* Progress Steps */}
-            <div className="mt-8 flex items-center justify-center gap-2">
+            {/* Progress Steps with enhanced animations */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              className="flex items-center justify-center gap-2"
+            >
               {[
                 { key: 'upload', label: 'Upload', icon: '📤' },
                 { key: 'review', label: 'Review', icon: '📝' },
@@ -283,38 +339,206 @@ export default function SupportCVPage() {
                 
                 return (
                   <React.Fragment key={step.key}>
-                    <div className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                      isActive 
-                        ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg scale-105 glow-effect' 
-                        : isCompleted
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
-                        : 'glass-effect text-gray-400'
-                    }`}>
-                      <span className="text-xl">{step.icon}</span>
-                      <span className="font-medium">{step.label}</span>
-                    </div>
-                    {index < 3 && (
-                      <svg className="w-6 h-6 text-purple-500/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.1 }}
+                      whileHover={{ scale: 1.05 }}
+                      className={`relative flex items-center gap-2 px-6 py-3 rounded-xl transition-all ${
+                        isActive 
+                          ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg' 
+                          : isCompleted
+                          ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
+                          : 'glass-effect text-gray-400 border border-white/10'
+                      }`}
+                    >
+                      {isActive && (
+                        <>
+                          {/* Animated glow effect for active step */}
+                          <motion.div
+                            animate={{ 
+                              boxShadow: [
+                                "0 0 20px rgba(139, 92, 246, 0.4)",
+                                "0 0 40px rgba(139, 92, 246, 0.8)",
+                                "0 0 20px rgba(139, 92, 246, 0.4)"
+                              ]
+                            }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            className="absolute inset-0 rounded-xl"
+                          />
+                          {/* Shimmer effect */}
+                          <motion.div
+                            animate={{ x: [-200, 1000] }}
+                            transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+                            className="absolute inset-0 w-32 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                          />
+                        </>
+                      )}
+                      {isCompleted && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs z-20"
+                        >
+                          ✓
+                        </motion.div>
+                      )}
+                      <motion.span 
+                        animate={{ scale: isActive ? [1, 1.2, 1] : 1 }}
+                        transition={{ duration: 2, repeat: isActive ? Infinity : 0 }}
+                        className="text-2xl relative z-10"
+                      >
+                        {step.icon}
+                      </motion.span>
+                      <span className="font-semibold relative z-10">{step.label}</span>
+                    </motion.div>
+                    {index < 4 && (
+                      <motion.svg 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 + 0.2 }}
+                        className="w-6 h-6 text-purple-500/50" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+                      </motion.svg>
                     )}
                   </React.Fragment>
                 );
               })}
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Main Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {state.currentStep === 'upload' && (
-          <CVUploader
-            selectedTemplate={state.selectedTemplate!}
-            onCVUploaded={handleCVUploaded}
-            onStartFromScratch={handleStartFromScratch}
-            onReviewReady={handleReviewReady}
-          />
+        {showLanding && state.currentStep === 'upload' && (
+          <div className="mb-12">
+            {/* Hero Section */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center mb-12"
+            >
+              <motion.div 
+                className="relative inline-block mb-8"
+                animate={{ y: [0, -15, 0] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600/30 to-blue-600/30 blur-3xl animate-pulse" />
+                <div className="relative h-24 w-24 rounded-3xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center mx-auto shadow-2xl">
+                  <FileText className="h-12 w-12 text-white" />
+                </div>
+              </motion.div>
+
+              <h1 className="text-5xl font-bold mb-4">
+                <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+                  AI-Powered CV Builder
+                </span>
+              </h1>
+              <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+                Create professional, ATS-optimized CVs with intelligent suggestions powered by AI
+              </p>
+            </motion.div>
+
+            {/* Upload Section */}
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="relative mb-16"
+            >
+              <CVUploader
+                selectedTemplate={state.selectedTemplate!}
+                onCVUploaded={handleCVUploaded}
+                onStartFromScratch={handleStartFromScratch}
+                onReviewReady={handleReviewReady}
+              />
+            </motion.div>
+
+            {/* Features Grid */}
+            <div className="grid md:grid-cols-3 gap-6 mb-12">
+              {[
+                {
+                  icon: "🤖",
+                  title: "AI Analysis",
+                  description: "Get instant feedback on your CV with our advanced AI that analyzes content, formatting, and ATS compatibility",
+                  color: "from-purple-500/20 to-purple-600/20",
+                  delay: 0.3
+                },
+                {
+                  icon: "✨",
+                  title: "Smart Optimization",
+                  description: "Automatically improve your CV with STAR method optimization and keyword enhancement",
+                  color: "from-blue-500/20 to-blue-600/20",
+                  delay: 0.4
+                },
+                {
+                  icon: "📊",
+                  title: "ATS Friendly",
+                  description: "Ensure your CV passes Applicant Tracking Systems with optimized formatting and structure",
+                  color: "from-pink-500/20 to-pink-600/20",
+                  delay: 0.5
+                }
+              ].map((feature, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ y: 40, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: feature.delay }}
+                  className="relative group"
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                  <div className="relative glass-effect border border-purple-500/30 rounded-2xl p-6 hover:border-purple-500/50 transition-all duration-300 h-full">
+                    <div className="text-5xl mb-4">{feature.icon}</div>
+                    <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
+                    <p className="text-gray-400 leading-relaxed">{feature.description}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Why Choose Us */}
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="relative glass-effect border border-purple-500/30 rounded-2xl p-8 mb-8"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5" />
+              <div className="relative">
+                <h3 className="text-2xl font-bold text-center mb-8">
+                  <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    Why Use Our CV Builder?
+                  </span>
+                </h3>
+                <div className="grid md:grid-cols-2 gap-6">
+                  {[
+                    { icon: "🎯", title: "Increase Interview Chances", desc: "Optimized for ATS systems used by 90% of companies" },
+                    { icon: "⚡", title: "Save Time", desc: "AI suggestions help you create a perfect CV in minutes" },
+                    { icon: "💼", title: "Professional Templates", desc: "Choose from multiple industry-standard designs" },
+                    { icon: "📈", title: "Track Progress", desc: "Get detailed scores and improvement recommendations" }
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-start gap-4 group">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/30 to-pink-600/30 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="relative w-14 h-14 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                          <span className="text-2xl">{item.icon}</span>
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-white mb-1">{item.title}</h4>
+                        <p className="text-sm text-gray-400">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </div>
         )}
 
         {state.currentStep === 'review' && (

@@ -31,7 +31,7 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
       const result = await pdfExtractor.extractText(file);
       
       if (!result.success) {
-        const errorMsg = result.error?.message || 'Không thể đọc file PDF';
+        const errorMsg = (result as any).error?.message || 'Cannot read PDF file';
         throw new Error(errorMsg);
       }
 
@@ -39,14 +39,14 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
       console.log('✅ Đã đọc CV thành công, độ dài:', extractedText.length);
       
       if (!extractedText || extractedText.trim().length < 50) {
-        throw new Error('CV không có đủ nội dung. Vui lòng kiểm tra lại file PDF.');
+        throw new Error('CV does not have enough content. Please check the PDF file again.');
       }
 
       // Pass extracted text to parent
       onCVAnalyzed(extractedText);
     } catch (err) {
       console.error('❌ Lỗi khi xử lý CV:', err);
-      setError(err instanceof Error ? err.message : 'Không thể xử lý CV');
+      setError(err instanceof Error ? err.message : 'Cannot process CV');
       setIsProcessing(false);
     }
   }, [onCVAnalyzed]);
@@ -61,7 +61,7 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
     if (pdfFile) {
       await processCV(pdfFile);
     } else {
-      setError('Vui lòng upload file PDF');
+      setError('Please upload PDF file');
     }
   }, [processCV]);
 
@@ -70,7 +70,7 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
     if (file && file.type === 'application/pdf') {
       await processCV(file);
     } else {
-      setError('Vui lòng chọn file PDF');
+      setError('Please select PDF file');
     }
   }, [processCV]);
 
@@ -78,10 +78,10 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
     <div className="max-w-4xl mx-auto animate-fade-in-up">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold gradient-text mb-2">
-          🎯 Tìm Việc Làm Phù Hợp
+          🎯 Find Your Dream Job
         </h2>
         <p className="text-gray-300">
-          Upload CV của bạn để chúng tôi tìm các công việc phù hợp nhất
+          Upload your CV to find the most suitable jobs
         </p>
       </div>
 
@@ -100,10 +100,10 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
           <div className="text-center">
             <div className="text-8xl mb-6 animate-float">📋</div>
             <h3 className="text-2xl font-bold text-white mb-2">
-              Kéo thả CV của bạn vào đây
+              Drag and drop your CV here
             </h3>
             <p className="text-gray-300 mb-6">
-              Chúng tôi sẽ phân tích CV và đề xuất các công việc phù hợp
+              We will analyze your CV and suggest suitable jobs
             </p>
 
             <label className="inline-block">
@@ -115,7 +115,7 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
                 disabled={isProcessing}
               />
               <span className="px-8 py-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl font-medium cursor-pointer hover:from-purple-600 hover:to-blue-600 transition-all duration-300 inline-block shadow-lg hover:shadow-xl glow-effect">
-                📤 Chọn File CV (PDF)
+                📤 Select CV File (PDF)
               </span>
             </label>
           </div>
@@ -123,7 +123,7 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
           <div className="text-center">
             <div className="text-8xl mb-6 animate-bounce">🔍</div>
             <h3 className="text-2xl font-bold text-white mb-4">
-              Đang phân tích CV của bạn...
+              Analyzing your CV...
             </h3>
             <div className="max-w-md mx-auto">
               <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
@@ -141,7 +141,7 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
           <div className="flex items-start gap-4">
             <span className="text-4xl">❌</span>
             <div>
-              <h4 className="font-bold text-red-400 text-lg mb-2">Lỗi</h4>
+              <h4 className="font-bold text-red-400 text-lg mb-2">Error</h4>
               <p className="text-red-300">{error}</p>
             </div>
           </div>
@@ -152,17 +152,17 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
       <div className="mt-12 grid grid-cols-3 gap-6">
         <div className="text-center glass-effect rounded-xl p-6">
           <div className="text-4xl mb-3">🤖</div>
-          <p className="text-sm text-white font-medium">Phân Tích Thông Minh</p>
-          <p className="text-xs text-gray-400">AI phân tích kỹ năng & kinh nghiệm</p>
+          <p className="text-sm text-white font-medium">Smart Analysis</p>
+          <p className="text-xs text-gray-400">AI analyzes skills & experience</p>
         </div>
         <div className="text-center glass-effect rounded-xl p-6">
           <div className="text-4xl mb-3">🎯</div>
-          <p className="text-sm text-white font-medium">Gợi Ý Chính Xác</p>
-          <p className="text-xs text-gray-400">Tìm việc phù hợp với profile</p>
+          <p className="text-sm text-white font-medium">Accurate Suggestions</p>
+          <p className="text-xs text-gray-400">Find jobs matching your profile</p>
         </div>
         <div className="text-center glass-effect rounded-xl p-6">
-          <div className="text-4xl mb-3">🌐</div>
-          <p className="text-sm text-white font-medium">Nhiều Nguồn</p>
+          <div className="text-4xl mb-3">🌎</div>
+          <p className="text-sm text-white font-medium">Multiple Sources</p>
           <p className="text-xs text-gray-400">TopCV, ITviec, LinkedIn...</p>
         </div>
       </div>

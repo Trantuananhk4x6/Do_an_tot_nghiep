@@ -24,14 +24,6 @@ import { SummaryResponse } from "../models/Summary";
 //   }
 // };import { SummaryResponse } from '../models/Summary';
 
-// @ts-ignore
-let pdfjsLib: any;
-if (typeof window !== "undefined") {
-  // @ts-ignore
-  pdfjsLib = require("pdfjs-dist/build/pdf");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
-}
-
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const fetchWithRetry = async (
@@ -45,6 +37,22 @@ const fetchWithRetry = async (
     try {
       const res = await fetch(input, init);
       if (res.ok) return res;
+      
+      // Handle 429 (Rate Limit) with exponential backoff
+      if (res.status === 429) {
+        const txt = await res.text().catch(() => "");
+        console.warn(`[fetchWithRetry] Rate limit hit. Attempt ${attempt + 1}/${retries + 1}`);
+        
+        if (attempt < retries) {
+          // Longer delay for rate limits
+          const delay = baseDelayMs * Math.pow(2, attempt) * 2; // Double the delay for rate limits
+          console.log(`[fetchWithRetry] Waiting ${delay}ms before retry...`);
+          await sleep(delay + Math.floor(Math.random() * 1000));
+          continue;
+        }
+        
+        throw new Error(`Rate limit exceeded. Please wait a moment and try again.`);
+      }
       
       // Handle 503 (Service Unavailable) and other 5xx errors with retry
       if (res.status >= 500 && res.status < 600) {
@@ -85,31 +93,12 @@ export const extractTextFromPDF = async (file: File): Promise<string> => {
   try {
     console.log("[extractTextFromPDF] Bắt đầu đọc file PDF:", file.name);
 
-    const arrayBuffer = await file.arrayBuffer();
-    console.log("[extractTextFromPDF] Đã đọc arrayBuffer, size:", arrayBuffer.byteLength);
-    
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    console.log("[extractTextFromPDF] Đã load PDF, số trang:", pdf.numPages);
+    // Dynamically import PDF utilities (client-side only)
+    const { extractTextFromPDF: extractPDF } = await import('@/lib/pdf-utils.client');
+    const text = await extractPDF(file);
 
-    let fullText = "";
-
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      try {
-        const page = await pdf.getPage(pageNum);
-        const textContent = await page.getTextContent();
-
-        const pageText = textContent.items
-          .map((item: any) => ("str" in item ? item.str : ""))
-          .join(" ");
-
-        fullText += pageText + "\n";
-      } catch (pageErr) {
-        console.error(`[extractTextFromPDF] Lỗi khi đọc trang ${pageNum}:`, pageErr);
-      }
-    }
-
-    console.log("[extractTextFromPDF] Đã trích xuất được:", fullText.length, "ký tự");
-    return fullText.trim();
+    console.log("[extractTextFromPDF] Đã trích xuất được:", text.length, "ký tự");
+    return text;
   } catch (err) {
     console.error("[extractTextFromPDF] Lỗi khi đọc PDF:", err);
     throw new Error("Không thể trích xuất nội dung từ file PDF");
@@ -349,7 +338,7 @@ ${truncated}
 
   // Step 6: Call Gemini API with retry
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
     console.log("[generateSummary] Gọi Gemini API...");
 
     const response = await fetchWithRetry(url, {

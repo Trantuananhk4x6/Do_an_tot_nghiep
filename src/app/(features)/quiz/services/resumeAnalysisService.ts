@@ -155,7 +155,6 @@ const SKILL_CATEGORY_MAP: Record<string, QuizCategory> = {
   'gatsby': 'react',
   'react router': 'react',
   'react-router': 'react',
-  'react native': 'react',
   'react-native': 'react',
   'mobx': 'react',
   'zustand': 'react',
@@ -453,7 +452,6 @@ const SKILL_CATEGORY_MAP: Record<string, QuizCategory> = {
   'dart': 'mobile-dev',
   'react native': 'mobile-dev',
   'ionic': 'mobile-dev',
-  'xamarin': 'mobile-dev',
   'cordova': 'mobile-dev',
   'phonegap': 'mobile-dev',
   'expo': 'mobile-dev',
@@ -532,7 +530,7 @@ const SKILL_CATEGORY_MAP: Record<string, QuizCategory> = {
   'statistical analysis': 'data-science',
   'r programming': 'data-science',
   'r language': 'data-science',
-  'jupyter': 'data-science',
+ 
   'data engineering': 'data-engineering',
   'data engineer': 'data-engineering',
   'etl': 'data-engineering',
@@ -744,8 +742,8 @@ const SKILL_CATEGORY_MAP: Record<string, QuizCategory> = {
   'site reliability': 'sre',
   'site reliability engineer': 'sre',
   'observability': 'sre',
-  'incident management': 'sre',
   'on-call': 'sre',
+  
 
   // Advanced/Research (NEW)
   'robotics': 'robotics',
@@ -1072,7 +1070,7 @@ Analyze carefully. PRIMARY ROLE is the most important field.`;
   try {
     console.log('[analyzeSkillsWithAI] Calling Gemini API with retry logic...');
     const response = await fetchWithRetry(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

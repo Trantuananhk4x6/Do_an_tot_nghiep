@@ -4,17 +4,29 @@ const stepsData = [
   {
     id: 1,
     title: "Before Interview",
-    items: ["Quiz", "Mock Interview", "Prepare Hub"],
+    items: [
+      { name: "📝 Quiz", desc: "Test your technical knowledge" },
+      { name: "🎭 Mock Interview", desc: "Practice with AI interviewer" },
+      { name: "📚 Prepare Hub", desc: "Generate personalized questions" }
+    ],
   },
   {
     id: 2,
     title: "During Interview",
-    items: ["🚀 AI Interview", "Real-Time Transcription", "Knowledge Support"],
+    items: [
+      { name: "🚀 Live Interview", desc: "Real-time AI assistance" },
+      { name: "🎤 Transcription", desc: "Accurate speech-to-text" },
+      { name: "💡 Knowledge Support", desc: "Instant answer suggestions" }
+    ],
   },
   {
     id: 3,
     title: "After Interview",
-    items: ["Interview Summary", "Interview Analytics"],
+    items: [
+      { name: "📊 Summary", desc: "Detailed performance review" },
+      { name: "📈 Analytics", desc: "Track your progress" },
+      { name: "🎯 Insights", desc: "Get improvement tips" }
+    ],
   },
 ];
 
@@ -79,12 +91,13 @@ const Step = () => {
             
             <div className="space-y-3">
               {step.items.map((item, index) => (
-                <button
+                <div
                   key={index}
-                  className="w-full py-3 px-4 glass-effect rounded-xl border border-white/10 text-gray-300 font-medium hover:bg-gradient-to-r hover:from-purple-600/20 hover:to-pink-600/20 hover:border-purple-500/50 hover:shadow-neon transition-all duration-300 hover:translate-x-1"
+                  className="w-full py-3 px-4 glass-effect rounded-xl border border-white/10 hover:bg-gradient-to-r hover:from-purple-600/20 hover:to-pink-600/20 hover:border-purple-500/50 hover:shadow-neon transition-all duration-300 hover:translate-x-1"
                 >
-                  {item}
-                </button>
+                  <div className="text-gray-200 font-semibold text-left">{item.name}</div>
+                  <div className="text-gray-400 text-sm text-left mt-1">{item.desc}</div>
+                </div>
               ))}
             </div>
           </div>

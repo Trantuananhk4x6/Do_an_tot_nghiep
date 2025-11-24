@@ -8,13 +8,15 @@ import {
   Upload,
   List,
   Clock,
+  Sparkles,
 } from "lucide-react";
 import { SummaryResponse } from "./models/Summary";
 import { generateSummary } from "./services/summaryService";
 import FileUpload from "./components/fileUpload";
 import { Button } from "@/components/ui/button";
 import { LanguageSelector, Language } from "@/components/ui/language-selector";
-import NeuralNetworkBg from "@/components/ui/neural-network-bg";
+import { motion } from 'framer-motion';
+import Animated3DBackground from '@/components/ui/Animated3DBackground';
 
 const SummarizePage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -163,17 +165,34 @@ const SummarizePage = () => {
 
   return (
     <>
-      <NeuralNetworkBg />
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="text-center mb-12 animate-fade-in-up">
-        <h3 className="text-4xl font-bold mb-4 gradient-text">
-          Summarize Knowledge
-        </h3>
-        <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-          Transform your documents or audio files into concise, actionable
-          summaries with AI
-        </p>
-      </div>
+      <div className="relative min-h-screen">
+        <Animated3DBackground />
+        
+        <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Enhanced Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-12"
+          >
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center"
+              >
+                <BookOpen className="w-8 h-8 text-white" />
+              </motion.div>
+            </div>
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent mb-4">
+              {t.title}
+            </h1>
+            <div className="flex items-center justify-center gap-2 text-gray-300 text-lg">
+              <Sparkles className="w-5 h-5 text-purple-400" />
+              <p>{t.subtitle}</p>
+            </div>
+          </motion.div>
 
       <div className="glass-effect rounded-2xl p-8 mb-8 hover-scale">
         <FileUpload
@@ -392,7 +411,8 @@ const SummarizePage = () => {
           )}
         </div>
       )}
-    </main>
+        </main>
+      </div>
     </>
   );
 };

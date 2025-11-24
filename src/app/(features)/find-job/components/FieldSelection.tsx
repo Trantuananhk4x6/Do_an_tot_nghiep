@@ -34,26 +34,26 @@ const fieldIcons: Record<string, string> = {
 };
 
 const fieldDescriptions: Record<string, string> = {
-  'Frontend Developer': 'Phát triển giao diện người dùng, làm việc với HTML/CSS/JS, React, Vue, Angular',
-  'Backend Developer': 'Xây dựng server, API, database, xử lý logic nghiệp vụ phía server',
-  'Full Stack Developer': 'Làm việc cả Frontend và Backend, phát triển ứng dụng hoàn chỉnh',
-  'Mobile Developer': 'Phát triển ứng dụng di động iOS, Android, React Native, Flutter',
-  'Data Science': 'Phân tích dữ liệu, xây dựng mô hình dự đoán, data mining',
-  'Machine Learning': 'Xây dựng và tối ưu mô hình ML, deep learning, neural networks',
-  'AI Engineer': 'Phát triển giải pháp AI, NLP, computer vision, chatbot',
+  'Frontend Developer': 'Build user interfaces, work with HTML/CSS/JS, React, Vue, Angular',
+  'Backend Developer': 'Build servers, APIs, databases, handle server-side business logic',
+  'Full Stack Developer': 'Work on both Frontend and Backend, develop complete applications',
+  'Mobile Developer': 'Develop mobile apps for iOS, Android, React Native, Flutter',
+  'Data Science': 'Data analysis, build predictive models, data mining',
+  'Machine Learning': 'Build and optimize ML models, deep learning, neural networks',
+  'AI Engineer': 'Develop AI solutions, NLP, computer vision, chatbot',
   'DevOps Engineer': 'CI/CD, Docker, Kubernetes, cloud infrastructure, automation',
-  'QA Engineer': 'Kiểm thử phần mềm, automation testing, đảm bảo chất lượng sản phẩm',
-  'UI/UX Designer': 'Thiết kế giao diện và trải nghiệm người dùng, wireframe, prototype',
-  'Product Manager': 'Quản lý sản phẩm, định hướng phát triển, phối hợp team',
-  'Business Analyst': 'Phân tích nghiệp vụ, thu thập yêu cầu, tư vấn giải pháp',
-  'Software Developer': 'Phát triển phần mềm đa dạng, làm việc với nhiều công nghệ',
-  'Database Administrator': 'Quản trị cơ sở dữ liệu, tối ưu hiệu suất, backup và recovery',
-  'Security Engineer': 'Bảo mật hệ thống, phát hiện và xử lý lỗ hổng, penetration testing',
-  'Cloud Engineer': 'Thiết kế và quản lý hạ tầng cloud AWS/Azure/GCP',
-  'Game Developer': 'Phát triển game, Unity, Unreal Engine, game logic và graphics',
-  'Embedded Engineer': 'Lập trình nhúng, IoT, firmware, vi điều khiển',
-  'Network Engineer': 'Thiết kế và quản lý hệ thống mạng, routing, switching',
-  'System Administrator': 'Quản trị hệ thống Linux/Windows, server, monitoring',
+  'QA Engineer': 'Software testing, automation testing, ensure product quality',
+  'UI/UX Designer': 'Design interfaces and user experience, wireframe, prototype',
+  'Product Manager': 'Product management, development direction, team coordination',
+  'Business Analyst': 'Business analysis, requirements gathering, solution consulting',
+  'Software Developer': 'Develop diverse software, work with multiple technologies',
+  'Database Administrator': 'Database administration, performance optimization, backup and recovery',
+  'Security Engineer': 'System security, detect and fix vulnerabilities, penetration testing',
+  'Cloud Engineer': 'Design and manage cloud infrastructure AWS/Azure/GCP',
+  'Game Developer': 'Game development, Unity, Unreal Engine, game logic and graphics',
+  'Embedded Engineer': 'Embedded programming, IoT, firmware, microcontrollers',
+  'Network Engineer': 'Design and manage network systems, routing, switching',
+  'System Administrator': 'Linux/Windows system administration, server, monitoring',
 };
 
 export default function FieldSelection({ cvAnalysis, selectedField, onFieldSelected }: FieldSelectionProps) {
@@ -64,10 +64,10 @@ export default function FieldSelection({ cvAnalysis, selectedField, onFieldSelec
     <div className="max-w-6xl mx-auto animate-fade-in-up">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold gradient-text mb-2">
-          🎯 Chọn Lĩnh Vực Công Việc
+          🎯 Select Your Field
         </h2>
         <p className="text-gray-300">
-          Dựa trên CV của bạn, chúng tôi phát hiện các lĩnh vực phù hợp sau
+          Based on your CV, we detected the following suitable fields
         </p>
       </div>
 
@@ -76,7 +76,7 @@ export default function FieldSelection({ cvAnalysis, selectedField, onFieldSelec
         <div className="flex items-start gap-4">
           <span className="text-4xl">📝</span>
           <div className="flex-1">
-            <h3 className="text-xl font-bold text-white mb-2">Tóm Tắt CV</h3>
+            <h3 className="text-xl font-bold text-white mb-2">CV Summary</h3>
             <p className="text-gray-300 mb-3">{cvAnalysis.summary}</p>
             <div className="flex flex-wrap gap-2">
               {cvAnalysis.skills.slice(0, 8).map((skill, index) => (
@@ -89,7 +89,7 @@ export default function FieldSelection({ cvAnalysis, selectedField, onFieldSelec
               ))}
               {cvAnalysis.skills.length > 8 && (
                 <span className="px-3 py-1 bg-gray-500/20 border border-gray-500/50 rounded-full text-sm text-gray-400">
-                  +{cvAnalysis.skills.length - 8} kỹ năng khác
+                  +{cvAnalysis.skills.length - 8} more skills
                 </span>
               )}
             </div>
@@ -118,7 +118,7 @@ export default function FieldSelection({ cvAnalysis, selectedField, onFieldSelec
                   {/* Main Field Badge */}
                   {isMainField && (
                     <div className="absolute -top-3 -right-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-pulse">
-                      🎯 Phù hợp nhất
+                      🎯 Best Match
                     </div>
                   )}
 
@@ -143,10 +143,10 @@ export default function FieldSelection({ cvAnalysis, selectedField, onFieldSelec
                     {isSelected ? (
                       <>
                         <span>✓</span>
-                        <span className="font-medium">Đã chọn</span>
+                        <span className="font-medium">Selected</span>
                       </>
                     ) : (
-                      <span className="font-medium">Chọn lĩnh vực này</span>
+                      <span className="font-medium">Select this field</span>
                     )}
                   </div>
                 </button>
@@ -159,19 +159,19 @@ export default function FieldSelection({ cvAnalysis, selectedField, onFieldSelec
             <div className="flex items-start gap-4">
               <span className="text-3xl">💡</span>
               <div>
-                <h4 className="font-bold text-blue-300 mb-2">Lời khuyên</h4>
+                <h4 className="font-bold text-blue-300 mb-2">Tips</h4>
                 <ul className="space-y-1 text-gray-300 text-sm">
                   <li className="flex items-start gap-2">
                     <span>•</span>
-                    <span>Lĩnh vực có nhãn <strong className="text-purple-300">🎯 Phù hợp nhất</strong> được phân tích từ CV của bạn</span>
+                    <span>Field with <strong className="text-purple-300">🎯 Best Match</strong> label is analyzed from your CV</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span>•</span>
-                    <span>Bạn có thể chọn lĩnh vực khác nếu muốn khám phá cơ hội mới</span>
+                    <span>You can choose other fields if you want to explore new opportunities</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span>•</span>
-                    <span>Sau khi chọn lĩnh vực, bạn sẽ chọn cấp độ công việc mong muốn</span>
+                    <span>After selecting a field, you will choose your desired job level</span>
                   </li>
                 </ul>
               </div>
@@ -182,10 +182,10 @@ export default function FieldSelection({ cvAnalysis, selectedField, onFieldSelec
         <div className="glass-effect rounded-2xl p-12 text-center">
           <div className="text-8xl mb-6">🤔</div>
           <h3 className="text-2xl font-bold text-white mb-4">
-            Không thể xác định lĩnh vực rõ ràng
+            Cannot determine field clearly
           </h3>
           <p className="text-gray-300">
-            Vui lòng kiểm tra lại CV hoặc thử upload lại
+            Please check your CV or try uploading again
           </p>
         </div>
       )}
@@ -202,20 +202,23 @@ function detectFieldsFromCV(cvAnalysis: CVAnalysisForJob): string[] {
   // Add main field first
   detectedFields.add(mainField);
 
+  // Check for both frontend AND backend
+  const hasFrontend = text.match(/react|vue|angular|html|css|javascript|typescript|frontend|ui/);
+  const hasBackend = text.match(/backend|api|server|node|express|django|spring|nest|php|laravel/);
+
+  // Full Stack - if has BOTH frontend and backend
+  if (text.match(/fullstack|full stack|full-stack/) || (hasFrontend && hasBackend)) {
+    detectedFields.add('Full Stack Developer');
+  }
+
   // Frontend
-  if (text.match(/react|vue|angular|html|css|javascript|typescript|frontend|ui/)) {
+  if (hasFrontend) {
     detectedFields.add('Frontend Developer');
   }
 
   // Backend
-  if (text.match(/backend|api|server|node|express|django|spring|nest|php|laravel/)) {
+  if (hasBackend) {
     detectedFields.add('Backend Developer');
-  }
-
-  // Full Stack
-  if (text.match(/fullstack|full stack|full-stack/) || 
-      (text.includes('frontend') && text.includes('backend'))) {
-    detectedFields.add('Full Stack Developer');
   }
 
   // Mobile

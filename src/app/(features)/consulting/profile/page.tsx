@@ -29,8 +29,9 @@ export default function ProfilePage() {
   const { user } = useUser();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const fallbackName = user?.fullName || user?.primaryEmailAddress || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || '';
   const [formData, setFormData] = useState({
-    fullName: user?.fullName || '',
+    fullName: fallbackName,
     currentPosition: '',
     desiredPosition: '',
     industry: '',
@@ -53,20 +54,30 @@ export default function ProfilePage() {
         skills: formData.skills ? formData.skills.split(',').map(s => s.trim()) : [],
       };
 
-      const response = await fetch('/api/consulting/profile', {
+          // include location if available from browser geolocation or user
+          // we may add a location input in the future
+          const response = await fetch('/api/consulting/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profileData),
       });
 
+      const data = await response.json().catch(() => ({}));
       if (response.ok) {
         toast({
           title: 'Success',
-          description: 'Profile created successfully!',
+          description: data?.message || 'Profile created successfully!',
         });
         router.push('/consulting');
       } else {
-        throw new Error('Failed to create profile');
+        const msg = data?.message || 'Failed to create profile';
+        console.error('Create profile failed response:', response.status, msg, data);
+        toast({
+          title: 'Error',
+          description: msg,
+          variant: 'destructive',
+        });
+        throw new Error(msg);
       }
     } catch (error) {
       console.error('Error creating profile:', error);

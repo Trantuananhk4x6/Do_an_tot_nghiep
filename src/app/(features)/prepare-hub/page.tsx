@@ -4,6 +4,8 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import Loading from "@/components/ui/loading";
 import { LanguageSelector, Language, LANGUAGES } from "@/components/ui/language-selector";
+import { motion } from "framer-motion";
+import Animated3DBackground from "@/components/ui/Animated3DBackground";
 import {
   Dialog,
   DialogClose,
@@ -24,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, Briefcase, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import InterviewCard from "./components/InterviewCard";
 import { Resume } from "@/models/resume";
@@ -133,24 +135,61 @@ const Page = () => {
   };
   return (
     <>
-      <NeuralNetworkBg />
-      <div className="relative z-10">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold gradient-text mb-2">Interview Preparation Hub</h1>
-        <div className="mt-1 max-w-[640px] text-sm font-medium text-gray-400">
-          Generate interview questions and answers based on your resume and job
-          descriptions
+      <div className="relative min-h-screen">
+        <Animated3DBackground />
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-12">
+      {/* Header with enhanced animation */}
+      <motion.div 
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="mb-12"
+      >
+        <div className="flex items-center gap-4 mb-4">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center"
+          >
+            <Briefcase className="h-8 w-8 text-white" />
+          </motion.div>
+          <div>
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent mb-2">
+              Interview Preparation Hub
+            </h1>
+            <div className="flex items-center gap-2 text-gray-300">
+              <Sparkles className="h-5 w-5 text-purple-400" />
+              <p className="text-lg">
+                Generate interview questions and answers based on your resume and job descriptions
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
-      <div className="mb-6">
+      </motion.div>
+      
+      {/* Button với animation */}
+      <motion.div 
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+        className="mb-8"
+      >
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button 
-              onClick={() => getUserResume()}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl shadow-neon hover:shadow-neon-hover transition-all duration-300"
-            >
-              <Plus className="mr-2" /> Prepare Interview
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button 
+                onClick={() => getUserResume()}
+                className="relative overflow-hidden bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-6 text-lg rounded-xl shadow-neon hover:shadow-neon-hover transition-all duration-300"
+              >
+                <motion.div
+                  animate={{ x: [-200, 1000] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                  className="absolute inset-0 w-32 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                />
+                <Plus className="mr-2" /> Prepare Interview
+              </Button>
+            </motion.div>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md glass-effect border border-white/10">
             <DialogHeader>
@@ -259,8 +298,14 @@ const Page = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-      <div>
+      </motion.div>
+      
+      {/* Content area with animation */}
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.5 }}
+      >
         {loading ? (
           <Loading />
         ) : interviewSet.length === 0 ? (
@@ -290,7 +335,8 @@ const Page = () => {
             ))}
           </div>
         )}
-      </div>
+      </motion.div>
+        </div>
       </div>
     </>
   );

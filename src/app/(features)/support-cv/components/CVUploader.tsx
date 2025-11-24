@@ -5,6 +5,7 @@ import { CVTemplate, CVData } from '@/app/(features)/support-cv/types/cv.types';
 import { pdfExtractor } from '@/app/(features)/support-cv/services/pdf/extractor.service';
 import { cvAnalyzer } from '@/app/(features)/support-cv/services/ai/analyzer.service';
 import { cvReviewer } from '@/app/(features)/support-cv/services/ai/reviewer.service';
+import { Sparkles, FileText } from 'lucide-react';
 
 /**
  * Smart CV Parser - Extract structured CV data from raw text
@@ -468,65 +469,138 @@ export default function CVUploader({
   }, [processCV]);
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-6">
+    <div className="w-full max-w-4xl mx-auto">
       {/* Upload Area */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`
-          border-2 border-dashed rounded-lg p-12 text-center transition-all
-          ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+          relative group
+          ${isDragging ? 'scale-105' : 'scale-100'}
           ${isProcessing ? 'opacity-50 pointer-events-none' : ''}
+          transition-all duration-300
         `}
       >
-        {isProcessing ? (
-          <div className="space-y-4">
-            <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-            <p className="text-gray-700 font-medium">{progress}</p>
-          </div>
-        ) : (
-          <>
-            <div className="mb-4">
-              <svg className="w-16 h-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
+        {/* Gradient glow effect */}
+        <div className={`
+          absolute inset-0 bg-gradient-to-r from-purple-600/30 to-blue-600/30 blur-3xl 
+          ${isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
+          transition-opacity duration-500
+        `} />
+        
+        {/* Main upload container */}
+        <div className={`
+          relative glass-effect rounded-3xl p-12 text-center
+          border-2 border-dashed
+          ${isDragging 
+            ? 'border-purple-500/80 bg-purple-500/10' 
+            : 'border-white/20 hover:border-purple-500/50'
+          }
+          transition-all duration-300
+        `}>
+          {isProcessing ? (
+            <div className="space-y-6">
+              {/* Animated spinner with gradient */}
+              <div className="relative w-20 h-20 mx-auto">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full animate-spin" 
+                     style={{ clipPath: 'polygon(50% 0%, 100% 0%, 100% 50%, 50% 50%)' }}></div>
+                <div className="absolute inset-2 bg-background rounded-full"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Sparkles className="h-8 w-8 text-purple-400 animate-pulse" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-white font-semibold text-lg">{progress}</p>
+                <div className="w-64 h-2 bg-white/10 rounded-full mx-auto overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-purple-500 to-blue-500 animate-pulse rounded-full" 
+                       style={{ width: '100%', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
+                </div>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              Upload Your CV
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Drag and drop your CV (PDF) here, or click to browse
-            </p>
-            <label className="inline-block">
-              <input
-                type="file"
-                accept=".pdf"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <span className="px-6 py-3 bg-blue-500 text-white rounded-lg cursor-pointer hover:bg-blue-600 transition-colors inline-block">
-                Choose File
-              </span>
-            </label>
-          </>
-        )}
+          ) : (
+            <>
+              {/* Upload icon with gradient */}
+              <div className="mb-6 relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 blur-3xl animate-pulse" />
+                <div className="relative w-24 h-24 mx-auto rounded-3xl bg-gradient-to-br from-purple-600 to-blue-600 p-1">
+                  <div className="w-full h-full bg-background rounded-3xl flex items-center justify-center">
+                    <svg className="w-12 h-12 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              
+              <h3 className="text-3xl font-bold mb-3">
+                <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+                  Upload Your CV
+                </span>
+              </h3>
+              
+              <p className="text-gray-300 mb-8 text-lg max-w-md mx-auto">
+                Drag and drop your CV (PDF) here, or click to browse
+              </p>
+              
+              <label className="inline-block group/button cursor-pointer">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl blur opacity-75 group-hover/button:opacity-100 transition-opacity"></div>
+                  <span className="relative px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold inline-flex items-center gap-3 hover:shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 group-hover/button:scale-105">
+                    <FileText className="h-5 w-5" />
+                    Choose File
+                    <svg className="w-5 h-5 group-hover/button:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </span>
+                </div>
+              </label>
+              
+              {/* Supported format badge */}
+              <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 glass-effect border border-white/10 rounded-full">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-400">PDF files supported</span>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Error Display */}
       {error && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700">{error}</p>
+        <div className="mt-6 relative">
+          <div className="absolute inset-0 bg-red-500/20 blur-xl"></div>
+          <div className="relative glass-effect border border-red-500/50 rounded-2xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-red-400 font-semibold mb-1">Upload Error</h4>
+                <p className="text-red-300/80">{error}</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Start from Scratch Option */}
-      <div className="mt-6 text-center">
+      <div className="mt-8 text-center">
         <button
           onClick={onStartFromScratch}
-          className="text-blue-600 hover:text-blue-700 underline"
+          className="group inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors"
         >
-          Or start building from scratch →
+          <span className="text-lg font-medium">Or start building from scratch</span>
+          <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
         </button>
       </div>
     </div>

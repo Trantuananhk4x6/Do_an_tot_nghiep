@@ -16,6 +16,8 @@ import {
   Play
 } from "lucide-react";
 import FileUpload from "./components/fileUpload";
+import Animated3DBackground from "@/components/ui/Animated3DBackground";
+import { motion } from "framer-motion";
 import { 
   getRandomQuestions, 
   validateAnswer,
@@ -757,57 +759,132 @@ const EnhancedQuizPage = () => {
   if (mode === 'select') {
     return (
       <div className="relative min-h-screen">
-        {/* Header */}
-        <div className="text-center mb-12 animate-fade-in-up">
-          <div className="inline-block mb-4">
-            <Brain className="h-16 w-16 text-purple-500 animate-float mx-auto" />
-          </div>
-          <h1 className="text-5xl font-bold mb-4 gradient-text">
+        <Animated3DBackground />
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-12">
+        {/* Header with enhanced animation */}
+        <motion.div 
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12"
+        >
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1, rotate: 360 }}
+            transition={{ duration: 1, delay: 0.2 }}
+            className="inline-block mb-6"
+          >
+            <div className="relative">
+              <Brain className="h-20 w-20 text-purple-500 mx-auto" />
+              <motion.div
+                animate={{ 
+                  boxShadow: [
+                    "0 0 20px rgba(139, 92, 246, 0.3)",
+                    "0 0 60px rgba(139, 92, 246, 0.6)",
+                    "0 0 20px rgba(139, 92, 246, 0.3)"
+                  ]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute inset-0 rounded-full"
+              />
+            </div>
+          </motion.div>
+          <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
             {t.title}
           </h1>
-          <p className="text-lg text-gray-400">
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             {t.subtitle}
           </p>
-        </div>
+        </motion.div>
 
-        {/* Language Selector */}
-        <div className="glass-effect rounded-xl p-6 mb-8 max-w-md mx-auto">
-          <LanguageSelector
-            value={language}
-            onChange={setLanguage}
-            disabled={isLoadingQuestions || isAnalyzingResume}
-          />
-        </div>
-
-        {/* Resume Upload (Required) */}
-        <div className="glass-effect rounded-2xl p-8 mb-8 hover-scale">
-          <div className="flex items-center gap-3 mb-4">
-            <Upload className="h-6 w-6 text-purple-500" />
-            <h3 className="text-xl font-semibold">{t.uploadResume}</h3>
-            {isAnalyzingResume && (
-              <div className="flex items-center gap-2 text-purple-500">
-                <Clock className="animate-spin h-5 w-5" />
-                <span className="text-sm">{t.analyzing}</span>
-              </div>
-            )}
+        {/* Language Selector with animation */}
+        <motion.div 
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mb-8 max-w-md mx-auto"
+        >
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl opacity-20 blur-xl" />
+            <div className="relative glass-effect rounded-xl p-6 border border-purple-500/30">
+              <LanguageSelector
+                value={language}
+                onChange={setLanguage}
+                disabled={isLoadingQuestions || isAnalyzingResume}
+              />
+            </div>
           </div>
-          <p className="text-gray-400 mb-6">
-            {t.uploadResumeDesc}
-          </p>
-          <FileUpload
-            onFileChange={handleResumeUpload}
-            maxSizeInMB={10}
-            validTypes={["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"]}
-            title={t.dragDrop}
-            description={t.formatSupport}
-            icon={<Upload className="h-12 w-12 text-purple-500" />}
-          />
-        </div>
+        </motion.div>
 
-        {/* Skills Analysis Display */}
+        {/* Resume Upload with enhanced design */}
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="mb-8"
+        >
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl opacity-20 blur-xl" />
+            <div className="relative glass-effect rounded-2xl p-8 border border-purple-500/30">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <Upload className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold text-white">{t.uploadResume}</h3>
+                  {isAnalyzingResume && (
+                    <div className="flex items-center gap-2 text-purple-400 mt-1">
+                      <Clock className="animate-spin h-4 w-4" />
+                      <span className="text-sm">{t.analyzing}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <p className="text-gray-300 mb-6">
+                {t.uploadResumeDesc}
+              </p>
+              <FileUpload
+                onFileChange={handleResumeUpload}
+                maxSizeInMB={10}
+                validTypes={["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"]}
+                title={t.dragDrop}
+                description={t.formatSupport}
+                icon={<Upload className="h-12 w-12 text-purple-500" />}
+              />
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Skills Analysis Display with animations */}
         {skillAnalysis && (
-          <div className="glass-effect rounded-2xl p-8 mb-8 animate-fade-in-up">
-            <h3 className="text-2xl font-bold mb-6 gradient-text">📊 {t.cvAnalysis}</h3>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+            className="mb-8"
+          >
+            <div className="relative">
+              {/* Glowing border effect */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 rounded-2xl opacity-30 blur-xl animate-pulse" />
+              
+              <div className="relative glass-effect rounded-2xl p-8 border border-green-500/30">
+                {/* Scanning line animation */}
+                <motion.div
+                  animate={{ y: [0, 600, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                  className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-green-400 to-transparent opacity-50"
+                  style={{ top: 0 }}
+                />
+                
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center">
+                    <BarChart3 className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
+                    📊 {t.cvAnalysis}
+                  </h3>
+                </div>
             
             {/* Primary Skills */}
             <div className="mb-6">
@@ -1001,19 +1078,29 @@ const EnhancedQuizPage = () => {
               </p>
             </div>
           </div>
+          </div>
+        </motion.div>
         )}
 
-        {/* Category Selection - REMOVED */}
-        
-        {/* Level Selection - Simplified */}
-        <div className="glass-effect rounded-2xl p-8 mb-8">
-          <h3 className="text-2xl font-bold mb-6 gradient-text">{t.selectDifficulty}</h3>
-          <p className="text-gray-400 mb-6">
-            {skillAnalysis ? 
-              t.difficultyDetected.replace('{level}', t[skillAnalysis.experienceLevel as keyof typeof t] as string || skillAnalysis.experienceLevel) :
-              t.uploadFirst
-            }
-          </p>
+        {/* Level Selection with animation */}
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.9 }}
+          className="mb-8"
+        >
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl opacity-20 blur-xl" />
+            <div className="relative glass-effect rounded-2xl p-8 border border-purple-500/30">
+              <h3 className="text-2xl font-bold mb-6 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                {t.selectDifficulty}
+              </h3>
+              <p className="text-gray-300 mb-6">
+                {skillAnalysis ? 
+                  t.difficultyDetected.replace('{level}', t[skillAnalysis.experienceLevel as keyof typeof t] as string || skillAnalysis.experienceLevel) :
+                  t.uploadFirst
+                }
+              </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {(['low', 'mid', 'high'] as QuizLevel[]).map((level) => (
               <Ripple
@@ -1045,11 +1132,23 @@ const EnhancedQuizPage = () => {
               </Ripple>
             ))}
           </div>
-        </div>
+            </div>
+          </div>
+        </motion.div>
 
-        {/* Quiz Information - Dynamic based on CV analysis */}
-        <div className="glass-effect rounded-2xl p-8 mb-8">
-          <h3 className="text-2xl font-bold mb-6 gradient-text">📊 {t.quizInfo}</h3>
+        {/* Quiz Information with animation */}
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 1.1 }}
+          className="mb-8"
+        >
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl opacity-20 blur-xl" />
+            <div className="relative glass-effect rounded-2xl p-8 border border-blue-500/30">
+              <h3 className="text-2xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                📊 {t.quizInfo}
+              </h3>
           {skillAnalysis ? (
             <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
               <div className="flex items-center gap-2 mb-2">
@@ -1084,27 +1183,34 @@ const EnhancedQuizPage = () => {
             </div>
             <div className="text-center p-4 bg-green-500/10 rounded-xl border border-green-500/30">
               <p className="text-3xl font-bold text-green-500">
-                {skillAnalysis ? '4-6' : '6'}
+                {selectedLevel === 'low' ? '12-14' : selectedLevel === 'mid' ? '6-8' : '2-4'}
               </p>
               <p className="text-sm text-gray-400 mt-2">{t.easyQuestions}</p>
             </div>
             <div className="text-center p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/30">
               <p className="text-3xl font-bold text-yellow-500">
-                {skillAnalysis ? '8-10' : '8'}
+                {selectedLevel === 'low' ? '4-6' : selectedLevel === 'mid' ? '8-10' : '6-8'}
               </p>
               <p className="text-sm text-gray-400 mt-2">{t.mediumQuestions}</p>
             </div>
             <div className="text-center p-4 bg-red-500/10 rounded-xl border border-red-500/30">
               <p className="text-3xl font-bold text-red-500">
-                {skillAnalysis ? '4-6' : '6'}
+                {selectedLevel === 'low' ? '2-4' : selectedLevel === 'mid' ? '4-6' : '12-14'}
               </p>
               <p className="text-sm text-gray-400 mt-2">{t.hardQuestions}</p>
             </div>
           </div>
-        </div>
+            </div>
+          </div>
+        </motion.div>
 
-        {/* Start Button */}
-        <div className="flex justify-center">
+        {/* Start Button with animation */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 1.3 }}
+          className="flex justify-center mb-6"
+        >
           <Ripple
             as="button"
             color="purple"
@@ -1126,16 +1232,22 @@ const EnhancedQuizPage = () => {
               </>
             )}
           </Ripple>
-        </div>
+        </motion.div>
 
         {/* Help Text */}
         {!uploadedResume && (
-          <div className="text-center mt-6">
-            <p className="text-gray-400 text-sm">
-              💡 <strong>{t.tip}:</strong> {t.tipText}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.5 }}
+            className="text-center mt-6"
+          >
+            <p className="text-gray-300 text-sm">
+              💡 <strong className="text-purple-400">{t.tip}:</strong> {t.tipText}
             </p>
-          </div>
+          </motion.div>
         )}
+        </div>
       </div>
     );
   }
@@ -1147,80 +1259,118 @@ const EnhancedQuizPage = () => {
 
     return (
       <div className="relative min-h-screen">
-        {/* Progress Bar */}
-        <div className="glass-effect rounded-2xl p-6 mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-3">
-              <Brain className="h-6 w-6 text-purple-500" />
-              <span className="text-lg font-semibold">
-                {t.question} {currentQuestionIndex + 1} {t.of} {questions.length}
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-purple-500 animate-pulse" />
-              <span className="text-lg font-semibold">{formatTime(timeElapsed)}</span>
-            </div>
-          </div>
-          <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
-            <div
-              className="bg-gradient-to-r from-purple-500 to-pink-500 h-full transition-all duration-500 neon-shadow"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Question Card */}
-        <div className="glass-effect rounded-2xl p-8 mb-8 hover-scale animate-fade-in-up">
-          {/* Level Badge */}
-          <div className="mb-6">
-            <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold uppercase ${
-              currentQuestion.level === 'low' ? 'bg-green-500/20 text-green-500 border border-green-500/30' :
-              currentQuestion.level === 'mid' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' :
-              'bg-red-500/20 text-red-500 border border-red-500/30'
-            }`}>
-              {t[currentQuestion.level]} {language === 'vi' ? 'CẤP ĐỘ' :
-               language === 'ja' ? 'レベル' :
-               language === 'zh' ? '级别' :
-               language === 'ko' ? '레벨' : 'LEVEL'}
-            </span>
-          </div>
-
-          {/* Question Text */}
-          <h2 className="text-2xl font-bold mb-8 text-white leading-relaxed">
-            {currentQuestion.question}
-          </h2>
-
-          {/* Answer Options */}
-          <div className="space-y-4">
-            {currentQuestion.options.map((option, index) => (
-              <button
-                key={index}
-                onClick={() => handleAnswerSelect(index)}
-                className="w-full p-6 rounded-xl border-2 border-white/10 bg-white/5 hover:border-purple-500 hover:bg-purple-500/10 transition-all hover-scale text-left group ripple-container"
-                onMouseDown={(e) => {
-                  const ripple = document.createElement('span');
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const size = Math.max(rect.width, rect.height);
-                  const x = e.clientX - rect.left - size / 2;
-                  const y = e.clientY - rect.top - size / 2;
-                  ripple.style.width = ripple.style.height = `${size}px`;
-                  ripple.style.left = `${x}px`;
-                  ripple.style.top = `${y}px`;
-                  ripple.classList.add('ripple-effect', 'ripple-purple');
-                  e.currentTarget.appendChild(ripple);
-                  setTimeout(() => ripple.remove(), 600);
-                }}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center font-bold text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-all">
-                    {String.fromCharCode(65 + index)}
+        <Animated3DBackground />
+        
+        <div className="relative z-10 max-w-5xl mx-auto px-4 py-12">
+        {/* Progress Bar with enhanced design */}
+        <motion.div 
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl opacity-20 blur-xl" />
+            <div className="relative glass-effect rounded-2xl p-6 border border-purple-500/30">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                    <Brain className="h-6 w-6 text-white" />
                   </div>
-                  <span className="text-lg flex-1">{option}</span>
+                  <span className="text-xl font-semibold text-white">
+                    {t.question} {currentQuestionIndex + 1} {t.of} {questions.length}
+                  </span>
                 </div>
-              </button>
-            ))}
+                <div className="flex items-center gap-3">
+                  <Clock className="h-6 w-6 text-purple-400 animate-pulse" />
+                  <span className="text-xl font-semibold text-white">{formatTime(timeElapsed)}</span>
+                </div>
+              </div>
+              <div className="relative w-full bg-white/10 rounded-full h-3 overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.5 }}
+                  className="bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 h-full rounded-full"
+                  style={{ 
+                    boxShadow: "0 0 20px rgba(139, 92, 246, 0.6)"
+                  }}
+                />
+              </div>
+            </div>
           </div>
-        </div>
+        </motion.div>
+
+        {/* Question Card with enhanced design */}
+        <motion.div 
+          key={currentQuestionIndex}
+          initial={{ opacity: 0, x: 100 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -100 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-2xl opacity-30 blur-xl animate-pulse" />
+            <div className="relative glass-effect rounded-2xl p-8 border border-purple-500/30">
+              {/* Scanning line */}
+              <motion.div
+                animate={{ y: [0, 400, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400 to-transparent opacity-50"
+                style={{ top: 0 }}
+              />
+              
+              {/* Level Badge */}
+              <div className="mb-6">
+                <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold uppercase ${
+                  currentQuestion.level === 'low' ? 'bg-green-500/20 text-green-400 border border-green-500/50' :
+                  currentQuestion.level === 'mid' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50' :
+                  'bg-red-500/20 text-red-400 border border-red-500/50'
+                }`}>
+                  ⚡ {t[currentQuestion.level]} {language === 'vi' ? 'CẤP ĐỘ' :
+                   language === 'ja' ? 'レベル' :
+                   language === 'zh' ? '级别' :
+                   language === 'ko' ? '레벨' : 'LEVEL'}
+                </span>
+              </div>
+
+              {/* Question Text */}
+              <h2 className="text-3xl font-bold mb-8 text-white leading-relaxed">
+                {currentQuestion.question}
+              </h2>
+
+              {/* Answer Options */}
+              <div className="space-y-4">
+                {currentQuestion.options.map((option, index) => (
+                  <motion.button
+                    key={index}
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ scale: 1.02, x: 10 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleAnswerSelect(index)}
+                    className="w-full p-6 rounded-xl border-2 border-white/10 bg-white/5 hover:border-purple-500 hover:bg-purple-500/10 transition-all text-left group relative overflow-hidden"
+                  >
+                    {/* Shimmer effect */}
+                    <motion.div
+                      animate={{ x: [-200, 1000] }}
+                      transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                      className="absolute inset-0 w-32 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
+                    />
+                    
+                    <div className="flex items-center gap-4 relative z-10">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-bold text-white text-lg group-hover:scale-110 transition-transform">
+                        {String.fromCharCode(65 + index)}
+                      </div>
+                      <span className="text-lg flex-1 text-white">{option}</span>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Navigation */}
         <div className="flex justify-between items-center">
@@ -1249,6 +1399,7 @@ const EnhancedQuizPage = () => {
           >
             {t.finishQuiz}
           </Button>
+        </div>
         </div>
       </div>
     );

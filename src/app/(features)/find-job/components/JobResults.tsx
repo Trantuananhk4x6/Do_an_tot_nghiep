@@ -45,10 +45,10 @@ export default function JobResults({ platforms, keyword, location, level, onBack
       {/* Header */}
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold gradient-text mb-2">
-          🎯 Tìm Việc Làm
+          🎯 Find Jobs
         </h2>
         <p className="text-gray-300">
-          Chọn các nền tảng bạn muốn tìm kiếm
+          Select the platforms you want to search
         </p>
       </div>
 
@@ -57,18 +57,18 @@ export default function JobResults({ platforms, keyword, location, level, onBack
         <div className="flex items-start gap-4">
           <span className="text-4xl">🔍</span>
           <div className="flex-1">
-            <h3 className="text-xl font-bold text-white mb-3">Thông Tin Tìm Kiếm</h3>
+            <h3 className="text-xl font-bold text-white mb-3">Search Information</h3>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <p className="text-sm text-gray-400 mb-1">Vị trí</p>
+                <p className="text-sm text-gray-400 mb-1">Position</p>
                 <p className="text-white font-medium">{keyword}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-400 mb-1">Cấp độ</p>
+                <p className="text-sm text-gray-400 mb-1">Level</p>
                 <p className="text-white font-medium capitalize">{level}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-400 mb-1">Địa điểm</p>
+                <p className="text-sm text-gray-400 mb-1">Location</p>
                 <p className="text-white font-medium">{location}</p>
               </div>
             </div>
@@ -82,14 +82,14 @@ export default function JobResults({ platforms, keyword, location, level, onBack
           onClick={onBack}
           className="px-6 py-3 glass-effect border-2 border-white/20 text-white rounded-xl font-medium hover:border-purple-400 transition-all duration-300"
         >
-          ← Quay lại
+          ← Back
         </button>
         <button
           onClick={openAllSelected}
           disabled={selectedPlatforms.length === 0}
           className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl font-medium hover:from-purple-600 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl glow-effect disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          🚀 Mở tất cả ({selectedPlatforms.length}) trang đã chọn
+          🚀 Open All ({selectedPlatforms.length}) Selected Pages
         </button>
       </div>
 
@@ -139,7 +139,7 @@ export default function JobResults({ platforms, keyword, location, level, onBack
                       : 'bg-white/10 text-gray-400 hover:bg-white/20'
                   }`}
                 >
-                  {isSelected ? '✓ Đã chọn' : 'Chọn'}
+                  {isSelected ? '✓ Selected' : 'Select'}
                 </button>
                 <a
                   href={searchUrl}
@@ -147,13 +147,13 @@ export default function JobResults({ platforms, keyword, location, level, onBack
                   rel="noopener noreferrer"
                   className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg font-medium hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg hover:shadow-xl"
                 >
-                  Mở trang →
+                  Open Page →
                 </a>
               </div>
 
               {/* Preview URL */}
               <div className="mt-4 p-3 bg-black/30 rounded-lg">
-                <p className="text-xs text-gray-400 mb-1">URL tìm kiếm:</p>
+                <p className="text-xs text-gray-400 mb-1">Search URL:</p>
                 <p className="text-xs text-gray-300 break-all">
                   {searchUrl}
                 </p>
@@ -168,23 +168,23 @@ export default function JobResults({ platforms, keyword, location, level, onBack
         <div className="flex items-start gap-4">
           <span className="text-3xl">💡</span>
           <div>
-            <h4 className="font-bold text-blue-300 mb-2">Mẹo tìm việc hiệu quả</h4>
+            <h4 className="font-bold text-blue-300 mb-2">Effective Job Search Tips</h4>
             <ul className="space-y-1 text-gray-300 text-sm">
               <li className="flex items-start gap-2">
                 <span>•</span>
-                <span>Tạo tài khoản trên các nền tảng để lưu việc làm và nhận thông báo</span>
+                <span>Create accounts on platforms to save jobs and receive notifications</span>
               </li>
               <li className="flex items-start gap-2">
                 <span>•</span>
-                <span>Cập nhật CV và profile thường xuyên để tăng khả năng được nhà tuyển dụng chú ý</span>
+                <span>Update CV and profile regularly to increase visibility to recruiters</span>
               </li>
               <li className="flex items-start gap-2">
                 <span>•</span>
-                <span>Đọc kỹ mô tả công việc và yêu cầu trước khi apply</span>
+                <span>Read job descriptions and requirements carefully before applying</span>
               </li>
               <li className="flex items-start gap-2">
                 <span>•</span>
-                <span>Customize CV cho từng vị trí để tăng tỷ lệ thành công</span>
+                <span>Customize CV for each position to increase success rate</span>
               </li>
             </ul>
           </div>
@@ -196,17 +196,17 @@ export default function JobResults({ platforms, keyword, location, level, onBack
         <div className="text-center glass-effect rounded-xl p-6">
           <div className="text-3xl mb-2">🎯</div>
           <p className="text-2xl font-bold text-white mb-1">{platforms.length}</p>
-          <p className="text-sm text-gray-400">Nền tảng tuyển dụng</p>
+          <p className="text-sm text-gray-400">Job Platforms</p>
         </div>
         <div className="text-center glass-effect rounded-xl p-6">
           <div className="text-3xl mb-2">✅</div>
           <p className="text-2xl font-bold text-white mb-1">{selectedPlatforms.length}</p>
-          <p className="text-sm text-gray-400">Nền tảng đã chọn</p>
+          <p className="text-sm text-gray-400">Platforms Selected</p>
         </div>
         <div className="text-center glass-effect rounded-xl p-6">
           <div className="text-3xl mb-2">🚀</div>
           <p className="text-2xl font-bold text-white mb-1">1 Click</p>
-          <p className="text-sm text-gray-400">Mở tất cả cùng lúc</p>
+          <p className="text-sm text-gray-400">Open All at Once</p>
         </div>
       </div>
     </div>

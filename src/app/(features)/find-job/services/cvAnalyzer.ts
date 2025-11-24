@@ -42,41 +42,65 @@ function getFallbackAnalysis(cvText: string): CVAnalysisForJob {
   
   // Estimate years of experience - multiple patterns
   let yearsOfExperience = 0;
+  let hasExplicitLevel = false;
   
-  // Pattern 1: "9+ years", "9 years", "9+ năm"
-  const pattern1 = text.match(/(\d+)\+?\s*(?:years?|năm)\s*(?:of\s*)?(?:experience|kinh nghiệm)?/i);
-  if (pattern1) {
-    yearsOfExperience = Math.max(yearsOfExperience, parseInt(pattern1[1]));
+  // Check for explicit level keywords first (highest priority)
+  if (text.match(/\b(fresher|mới tốt nghiệp|fresh graduate|0[\s-]1\s+(?:years?|năm))\b/i)) {
+    yearsOfExperience = 0;
+    hasExplicitLevel = true;
+    console.log('🎯 Phát hiện từ khóa: Fresher');
+  } else if (text.match(/\b(intern|thực tập|internship|student)\b/i)) {
+    yearsOfExperience = 0;
+    hasExplicitLevel = true;
+    console.log('🎯 Phát hiện từ khóa: Intern');
   }
   
-  // Pattern 2: "with 9+ years", "over 9 years"
-  const pattern2 = text.match(/(?:with|over|more than)\s*(\d+)\+?\s*(?:years?|năm)/i);
-  if (pattern2) {
-    yearsOfExperience = Math.max(yearsOfExperience, parseInt(pattern2[1]));
-  }
-  
-  // Pattern 3: Calculate from work history dates (e.g., "2020 - Present", "2016 - 2020")
-  const dateRanges = text.match(/(\d{4})\s*[-–—]\s*(?:present|hiện tại|\d{4})/gi);
-  if (dateRanges && dateRanges.length > 0) {
-    let totalYears = 0;
-    const currentYear = new Date().getFullYear();
+  // Only calculate from other patterns if no explicit level found
+  if (!hasExplicitLevel) {
+    // Pattern 1: "9+ years", "9 years", "9+ năm"
+    const pattern1 = text.match(/(\d+)\+?\s*(?:years?|năm)\s*(?:of\s*)?(?:experience|kinh nghiệm)/i);
+    if (pattern1) {
+      yearsOfExperience = Math.max(yearsOfExperience, parseInt(pattern1[1]));
+    }
     
-    dateRanges.forEach(range => {
-      const match = range.match(/(\d{4})\s*[-–—]\s*(?:present|hiện tại|(\d{4}))/i);
-      if (match) {
-        const startYear = parseInt(match[1]);
-        const endYear = match[2] ? parseInt(match[2]) : currentYear;
-        totalYears += (endYear - startYear);
+    // Pattern 2: "with 9+ years", "over 9 years"
+    const pattern2 = text.match(/(?:with|over|more than)\s*(\d+)\+?\s*(?:years?|năm)/i);
+    if (pattern2) {
+      yearsOfExperience = Math.max(yearsOfExperience, parseInt(pattern2[1]));
+    }
+    
+    // Pattern 3: Calculate from work history dates ONLY if "experience" keyword nearby
+    // Look for work experience section indicators
+    const hasWorkSection = text.match(/(?:work\s+experience|kinh nghiệm làm việc|professional\s+experience)/i);
+    
+    if (hasWorkSection) {
+      const dateRanges = text.match(/(\d{4})\s*[-–—]\s*(?:present|hiện tại|\d{4})/gi);
+      if (dateRanges && dateRanges.length > 0) {
+        let totalYears = 0;
+        const currentYear = new Date().getFullYear();
+        
+        dateRanges.forEach(range => {
+          const match = range.match(/(\d{4})\s*[-–—]\s*(?:present|hiện tại|(\d{4}))/i);
+          if (match) {
+            const startYear = parseInt(match[1]);
+            const endYear = match[2] ? parseInt(match[2]) : currentYear;
+            const yearDiff = (endYear - startYear);
+            // Only count if it's reasonable work experience (not education)
+            if (yearDiff > 0 && yearDiff <= 50) {
+              totalYears += yearDiff;
+            }
+          }
+        });
+        
+        yearsOfExperience = Math.max(yearsOfExperience, totalYears);
       }
-    });
+    }
     
-    yearsOfExperience = Math.max(yearsOfExperience, totalYears);
-  }
-  
-  // Pattern 4: "Cybersecurity analyst with 9+ years"
-  const pattern4 = text.match(/analyst\s+with\s+(\d+)\+?\s*(?:years?|năm)/i);
-  if (pattern4) {
-    yearsOfExperience = Math.max(yearsOfExperience, parseInt(pattern4[1]));
+    // Pattern 4: "Cybersecurity analyst with 9+ years"
+    const pattern4 = text.match(/analyst\s+with\s+(\d+)\+?\s*(?:years?|năm)/i);
+    if (pattern4) {
+      yearsOfExperience = Math.max(yearsOfExperience, parseInt(pattern4[1]));
+    }
   }
   
   console.log('📊 Phát hiện kinh nghiệm:', yearsOfExperience, 'năm');
@@ -98,31 +122,41 @@ function getFallbackAnalysis(cvText: string): CVAnalysisForJob {
     currentLevel = 'junior';
     suggestedLevel = ['junior', 'middle'];
   } else if (yearsOfExperience >= 1) {
-    currentLevel = 'fresher';
-    suggestedLevel = ['fresher', 'junior'];
+    currentLevel = 'junior';
+    suggestedLevel = ['junior', 'middle'];
   } else {
-    currentLevel = 'intern';
-    suggestedLevel = ['intern', 'fresher'];
+    // 0 years - check if student or fresh graduate
+    if (text.match(/\b(student|\u0111ang h\u1ecdc|sinh vi\u00ean)\b/i)) {
+      currentLevel = 'intern';
+      suggestedLevel = ['intern', 'fresher'];
+    } else {
+      currentLevel = 'fresher';
+      suggestedLevel = ['fresher', 'junior'];
+    }
   }
   
   // Determine main field with better detection
   let mainField = 'Software Developer';
   
+  // Check for both frontend AND backend skills (Fullstack)
+  const hasFrontend = text.match(/react|vue|angular|html|css|javascript|typescript|frontend/i);
+  const hasBackend = text.match(/backend|api|server|node\.?js|express|django|spring|database|sql/i);
+  
   // Security field detection (based on CV content)
   if (text.match(/cyber\s*security|security\s+analyst|penetration|malware|threat\s+analysis|nist|dlp/i)) {
     mainField = 'Security Engineer';
   }
+  // Full Stack - if has BOTH frontend and backend skills
+  else if (text.match(/fullstack|full[\s-]stack/i) || (hasFrontend && hasBackend)) {
+    mainField = 'Full Stack Developer';
+  }
   // Frontend
-  else if (text.includes('frontend') || text.match(/react|vue|angular/)) {
+  else if (text.includes('frontend') || hasFrontend) {
     mainField = 'Frontend Developer';
   }
   // Backend
-  else if (text.includes('backend') || text.match(/api|server|node\.?js|express|django|spring/)) {
+  else if (text.includes('backend') || hasBackend) {
     mainField = 'Backend Developer';
-  }
-  // Full Stack
-  else if (text.match(/fullstack|full[\s-]stack/)) {
-    mainField = 'Full Stack Developer';
   }
   // Data Science / ML / AI
   else if (text.match(/data\s+scien|machine\s+learning|artificial\s+intelligence|deep\s+learning/)) {
@@ -182,7 +216,7 @@ function getFallbackAnalysis(cvText: string): CVAnalysisForJob {
     mainField,
     location,
     summary: yearsOfExperience > 0 
-      ? `${currentLevel.charAt(0).toUpperCase() + currentLevel.slice(1)} ${mainField} với ${yearsOfExperience}+ năm kinh nghiệm`
+      ? `${currentLevel.charAt(0).toUpperCase() + currentLevel.slice(1)} ${mainField} with ${yearsOfExperience}+ years of experience`
       : `${currentLevel.charAt(0).toUpperCase() + currentLevel.slice(1)} ${mainField}`
   };
 }
@@ -190,13 +224,13 @@ function getFallbackAnalysis(cvText: string): CVAnalysisForJob {
 // Helper function to get level display name
 export function getLevelDisplayName(level: JobLevel): string {
   const displayNames: Record<JobLevel, string> = {
-    intern: 'Thực tập sinh (Intern)',
-    fresher: 'Mới tốt nghiệp (Fresher)',
-    junior: 'Nhân viên (Junior)',
-    middle: 'Trưởng nhóm (Middle)',
-    senior: 'Chuyên gia (Senior)',
-    manager: 'Quản lý (Manager)',
-    director: 'Giám đốc (Director)'
+    intern: 'Intern',
+    fresher: 'Fresher',
+    junior: 'Junior',
+    middle: 'Middle',
+    senior: 'Senior',
+    manager: 'Manager',
+    director: 'Director'
   };
   return displayNames[level];
 }
@@ -204,13 +238,13 @@ export function getLevelDisplayName(level: JobLevel): string {
 // Get recommended experience range for a level
 export function getExperienceRange(level: JobLevel): string {
   const ranges: Record<JobLevel, string> = {
-    intern: '0 năm (Đang học)',
-    fresher: '0-1 năm',
-    junior: '1-3 năm',
-    middle: '3-5 năm',
-    senior: '5-8 năm',
-    manager: '7+ năm',
-    director: '10+ năm'
+    intern: '0 years (Student)',
+    fresher: '0-1 years',
+    junior: '1-3 years',
+    middle: '3-5 years',
+    senior: '5-8 years',
+    manager: '7+ years',
+    director: '10+ years'
   };
   return ranges[level];
 }

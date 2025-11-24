@@ -53,32 +53,53 @@ export default function TemplateSelectorPanel({
   };
 
   return (
-    <div className="h-full overflow-y-auto space-y-4 pr-2">
-      <div className="sticky top-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 z-10 pb-4">
-        <h3 className="text-xl font-bold gradient-text mb-1">📝 CV Template</h3>
-        <p className="text-sm text-gray-300">Choose from <span className="text-purple-400 font-bold">{CV_TEMPLATES.length} professional templates</span></p>
-        
-        {/* Quick AI Button when panel hidden */}
-        {!showAIPanel && !isLoadingAI && (
-          <button
-            onClick={getAIRecommendation}
-            className="mt-3 w-full glass-effect border border-purple-500/50 text-purple-300 py-2.5 rounded-lg text-sm font-medium hover:bg-purple-500/20 transition-all flex items-center justify-center gap-2 glow-effect"
-          >
-            <span>🤖</span>
-            <span>Get AI Recommendation</span>
-          </button>
-        )}
+    <div className="relative h-full overflow-y-auto space-y-4 pr-2">
+      {/* Header Section with Gradient Background */}
+      <div className="sticky top-0 bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-sm z-10 pb-4 -mx-2 px-2">
+        <div className="relative glass-effect border border-purple-500/30 rounded-2xl p-6 overflow-hidden">
+          {/* Animated background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 opacity-50" />
+          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/20 to-blue-600/20 blur-xl opacity-50" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg">
+                <span className="text-2xl">📝</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold bg-gradient-to-r from-purple-300 via-pink-300 to-blue-300 bg-clip-text text-transparent">
+                  CV Template
+                </h3>
+                <p className="text-xs text-gray-400">
+                  <span className="text-purple-400 font-semibold">{CV_TEMPLATES.length}</span> professional designs
+                </p>
+              </div>
+            </div>
+            
+            {/* Quick AI Button when panel hidden */}
+            {!showAIPanel && !isLoadingAI && (
+              <button
+                onClick={getAIRecommendation}
+                className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 rounded-xl text-sm font-semibold hover:from-purple-600 hover:to-blue-600 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105"
+              >
+                <span className="text-lg">🤖</span>
+                <span>Get AI Recommendation</span>
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Live Preview of Current CV */}
-      <div className="glass-effect border border-white/10 rounded-xl overflow-hidden">
-        <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 px-4 py-2 border-b border-white/10">
+      <div className="relative glass-effect border border-purple-500/30 rounded-2xl overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="relative bg-gradient-to-r from-purple-500/30 to-blue-500/30 px-5 py-3 border-b border-purple-500/30">
           <h4 className="text-sm font-bold text-white flex items-center gap-2">
-            <span>👁️</span>
-            Live Preview
+            <span className="text-lg">👁️</span>
+            <span>Live Preview</span>
           </h4>
         </div>
-        <div className="p-4 bg-white max-h-64 overflow-y-auto custom-scrollbar">
+        <div className="relative p-4 bg-white/95 max-h-64 overflow-y-auto custom-scrollbar">
           {/* Mini CV Preview */}
           <div className="space-y-3">
             {/* Header with Profile Image */}

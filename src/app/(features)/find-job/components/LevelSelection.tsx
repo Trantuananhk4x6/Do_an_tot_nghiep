@@ -28,10 +28,10 @@ export default function LevelSelection({ cvAnalysis, selectedLevel, onLevelSelec
     <div className="max-w-6xl mx-auto animate-fade-in-up">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold gradient-text mb-2">
-          Chọn Cấp Độ Công Việc
+          Select Job Level
         </h2>
         <p className="text-gray-300">
-          Chúng tôi phân tích bạn phù hợp với các vị trí sau
+          We analyzed that you are suitable for the following positions
         </p>
       </div>
 
@@ -40,28 +40,28 @@ export default function LevelSelection({ cvAnalysis, selectedLevel, onLevelSelec
         <div className="flex items-start gap-4">
           <span className="text-4xl">📊</span>
           <div className="flex-1">
-            <h3 className="text-xl font-bold text-white mb-3">Phân Tích CV Của Bạn</h3>
+            <h3 className="text-xl font-bold text-white mb-3">Your CV Analysis</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-400 mb-1">Lĩnh vực</p>
+                <p className="text-sm text-gray-400 mb-1">Field</p>
                 <p className="text-white font-medium">{cvAnalysis.mainField}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-400 mb-1">Kinh nghiệm</p>
-                <p className="text-white font-medium">{cvAnalysis.yearsOfExperience}+ năm</p>
+                <p className="text-sm text-gray-400 mb-1">Experience</p>
+                <p className="text-white font-medium">{cvAnalysis.yearsOfExperience}+ years</p>
               </div>
               <div>
-                <p className="text-sm text-gray-400 mb-1">Cấp độ hiện tại</p>
+                <p className="text-sm text-gray-400 mb-1">Current Level</p>
                 <p className="text-white font-medium">{getLevelDisplayName(cvAnalysis.currentLevel)}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-400 mb-1">Địa điểm</p>
+                <p className="text-sm text-gray-400 mb-1">Location</p>
                 <p className="text-white font-medium">{cvAnalysis.location}</p>
               </div>
             </div>
             {cvAnalysis.skills.length > 0 && (
               <div className="mt-4">
-                <p className="text-sm text-gray-400 mb-2">Kỹ năng nổi bật</p>
+                <p className="text-sm text-gray-400 mb-2">Key Skills</p>
                 <div className="flex flex-wrap gap-2">
                   {cvAnalysis.skills.slice(0, 10).map((skill, index) => (
                     <span 
@@ -98,14 +98,14 @@ export default function LevelSelection({ cvAnalysis, selectedLevel, onLevelSelec
               {/* Recommended Badge */}
               {isRecommended && (
                 <div className="absolute -top-3 -right-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-pulse">
-                  ✨ Gợi ý
+                  ✨ Recommended
                 </div>
               )}
               
               {/* Current Badge */}
               {isCurrent && (
                 <div className="absolute -top-3 -left-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                  📍 Hiện tại
+                  📍 Current
                 </div>
               )}
 
@@ -116,7 +116,7 @@ export default function LevelSelection({ cvAnalysis, selectedLevel, onLevelSelec
                     {getLevelDisplayName(level)}
                   </h3>
                   <p className="text-sm text-gray-400">
-                    Kinh nghiệm: {getExperienceRange(level)}
+                    Experience: {getExperienceRange(level)}
                   </p>
                 </div>
               </div>
@@ -135,10 +135,10 @@ export default function LevelSelection({ cvAnalysis, selectedLevel, onLevelSelec
                 {isSelected ? (
                   <>
                     <span>✓</span>
-                    <span className="font-medium">Đã chọn</span>
+                    <span className="font-medium">Selected</span>
                   </>
                 ) : (
-                  <span className="font-medium">Chọn vị trí này</span>
+                  <span className="font-medium">Select this level</span>
                 )}
               </div>
             </button>
@@ -158,19 +158,19 @@ export default function LevelSelection({ cvAnalysis, selectedLevel, onLevelSelec
         <div className="flex items-start gap-4">
           <span className="text-3xl">💡</span>
           <div>
-            <h4 className="font-bold text-blue-300 mb-2">Lời khuyên</h4>
+            <h4 className="font-bold text-blue-300 mb-2">Tips</h4>
             <ul className="space-y-1 text-gray-300 text-sm">
               <li className="flex items-start gap-2">
                 <span>•</span>
-                <span>Các vị trí có nhãn <strong className="text-purple-300">✨ Gợi ý</strong> phù hợp nhất với kinh nghiệm của bạn</span>
+                <span>Positions with <strong className="text-purple-300">✨ Recommended</strong> label are best suited to your experience</span>
               </li>
               <li className="flex items-start gap-2">
                 <span>•</span>
-                <span>Bạn có thể chọn vị trí thấp hơn để tăng cơ hội hoặc cao hơn để thử thách bản thân</span>
+                <span>You can choose a lower position to increase opportunities or higher to challenge yourself</span>
               </li>
               <li className="flex items-start gap-2">
                 <span>•</span>
-                <span>Hệ thống sẽ tìm kiếm việc làm phù hợp trên các trang tuyển dụng lớn tại Việt Nam</span>
+                <span>The system will search for suitable jobs on major recruitment sites in Vietnam</span>
               </li>
             </ul>
           </div>
@@ -182,13 +182,13 @@ export default function LevelSelection({ cvAnalysis, selectedLevel, onLevelSelec
 
 function getLevelDescription(level: JobLevel): string {
   const descriptions: Record<JobLevel, string> = {
-    intern: 'Phù hợp cho sinh viên đang học, muốn tích lũy kinh nghiệm thực tế',
-    fresher: 'Dành cho người mới tốt nghiệp, bắt đầu sự nghiệp chuyên môn',
-    junior: 'Có 1-3 năm kinh nghiệm, làm việc độc lập với các task cơ bản',
-    middle: 'Có 3-5 năm kinh nghiệm, có thể dẫn dắt dự án nhỏ hoặc team',
-    senior: 'Chuyên gia 5+ năm, tư vấn kiến trúc và giải quyết vấn đề phức tạp',
-    manager: 'Quản lý team, phối hợp nhiều dự án, có kỹ năng lãnh đạo tốt',
-    director: 'Lãnh đạo cấp cao, định hướng chiến lược và phát triển tổ chức'
+    intern: 'Suitable for students, want to gain practical experience',
+    fresher: 'For fresh graduates, starting professional career',
+    junior: '1-3 years experience, work independently on basic tasks',
+    middle: '3-5 years experience, can lead small projects or teams',
+    senior: '5+ years expert, advise on architecture and solve complex problems',
+    manager: 'Manage team, coordinate multiple projects, strong leadership skills',
+    director: 'Senior leadership, define strategy and organizational development'
   };
   return descriptions[level];
 }

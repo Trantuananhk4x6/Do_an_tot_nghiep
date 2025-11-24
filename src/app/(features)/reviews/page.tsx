@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import Header from "@/components/ui/header";
 import Footer from "@/components/ui/footer";
-import { FloatingDots } from "@/components/ui/floating-dots";
-import { AnimatedStars } from "@/components/ui/animated-stars";
+import { motion } from 'framer-motion';
+import Animated3DBackground from '@/components/ui/Animated3DBackground';
+import { Star, Sparkles } from 'lucide-react';
 
 interface Rating {
   id: number;
@@ -128,28 +129,36 @@ export default function ReviewsPage() {
 
   return (
     <>
-      <FloatingDots />
-      <AnimatedStars />
       <Header />
       
-      <main className="min-h-screen relative">
-        {/* Background Effects */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute top-40 right-10 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 py-16 relative z-10">
-          {/* Header Section */}
-          <div className="text-center mb-16">
-            <h1 className="text-5xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Reviews & Ratings
-              </span>
+      <div className="relative min-h-screen">
+        <Animated3DBackground />
+        
+        <main className="relative z-10 max-w-7xl mx-auto px-4 py-16">
+          {/* Enhanced Header Section */}
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-16"
+          >
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center"
+              >
+                <Star className="w-8 h-8 text-white" />
+              </motion.div>
+            </div>
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent mb-4">
+              Reviews & Ratings
             </h1>
-            <p className="text-gray-400 text-lg">Share your experience and help others succeed!</p>
-          </div>
+            <div className="flex items-center justify-center gap-2 text-gray-300 text-lg">
+              <Sparkles className="w-5 h-5 text-purple-400" />
+              <p>Share your experience and help us improve</p>
+            </div>
+          </motion.div>
 
           {/* Statistics Section */}
           <div className="glass-effect border border-white/10 rounded-2xl p-8 mb-12">
@@ -392,8 +401,8 @@ export default function ReviewsPage() {
               )}
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
 
       <Footer />
     </>
