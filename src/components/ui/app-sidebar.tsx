@@ -12,6 +12,7 @@ import {
   Briefcase,
   Users,
   GraduationCap,
+  HelpCircle,
 } from "lucide-react";
 import {
   Sidebar,
@@ -209,6 +210,12 @@ export function AppSidebar() {
               )}
             </div>
             <ChevronUp className="ml-auto h-4 w-4 text-gray-500 group-hover:text-purple-400 group-hover:-translate-y-0.5 transition-all duration-300" />
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <Link href="/abouttutorial" className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-all duration-200">
+              <HelpCircle className="h-5 w-5 text-gray-300" />
+              <span className="text-sm text-gray-300">Hướng dẫn</span>
+            </Link>
           </div>
         </div>
       </SidebarFooter>

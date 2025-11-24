@@ -179,6 +179,23 @@ export default function AboutPage() {
           </div>
         </motion.div>
 
+        {/* How-to guide moved to /abouttutorial - brief CTA below */}
+        <div className="mb-8">
+          <div className="max-w-6xl mx-auto p-6 rounded-xl border border-white/10 bg-gradient-to-r from-purple-900/10 to-pink-900/10 flex items-center justify-between">
+            <div>
+              <h3 className="text-2xl font-bold text-purple-400">Hướng dẫn sử dụng</h3>
+              <p className="text-gray-300">Đã chuyển sang trang hướng dẫn riêng. Nhấn vào nút để xem chi tiết từng tính năng và mẹo sử dụng.</p>
+            </div>
+            <div>
+              <Link href="/abouttutorial">
+                <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold text-white hover:scale-105 transition-transform">
+                  Xem Hướng dẫn
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+
         {/* CTA Section */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}

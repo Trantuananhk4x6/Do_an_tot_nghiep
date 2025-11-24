@@ -660,12 +660,12 @@ const MockInterviewPage = () => {
     <>
       <NeuralNetworkBg />
       <div className="relative z-10 h-screen bg-background flex flex-col overflow-hidden">
-      {/* Animated Stars Background */}
-      <AnimatedStars />
-      
-      <div className="flex-1 relative z-10">
+        {/* Animated Stars Background */}
+        <AnimatedStars />
+        {/* Thêm scroll cho toàn bộ trang */}
+        <div className="flex-1 relative z-10 overflow-y-auto custom-scrollbar">
         {!isStarted ? (
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="flex-1">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
