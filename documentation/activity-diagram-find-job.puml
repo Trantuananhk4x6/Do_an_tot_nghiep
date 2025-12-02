@@ -1,0 +1,102 @@
+@startuml activity-diagram-find-job
+title Activity Diagram - Find Job (Tìm việc làm)
+skinparam backgroundColor #FEFEFE
+skinparam ActivityBackgroundColor #E8F4FD
+skinparam ActivityBorderColor #3498DB
+skinparam ActivityStartColor #27AE60
+skinparam ActivityEndColor #E74C3C
+skinparam ActivityDiamondBackgroundColor #F39C12
+skinparam ActivityDiamondBorderColor #E67E22
+skinparam SwimlaneBorderColor #2C3E50
+skinparam SwimlaneTitleBackgroundColor #34495E
+skinparam SwimlaneTitleFontColor white
+
+|User|
+start
+:Chọn "Find Job" trên menu;
+
+|System|
+:Hiển thị giao diện Find Job;
+:Hiển thị bước Upload CV;
+
+|User|
+:Upload file CV;
+
+|System|
+:Phân tích CV;
+:Trích xuất thông tin:
+- Kỹ năng
+- Kinh nghiệm
+- Ngành nghề
+- Vị trí địa lý;
+
+if (Nhận diện được vị trí?) then (Có)
+  :Hiển thị vị trí đã phát hiện;
+else (Không)
+  :Sẽ hỏi vị trí ở bước sau;
+endif
+
+:Hiển thị danh sách ngành nghề gợi ý;
+
+|User|
+:Chọn ngành nghề mong muốn;
+
+|System|
+:Hiển thị các cấp bậc công việc;
+
+|User|
+:Chọn cấp bậc (Intern/Fresher/Junior/Middle/Senior/Lead);
+
+|System|
+:Hiển thị form Job Preferences;
+
+|User|
+:Nhập thông tin sở thích:
+- Hình thức làm việc (Remote/Hybrid/Onsite)
+- Mức lương mong muốn
+- Địa điểm làm việc;
+
+|System|
+:Tạo từ khóa tìm kiếm kết hợp:
+Field + Level;
+
+:Chuẩn hóa địa điểm (VD: HCM → Ho Chi Minh);
+
+if (Muốn xem Market Insights?) then (Có)
+  |User|
+  :Nhấn xem Market Insights;
+  |System|
+  :Hiển thị thông tin thị trường:
+  - Xu hướng lương
+  - Nhu cầu tuyển dụng
+  - Kỹ năng hot;
+endif
+
+|System|
+:Tạo danh sách nền tảng tuyển dụng theo quốc gia:
+- Vietnam: VietnamWorks, TopCV, ITviec
+- Global: LinkedIn, Indeed, Glassdoor;
+
+:Tạo link tìm việc với keyword và location;
+
+|User|
+:Xem danh sách link tìm việc;
+:Nhấn vào link để xem việc làm;
+
+|System|
+:Mở trang tuyển dụng với từ khóa đã điền sẵn;
+
+|User|
+:Duyệt và ứng tuyển việc làm;
+
+stop
+
+legend right
+  |= Ký hiệu |= Mô tả |
+  | Hình oval | Bắt đầu/Kết thúc |
+  | Hình chữ nhật | Hoạt động |
+  | Hình thoi | Điều kiện |
+  | Swimlane | Phân chia Actor |
+endlegend
+
+@enduml

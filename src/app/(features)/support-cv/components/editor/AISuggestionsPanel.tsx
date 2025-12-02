@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { AISuggestion } from '@/app/(features)/support-cv/types/cv.types';
+import { Sparkles, Bot, Lightbulb, BarChart2, Check, MessageCircle } from 'lucide-react';
 
 interface AISuggestionsPanelProps {
   suggestions: AISuggestion[];
@@ -12,13 +13,13 @@ export default function AISuggestionsPanel({ suggestions, isGenerating }: AISugg
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-4">
       <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-        <span>✨</span>
+        <Sparkles className="w-5 h-5 text-purple-500" />
         AI Suggestions
       </h3>
 
       {isGenerating ? (
         <div className="text-center py-8">
-          <div className="text-4xl mb-4 animate-pulse">🤖</div>
+          <Bot className="w-12 h-12 mx-auto mb-4 text-purple-500 animate-pulse" />
           <p className="text-gray-600">Analyzing your CV...</p>
         </div>
       ) : suggestions.length > 0 ? (
@@ -46,8 +47,9 @@ export default function AISuggestionsPanel({ suggestions, isGenerating }: AISugg
                 <strong>Suggested:</strong> {suggestion.suggestedText}
               </p>
 
-              <p className="text-xs text-gray-500 mb-3">
-                💡 {suggestion.reason}
+              <p className="text-xs text-gray-500 mb-3 flex items-start gap-1">
+                <Lightbulb className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                {suggestion.reason}
               </p>
 
               {suggestion.actionVerbs && suggestion.actionVerbs.length > 0 && (
@@ -63,14 +65,16 @@ export default function AISuggestionsPanel({ suggestions, isGenerating }: AISugg
               {suggestion.metrics && suggestion.metrics.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {suggestion.metrics.map((metric, i) => (
-                    <span key={i} className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
-                      📊 {metric}
+                    <span key={i} className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded flex items-center gap-1">
+                      <BarChart2 className="w-3 h-3" />
+                      {metric}
                     </span>
                   ))}
                 </div>
               )}
 
-              <button className="w-full mt-3 bg-purple-500 text-white py-2 rounded-lg text-sm hover:bg-purple-600 transition-all">
+              <button className="w-full mt-3 bg-purple-500 text-white py-2 rounded-lg text-sm hover:bg-purple-600 transition-all flex items-center justify-center gap-2">
+                <Check className="w-4 h-4" />
                 Apply Suggestion
               </button>
             </div>
@@ -78,7 +82,7 @@ export default function AISuggestionsPanel({ suggestions, isGenerating }: AISugg
         </div>
       ) : (
         <div className="text-center py-8">
-          <div className="text-4xl mb-4">💭</div>
+          <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
           <p className="text-gray-500 text-sm">
             No suggestions yet. Fill in your experience to get AI-powered recommendations.
           </p>

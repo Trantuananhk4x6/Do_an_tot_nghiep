@@ -2,6 +2,17 @@
 
 import React, { useState, useCallback } from 'react';
 import { pdfExtractor } from '@/app/(features)/support-cv/services/pdf/extractor.service';
+import { 
+  FileText, 
+  Upload, 
+  Search, 
+  AlertCircle, 
+  Bot, 
+  Target, 
+  Globe,
+  Sparkles
+} from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface CVUploadStepProps {
   onCVAnalyzed: (cvText: string) => void;
@@ -11,6 +22,7 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string>('');
+  const { language, t } = useLanguage();
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -31,7 +43,8 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
       const result = await pdfExtractor.extractText(file);
       
       if (!result.success) {
-        const errorMsg = (result as any).error?.message || 'Cannot read PDF file';
+        const errorMsg = (result as any).error?.message || 
+          (language === 'vi' ? 'Không thể đọc file PDF' : 'Cannot read PDF file');
         throw new Error(errorMsg);
       }
 
@@ -39,17 +52,22 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
       console.log('✅ Đã đọc CV thành công, độ dài:', extractedText.length);
       
       if (!extractedText || extractedText.trim().length < 50) {
-        throw new Error('CV does not have enough content. Please check the PDF file again.');
+        throw new Error(
+          language === 'vi' 
+            ? 'CV không có đủ nội dung. Vui lòng kiểm tra lại file PDF.'
+            : 'CV does not have enough content. Please check the PDF file again.'
+        );
       }
 
       // Pass extracted text to parent
       onCVAnalyzed(extractedText);
     } catch (err) {
       console.error('❌ Lỗi khi xử lý CV:', err);
-      setError(err instanceof Error ? err.message : 'Cannot process CV');
+      setError(err instanceof Error ? err.message : 
+        (language === 'vi' ? 'Không thể xử lý CV' : 'Cannot process CV'));
       setIsProcessing(false);
     }
-  }, [onCVAnalyzed]);
+  }, [onCVAnalyzed, language]);
 
   const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
@@ -61,27 +79,27 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
     if (pdfFile) {
       await processCV(pdfFile);
     } else {
-      setError('Please upload PDF file');
+      setError(language === 'vi' ? 'Vui lòng tải lên file PDF' : 'Please upload PDF file');
     }
-  }, [processCV]);
+  }, [processCV, language]);
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type === 'application/pdf') {
       await processCV(file);
     } else {
-      setError('Please select PDF file');
+      setError(language === 'vi' ? 'Vui lòng chọn file PDF' : 'Please select PDF file');
     }
-  }, [processCV]);
+  }, [processCV, language]);
 
   return (
     <div className="max-w-4xl mx-auto animate-fade-in-up">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold gradient-text mb-2">
-          🎯 Find Your Dream Job
+          {t.upload.title}
         </h2>
         <p className="text-gray-300">
-          Upload your CV to find the most suitable jobs
+          {t.upload.subtitle}
         </p>
       </div>
 
@@ -98,12 +116,17 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
       >
         {!isProcessing ? (
           <div className="text-center">
-            <div className="text-8xl mb-6 animate-float">📋</div>
+            <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30 flex items-center justify-center animate-float">
+              <FileText className="w-12 h-12 text-purple-400" />
+            </div>
             <h3 className="text-2xl font-bold text-white mb-2">
-              Drag and drop your CV here
+              {language === 'vi' ? 'Kéo thả CV của bạn vào đây' : 'Drag and drop your CV here'}
             </h3>
             <p className="text-gray-300 mb-6">
-              We will analyze your CV and suggest suitable jobs
+              {language === 'vi' 
+                ? 'Chúng tôi sẽ phân tích CV và đề xuất công việc phù hợp'
+                : 'We will analyze your CV and suggest suitable jobs'
+              }
             </p>
 
             <label className="inline-block">
@@ -114,16 +137,19 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
                 className="hidden"
                 disabled={isProcessing}
               />
-              <span className="px-8 py-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl font-medium cursor-pointer hover:from-purple-600 hover:to-blue-600 transition-all duration-300 inline-block shadow-lg hover:shadow-xl glow-effect">
-                📤 Select CV File (PDF)
+              <span className="px-8 py-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl font-medium cursor-pointer hover:from-purple-600 hover:to-blue-600 transition-all duration-300 inline-flex items-center gap-2 shadow-lg hover:shadow-xl glow-effect">
+                <Upload className="w-5 h-5" />
+                {t.upload.button}
               </span>
             </label>
           </div>
         ) : (
           <div className="text-center">
-            <div className="text-8xl mb-6 animate-bounce">🔍</div>
+            <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30 flex items-center justify-center animate-bounce">
+              <Search className="w-12 h-12 text-purple-400" />
+            </div>
             <h3 className="text-2xl font-bold text-white mb-4">
-              Analyzing your CV...
+              {t.upload.analyzing}
             </h3>
             <div className="max-w-md mx-auto">
               <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
@@ -139,9 +165,13 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
       {error && (
         <div className="mt-6 glass-effect rounded-xl p-6 border-2 border-red-500/50 bg-red-500/10 animate-fade-in">
           <div className="flex items-start gap-4">
-            <span className="text-4xl">❌</span>
+            <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center shrink-0">
+              <AlertCircle className="w-5 h-5 text-red-400" />
+            </div>
             <div>
-              <h4 className="font-bold text-red-400 text-lg mb-2">Error</h4>
+              <h4 className="font-bold text-red-400 text-lg mb-2">
+                {t.upload.error}
+              </h4>
               <p className="text-red-300">{error}</p>
             </div>
           </div>
@@ -151,19 +181,28 @@ export default function CVUploadStep({ onCVAnalyzed }: CVUploadStepProps) {
       {/* Features */}
       <div className="mt-12 grid grid-cols-3 gap-6">
         <div className="text-center glass-effect rounded-xl p-6">
-          <div className="text-4xl mb-3">🤖</div>
-          <p className="text-sm text-white font-medium">Smart Analysis</p>
-          <p className="text-xs text-gray-400">AI analyzes skills & experience</p>
+          <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center">
+            <Bot className="w-6 h-6 text-purple-400" />
+          </div>
+          <p className="text-sm text-white font-medium">
+            {t.upload.features.analyze}
+          </p>
         </div>
         <div className="text-center glass-effect rounded-xl p-6">
-          <div className="text-4xl mb-3">🎯</div>
-          <p className="text-sm text-white font-medium">Accurate Suggestions</p>
-          <p className="text-xs text-gray-400">Find jobs matching your profile</p>
+          <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
+            <Target className="w-6 h-6 text-green-400" />
+          </div>
+          <p className="text-sm text-white font-medium">
+            {t.upload.features.extract}
+          </p>
         </div>
         <div className="text-center glass-effect rounded-xl p-6">
-          <div className="text-4xl mb-3">🌎</div>
-          <p className="text-sm text-white font-medium">Multiple Sources</p>
-          <p className="text-xs text-gray-400">TopCV, ITviec, LinkedIn...</p>
+          <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
+            <Globe className="w-6 h-6 text-blue-400" />
+          </div>
+          <p className="text-sm text-white font-medium">
+            {t.upload.features.match}
+          </p>
         </div>
       </div>
     </div>

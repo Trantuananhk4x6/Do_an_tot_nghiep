@@ -1,0 +1,94 @@
+@startuml sequence-diagram-live-interview
+title Sequence Diagram - Live Interview
+skinparam backgroundColor #FEFEFE
+skinparam ParticipantBackgroundColor #E8F4FD
+skinparam ParticipantBorderColor #3498DB
+skinparam SequenceLifeLineBorderColor #95A5A6
+skinparam SequenceMessageAlign center
+
+actor "Người dùng" as User
+participant "Giao diện\nLive Interview" as UI
+participant "Dịch vụ\nTranscription\n(Deepgram)" as Deepgram
+participant "API\nLive Interview" as API
+
+autonumber
+
+== Khởi tạo Live Interview ==
+
+User -> UI : Chọn "Live Interview" trên menu
+activate UI
+UI --> User : Hiển thị giao diện Live Interview
+
+== Bắt đầu phỏng vấn ==
+
+User -> UI : Nhấn nút "Start"
+UI -> UI : Yêu cầu quyền screen + microphone
+UI --> User : Hiển thị dialog chọn tab/cửa sổ
+
+User -> UI : Chọn tab để chia sẻ
+User -> UI : Xác nhận chia sẻ màn hình
+UI --> User : Hiển thị màn hình đang được chia sẻ
+
+== Xử lý Transcription ==
+
+UI -> Deepgram : Mở kết nối WebSocket
+activate Deepgram
+
+loop Trong khi đang chia sẻ
+  UI -> Deepgram : Gửi audio chunks
+  Deepgram --> UI : Trả về transcript (interim/final)
+  UI --> User : Hiển thị transcript realtime
+end
+
+== Chọn Mode và hỏi AI ==
+
+alt Manual Mode
+  User -> UI : Tô đậm phần text muốn hỏi
+  User -> UI : Nhấn nút "Ask AI"
+  UI -> API : POST /api/live-interview
+  activate API
+  note right of API
+    Body: {
+      question: "text đã tô đậm",
+      context: "transcript hiện tại"
+    }
+  end note
+  API --> UI : Câu trả lời từ AI
+  deactivate API
+  UI --> User : Hiển thị câu trả lời AI
+  
+else Auto Mode
+  UI -> UI : Tự động nhận diện câu hỏi
+  UI -> API : POST /api/live-interview
+  activate API
+  API --> UI : Câu trả lời từ AI
+  deactivate API
+  UI --> User : Hiển thị câu trả lời AI + nút "Ask AI"
+  
+  opt Người dùng muốn hỏi thêm
+    User -> UI : Nhấn nút "Ask AI"
+    UI -> API : POST /api/live-interview
+    API --> UI : Câu trả lời mới
+    UI --> User : Hiển thị câu trả lời
+  end
+end
+
+== Kết thúc ==
+
+User -> UI : Nhấn nút "Stop"
+UI -> Deepgram : Đóng kết nối WebSocket
+deactivate Deepgram
+UI -> UI : Dừng recorder, giải phóng streams
+UI --> User : Thông báo "Transcription ended"
+
+deactivate UI
+
+legend right
+  |= Thành phần |= Mô tả |
+  | Người dùng | Actor chính tương tác với hệ thống |
+  | Giao diện Live Interview | Frontend React Component |
+  | Dịch vụ Transcription | Deepgram WebSocket API |
+  | API Live Interview | Backend xử lý AI response |
+endlegend
+
+@enduml

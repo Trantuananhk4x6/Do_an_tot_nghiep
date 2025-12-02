@@ -138,29 +138,29 @@ const Page = () => {
       <div className="relative min-h-screen">
         <Animated3DBackground />
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-12">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
       {/* Header with enhanced animation */}
       <motion.div 
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="mb-12"
+        className="mb-8 sm:mb-12"
       >
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4">
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center"
+            className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0"
           >
-            <Briefcase className="h-8 w-8 text-white" />
+            <Briefcase className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-white" />
           </motion.div>
           <div>
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent mb-2">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent mb-1 sm:mb-2">
               Interview Preparation Hub
             </h1>
-            <div className="flex items-center gap-2 text-gray-300">
-              <Sparkles className="h-5 w-5 text-purple-400" />
-              <p className="text-lg">
+            <div className="flex items-start sm:items-center gap-2 text-gray-300">
+              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+              <p className="text-sm sm:text-base lg:text-lg">
                 Generate interview questions and answers based on your resume and job descriptions
               </p>
             </div>
@@ -173,21 +173,23 @@ const Page = () => {
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
-        className="mb-8"
+        className="mb-6 sm:mb-8"
       >
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button 
                 onClick={() => getUserResume()}
-                className="relative overflow-hidden bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-6 text-lg rounded-xl shadow-neon hover:shadow-neon-hover transition-all duration-300"
+                className="relative overflow-hidden bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6 text-sm sm:text-base lg:text-lg rounded-xl shadow-neon hover:shadow-neon-hover transition-all duration-300"
               >
                 <motion.div
                   animate={{ x: [-200, 1000] }}
                   transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
                   className="absolute inset-0 w-32 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
                 />
-                <Plus className="mr-2" /> Prepare Interview
+                <Plus className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" /> 
+                <span className="hidden sm:inline">Prepare Interview</span>
+                <span className="sm:hidden">Prepare</span>
               </Button>
             </motion.div>
           </DialogTrigger>
@@ -309,19 +311,19 @@ const Page = () => {
         {loading ? (
           <Loading />
         ) : interviewSet.length === 0 ? (
-          <div className="glass-effect rounded-2xl p-12 text-center border border-white/10">
-            <div className="inline-block p-4 rounded-2xl bg-purple-500/10 mb-4">
-              <svg className="h-16 w-16 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="glass-effect rounded-xl sm:rounded-2xl p-6 sm:p-8 lg:p-12 text-center border border-white/10">
+            <div className="inline-block p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-purple-500/10 mb-3 sm:mb-4">
+              <svg className="h-10 w-10 sm:h-12 sm:w-12 lg:h-16 lg:w-16 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <p className="text-gray-400 text-lg">
+            <p className="text-gray-400 text-sm sm:text-base lg:text-lg">
               Not found any questions. Please upload your resume and
               jobdescription.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {interviewSet.map((interview: InterviewSet) => (
               <InterviewCard
                 key={interview.id}

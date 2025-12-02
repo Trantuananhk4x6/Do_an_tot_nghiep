@@ -1,0 +1,113 @@
+@startuml sequence-diagram-summarize
+title Sequence Diagram - Summarize (Phân tích CV chuyên sâu)
+skinparam backgroundColor #FEFEFE
+skinparam ParticipantBackgroundColor #E8F4FD
+skinparam ParticipantBorderColor #3498DB
+skinparam SequenceLifeLineBorderColor #95A5A6
+skinparam SequenceMessageAlign center
+
+actor "Người dùng" as User
+participant "Giao diện\nSummarize" as UI
+participant "Summary\nService" as SummaryService
+participant "File Parser\nService" as FileParser
+participant "AI Backend\n(Gemini)" as AI
+
+autonumber
+
+== Bước 1: Khởi tạo ==
+
+User -> UI: Chọn "Summarize"
+activate UI
+UI --> User: Hiển thị giao diện với:
+note right of User
+  - Language Selector
+  - Upload area
+  - Analyze button
+end note
+
+== Bước 2: Cấu hình và Upload ==
+
+User -> UI: Chọn ngôn ngữ (VD: Vietnamese)
+User -> UI: Upload file CV (PDF)
+UI --> User: Hiển thị file đã upload
+
+== Bước 3: Phân tích CV ==
+
+User -> UI: Nhấn "Phân tích CV"
+UI --> User: Hiển thị loading
+
+UI -> FileParser: Parse file
+activate FileParser
+FileParser -> FileParser: Trích xuất text từ PDF
+FileParser --> UI: CV text content
+deactivate FileParser
+
+UI -> SummaryService: generateSummary(file, language)
+activate SummaryService
+
+SummaryService -> AI: Phân tích CV với prompt
+note right of AI
+  Prompt yêu cầu:
+  - Đánh giá điểm CV (0-100)
+  - Tóm tắt tổng quan
+  - Phân tích kỹ năng
+  - Điểm mạnh/yếu
+  - Gợi ý nghề nghiệp
+  - Action items
+  
+  Ngôn ngữ: Vietnamese
+end note
+
+alt Phân tích thành công
+    AI --> SummaryService: SummaryResponse
+    SummaryService --> UI: Kết quả phân tích
+    
+    UI --> User: Hiển thị kết quả:
+    note right of User
+      **Điểm CV: 75/100**
+      
+      **Tóm tắt:**
+      - 450 từ
+      - 2 phút đọc
+      
+      **Kỹ năng:**
+      - Technical: React, TypeScript
+      - Soft Skills: Teamwork, Communication
+      
+      **Điểm mạnh:**
+      - Kinh nghiệm solid với React
+      - Nhiều project thực tế
+      
+      **Cần cải thiện:**
+      - Thêm certifications
+      - Bổ sung soft skills
+      
+      **Nghề nghiệp gợi ý:**
+      - Frontend Developer
+      - Full Stack Developer
+    end note
+    
+else Rate Limit
+    AI --> SummaryService: 429 Too Many Requests
+    SummaryService --> UI: Rate limit error
+    UI --> User: "Hệ thống quá tải, vui lòng thử lại sau"
+    
+else Lỗi khác
+    AI --> SummaryService: Error
+    SummaryService --> UI: Error message
+    UI --> User: "Không thể phân tích, vui lòng thử file khác"
+end
+
+deactivate SummaryService
+deactivate UI
+
+legend right
+  |= Thành phần |= Mô tả |
+  | Người dùng | Actor chính |
+  | Giao diện Summarize | Frontend React Component |
+  | Summary Service | Service xử lý phân tích |
+  | File Parser Service | Service parse PDF/DOCX |
+  | AI Backend (Gemini) | Google Gemini API |
+endlegend
+
+@enduml

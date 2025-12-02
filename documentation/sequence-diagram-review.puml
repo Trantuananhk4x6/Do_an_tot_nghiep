@@ -1,0 +1,148 @@
+@startuml sequence-diagram-review
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam ParticipantBackgroundColor #E3F2FD
+skinparam ParticipantBorderColor #1565C0
+skinparam SequenceGroupBackgroundColor #F3E5F5
+skinparam NoteBackgroundColor #FFFDE7
+skinparam NoteBorderColor #F9A825
+
+title Sequence Diagram - UC009: Đánh giá và nhận xét hệ thống (Reviews)
+
+actor "Người dùng" as User
+participant "Reviews Page\n(page.tsx)" as ReviewsPage
+participant "Clerk\n(useUser)" as Clerk
+participant "API\n(/api/ratings)" as API
+database "Database\n(Rating Table)" as DB
+
+== Tải trang và Load đánh giá ==
+
+User -> ReviewsPage: Truy cập /reviews
+activate ReviewsPage
+
+ReviewsPage -> Clerk: useUser()
+activate Clerk
+Clerk --> ReviewsPage: { user, isSignedIn }
+deactivate Clerk
+
+ReviewsPage -> API: GET /api/ratings
+activate API
+API -> DB: SELECT * FROM Rating\nORDER BY createdAt DESC
+activate DB
+DB --> API: ratings[]
+deactivate DB
+
+API -> API: Tính averageRating = sum/count
+API -> API: Tính totalRatings = length
+
+API --> ReviewsPage: { ratings, averageRating, totalRatings }
+deactivate API
+
+ReviewsPage -> ReviewsPage: setAllRatings(ratings)
+ReviewsPage -> ReviewsPage: setAverageRating(averageRating)
+ReviewsPage -> ReviewsPage: setTotalRatings(totalRatings)
+ReviewsPage -> ReviewsPage: Tính ratingDistribution [5,4,3,2,1]
+
+ReviewsPage --> User: Hiển thị trang với:\n- Thống kê (điểm TB, biểu đồ phân bố)\n- Danh sách đánh giá\n- Form gửi đánh giá
+
+== Kiểm tra đánh giá cũ của người dùng ==
+
+alt Người dùng đã đăng nhập
+    ReviewsPage -> ReviewsPage: Tìm đánh giá của user trong allRatings
+    
+    alt Đã đánh giá trước đó
+        ReviewsPage -> ReviewsPage: setHasUserRated(true)
+        ReviewsPage -> ReviewsPage: setSelectedRating(userRating.rating)
+        ReviewsPage -> ReviewsPage: setComment(userRating.comment)
+        ReviewsPage --> User: Hiển thị đánh giá cũ\nvà nút "Update Review"
+    else Chưa đánh giá
+        ReviewsPage --> User: Hiển thị form trống\nvà nút "Submit Review"
+    end
+else Chưa đăng nhập
+    ReviewsPage --> User: Hiển thị thông báo\n"Please sign in to leave a review"\nvà nút "Sign In"
+end
+
+== Lọc đánh giá theo số sao (Tùy chọn) ==
+
+User -> ReviewsPage: Click vào số sao trong biểu đồ (ví dụ: 5 sao)
+ReviewsPage -> ReviewsPage: setFilterRating(5)
+ReviewsPage -> ReviewsPage: filteredRatings = allRatings.filter(r => r.rating === 5)
+ReviewsPage --> User: Hiển thị chỉ đánh giá 5 sao\nvà nút "Clear filter"
+
+User -> ReviewsPage: Click "Clear filter"
+ReviewsPage -> ReviewsPage: setFilterRating(null)
+ReviewsPage --> User: Hiển thị tất cả đánh giá
+
+== Gửi đánh giá mới ==
+
+User -> ReviewsPage: Chọn số sao (1-5)
+ReviewsPage -> ReviewsPage: setSelectedRating(selectedStar)
+ReviewsPage -> ReviewsPage: setHoveredRating(hoveredStar)
+ReviewsPage --> User: Highlight sao đã chọn
+
+User -> ReviewsPage: Nhập nhận xét (tùy chọn)
+ReviewsPage -> ReviewsPage: setComment(text)
+
+User -> ReviewsPage: Click "Submit Review"
+activate ReviewsPage
+
+alt Chưa chọn số sao
+    ReviewsPage -> ReviewsPage: setSubmitMessage({ type: 'error',\ntext: 'Please select a rating!' })
+    ReviewsPage --> User: Hiển thị thông báo lỗi
+else Đã chọn số sao
+    ReviewsPage -> ReviewsPage: setIsSubmitting(true)
+    
+    ReviewsPage -> API: POST /api/ratings\n{ userEmail, userName, rating, comment }
+    activate API
+    
+    API -> API: Validate required fields
+    API -> API: Validate rating (1-5)
+    
+    API -> DB: SELECT * FROM Rating\nWHERE userEmail = ?
+    activate DB
+    DB --> API: existingRating
+    deactivate DB
+    
+    alt Đánh giá đã tồn tại
+        API -> DB: UPDATE Rating\nSET rating = ?, comment = ?, updatedAt = NOW()\nWHERE userEmail = ?
+        activate DB
+        DB --> API: success
+        deactivate DB
+        API --> ReviewsPage: { success: true, message: "Rating saved successfully" }
+    else Đánh giá mới
+        API -> DB: INSERT INTO Rating\n(userEmail, userName, rating, comment)
+        activate DB
+        DB --> API: success
+        deactivate DB
+        API --> ReviewsPage: { success: true, message: "Rating saved successfully" }
+    end
+    deactivate API
+    
+    alt API thành công
+        ReviewsPage -> ReviewsPage: setSubmitMessage({ type: 'success',\ntext: hasUserRated ?\n'Review updated!' : 'Thank you for your review! 🎉' })
+        
+        ReviewsPage -> API: GET /api/ratings (reload)
+        activate API
+        API -> DB: SELECT * FROM Rating
+        activate DB
+        DB --> API: updated ratings[]
+        deactivate DB
+        API --> ReviewsPage: { ratings, averageRating, totalRatings }
+        deactivate API
+        
+        ReviewsPage -> ReviewsPage: Cập nhật state với data mới
+        ReviewsPage -> ReviewsPage: setHasUserRated(true)
+        ReviewsPage -> ReviewsPage: scrollIntoView("reviews-section")
+        
+        ReviewsPage --> User: Hiển thị thông báo thành công\nvà đánh giá mới trong danh sách
+    else API thất bại
+        ReviewsPage -> ReviewsPage: setSubmitMessage({ type: 'error',\ntext: 'Network error...' })
+        ReviewsPage --> User: Hiển thị thông báo lỗi
+    end
+    
+    ReviewsPage -> ReviewsPage: setIsSubmitting(false)
+end
+
+deactivate ReviewsPage
+
+@enduml

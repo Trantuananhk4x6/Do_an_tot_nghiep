@@ -1,8 +1,18 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  Eye, 
+  EyeOff, 
+  GripVertical, 
+  ArrowLeft, 
+  Download, 
+  Lightbulb,
+  LayoutGrid,
+  Edit3
+} from 'lucide-react';
 import { CVData, CVTemplate } from '@/app/(features)/support-cv/types/cv.types';
+import { useCVBuilder } from '../contexts/CVBuilderContext';
 import CVTemplateRenderer from './CVTemplateRenderer';
 
 interface CVPreviewProps {
@@ -10,9 +20,10 @@ interface CVPreviewProps {
   template: CVTemplate;
   onBackToEdit: () => void;
   onExport: () => void;
+  onUpdateCV?: (cvData: CVData) => void; // New: allow updating CV from preview
 }
 
-type SectionType = 'summary' | 'experience' | 'education' | 'skills' | 'projects' | 'certifications' | 'languages' | 'awards';
+type SectionType = 'summary' | 'experience' | 'education' | 'skills' | 'projects' | 'certifications' | 'languages' | 'awards' | 'publications' | 'volunteer' | 'references';
 
 interface SectionOrder {
   id: SectionType;
@@ -20,10 +31,12 @@ interface SectionOrder {
   visible: boolean;
 }
 
-export default function CVPreview({ cvData, template, onBackToEdit, onExport }: CVPreviewProps) {
+export default function CVPreview({ cvData, template, onBackToEdit, onExport, onUpdateCV }: CVPreviewProps) {
+  const { actions } = useCVBuilder();
   const [localCVData, setLocalCVData] = useState<CVData>(cvData);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const cvPreviewRef = useRef<HTMLDivElement>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
   
   const [sectionOrder, setSectionOrder] = useState<SectionOrder[]>([
     { id: 'summary', label: 'Summary', visible: !!cvData.personalInfo.summary },
@@ -33,8 +46,16 @@ export default function CVPreview({ cvData, template, onBackToEdit, onExport }: 
     { id: 'projects', label: 'Projects', visible: cvData.projects.length > 0 },
     { id: 'awards', label: 'Awards & Honors', visible: (cvData.awards && cvData.awards.length > 0) || false },
     { id: 'certifications', label: 'Certifications', visible: cvData.certifications.length > 0 },
-    { id: 'languages', label: 'Languages', visible: cvData.languages.length > 0 }
+    { id: 'languages', label: 'Languages', visible: cvData.languages.length > 0 },
+    { id: 'publications', label: 'Publications', visible: (cvData.publications && cvData.publications.length > 0) || false },
+    { id: 'volunteer', label: 'Volunteer', visible: (cvData.volunteer && cvData.volunteer.length > 0) || false },
+    { id: 'references', label: 'References', visible: (cvData.references && cvData.references.length > 0) || false }
   ]);
+
+  // Sync sectionOrder to context whenever it changes
+  useEffect(() => {
+    actions.setSectionOrder(sectionOrder);
+  }, [sectionOrder, actions]);
 
   const handleDragStart = (index: number) => {
     setDraggedIndex(index);
@@ -78,27 +99,34 @@ export default function CVPreview({ cvData, template, onBackToEdit, onExport }: 
   return (
     <div className="max-w-7xl mx-auto p-6 animate-fade-in-up">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 glass-effect rounded-lg p-4 border border-white/10">
-        <div>
-          <h2 className="text-2xl font-bold gradient-text flex items-center gap-2">
-            👁️ Interactive Preview
-          </h2>
-          <p className="text-sm text-gray-300 mt-1">
-            Template: <span className="font-semibold text-purple-400">{getTemplateName()}</span>
-          </p>
+      <div className="flex items-center justify-between mb-6 glass-effect rounded-xl p-4 border border-purple-500/30">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+            <Eye className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              Interactive Preview
+            </h2>
+            <p className="text-sm text-gray-400 mt-0.5">
+              Template: <span className="font-semibold text-purple-400">{getTemplateName()}</span>
+            </p>
+          </div>
         </div>
         <div className="flex gap-3">
           <button
             onClick={onBackToEdit}
-            className="px-6 py-3 glass-effect border border-white/20 text-gray-200 rounded-lg hover:bg-white/10 transition-all"
+            className="px-5 py-2.5 glass-effect border border-white/20 text-gray-200 rounded-lg hover:bg-white/10 transition-all flex items-center gap-2"
           >
-            ← Back to Edit
+            <ArrowLeft className="w-4 h-4" />
+            Back to Edit
           </button>
           <button
             onClick={onExport}
-            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all shadow-lg glow-effect"
+            className="px-5 py-2.5 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all shadow-lg flex items-center gap-2"
           >
-            Export CV →
+            <Download className="w-4 h-4" />
+            Export CV
           </button>
         </div>
       </div>
@@ -106,12 +134,12 @@ export default function CVPreview({ cvData, template, onBackToEdit, onExport }: 
       <div className="grid grid-cols-12 gap-6">
         {/* Section Order Controller */}
         <div className="col-span-3 print:hidden">
-          <div className="glass-effect border border-white/10 rounded-xl p-4 sticky top-4">
-            <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-              <span>📋</span>
-              <span>Section Order</span>
-            </h3>
-            <p className="text-xs text-gray-400 mb-4">Drag to reorder sections</p>
+          <div className="glass-effect border border-purple-500/30 rounded-xl p-4 sticky top-4">
+            <div className="flex items-center gap-2 mb-4">
+              <LayoutGrid className="w-5 h-5 text-purple-400" />
+              <h3 className="font-bold text-white">Section Order</h3>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">Drag to reorder sections. Click eye to toggle visibility.</p>
             
             <div className="space-y-2">
               {sectionOrder.map((section, index) => (
@@ -127,7 +155,7 @@ export default function CVPreview({ cvData, template, onBackToEdit, onExport }: 
                       : 'border-white/10 hover:border-purple-400 hover:bg-white/5'
                   } ${!section.visible ? 'opacity-50' : ''}`}
                 >
-                  <span className="text-xl">☰</span>
+                  <GripVertical className="w-4 h-4 text-gray-500" />
                   <span className="flex-1 text-sm font-medium text-gray-200">{section.label}</span>
                   <button
                     onClick={(e) => {
@@ -148,8 +176,9 @@ export default function CVPreview({ cvData, template, onBackToEdit, onExport }: 
             </div>
 
             <div className="mt-6 glass-effect border border-blue-500/30 rounded-lg p-3 print:hidden">
-              <p className="text-xs text-blue-300 flex items-center gap-1">
-                💡 <strong>Tip:</strong> Drag sections to reorder. Click <Eye className="inline w-3 h-3" /> icon to toggle visibility.
+              <p className="text-xs text-blue-300 flex items-start gap-2">
+                <Lightbulb className="w-4 h-4 shrink-0 mt-0.5" />
+                <span><strong>Tip:</strong> Drag sections to reorder. Click eye icon to toggle visibility.</span>
               </p>
             </div>
           </div>

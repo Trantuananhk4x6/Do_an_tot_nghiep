@@ -555,6 +555,46 @@ h6 {
   scrollbar-color: #a855f7 rgba(255, 255, 255, 0.05);
 }
 
+/* Tailwind scrollbar utilities for main container */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.4);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.6);
+}
+
+/* Firefox scrollbar for main container */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.4) transparent;
+}
+
+.scrollbar-thin:hover {
+  scrollbar-color: rgba(168, 85, 247, 0.6) transparent;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+
 /* Auto-Edit Loading Dialog Animations */
 @keyframes scale-in {
   0% {

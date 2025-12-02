@@ -1,0 +1,93 @@
+@startuml activity-diagram-live-interview
+title Activity Diagram - Live Interview
+skinparam backgroundColor #FEFEFE
+skinparam ActivityBackgroundColor #E8F4FD
+skinparam ActivityBorderColor #3498DB
+skinparam ActivityStartColor #27AE60
+skinparam ActivityEndColor #E74C3C
+skinparam ActivityDiamondBackgroundColor #F39C12
+skinparam ActivityDiamondBorderColor #E67E22
+skinparam SwimlaneBorderColor #2C3E50
+skinparam SwimlaneTitleBackgroundColor #34495E
+skinparam SwimlaneTitleFontColor white
+
+|User|
+start
+:Chọn "Live Interview" trên menu;
+
+|System|
+:Hiển thị giao diện Live Interview;
+
+|User|
+:Nhấn nút "Start";
+
+|System|
+:Yêu cầu quyền truy cập màn hình và microphone;
+
+|User|
+if (Cấp quyền?) then (Có)
+  :Chọn tab/cửa sổ để chia sẻ;
+  :Chia sẻ màn hình;
+else (Không)
+  |System|
+  :Hiển thị thông báo lỗi;
+  :Yêu cầu cấp quyền lại;
+  stop
+endif
+
+|System|
+:Hiển thị màn hình đang được chia sẻ;
+:Mở kết nối WebSocket đến Deepgram;
+:Bắt đầu lắng nghe và chuyển giọng nói thành text;
+:Hiển thị transcript lên giao diện (realtime);
+
+|User|
+:Chọn AI Response Mode;
+
+if (Chọn Mode?) then (Manual Mode)
+  |User|
+  :Tô đậm phần text muốn hỏi AI;
+  :Nhấn nút "Ask AI";
+  
+  |System|
+  :Gửi câu hỏi đến AI Backend;
+  :Nhận câu trả lời từ AI;
+  :Hiển thị câu trả lời;
+  
+else (Auto Mode)
+  |System|
+  :Tự động nhận diện câu hỏi từ transcript;
+  :Gửi câu hỏi đến AI Backend;
+  :Nhận và hiển thị câu trả lời AI;
+  :Hiển thị nút "Ask AI" cho câu hỏi thêm;
+endif
+
+|User|
+if (Tiếp tục hỏi?) then (Có)
+  :Tô đậm hoặc chờ nhận diện tự động;
+  :Nhấn "Ask AI";
+  
+  |System|
+  :Xử lý và hiển thị câu trả lời mới;
+  
+else (Không)
+  |User|
+  :Nhấn nút "Stop";
+  
+  |System|
+  :Đóng kết nối WebSocket;
+  :Dừng recording và giải phóng streams;
+  :Thông báo "Transcription ended";
+endif
+
+stop
+
+legend right
+  |= Ký hiệu |= Mô tả |
+  | Hình oval | Bắt đầu/Kết thúc |
+  | Hình chữ nhật | Hoạt động |
+  | Hình thoi | Điều kiện |
+  | Swimlane | Phân chia Actor |
+endlegend
+
+@enduml

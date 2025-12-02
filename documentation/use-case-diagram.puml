@@ -1,0 +1,96 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor Guest as "Guest / Visitor"
+actor User as "Registered\nUser"
+actor Admin as "Admin"
+
+rectangle "AI Service / Backend" as AI {
+  (Resume Optimization)
+  (Interview Simulation)
+  (Summarize)
+  (Assessment Report Generation)
+  (Find Job / Job Matching)
+}
+
+rectangle "Application" {
+  (Browse Features)
+  (Sign Up)
+  (Sign In)
+  (Sign Out)
+
+  package "Resume & CV" {
+    (Upload Resume)
+    (Manage Resume)
+    (Support CV Templates)
+    (Optimize Resume) <<include>>
+  }
+
+  package "Interview" {
+    (Start Mock Interview)
+    (Start Live Interview)
+    (Prepare Hub)  
+    (Get Assessment Report) <<include>>
+  }
+
+  package "Learning & Testing" {
+    (Take Quiz)
+    (Test Ratings)  
+  }
+
+  package "Community & Support" {
+    (Find Job)
+    (Book Consulting)
+    (View Voices / TTS)
+    (Give Rating / Review)
+  }
+
+  package "Admin" {
+    (Manage Users)
+    (Manage Ratings)
+    (View Reports)
+  }
+}
+
+' Guest actions
+Guest --> (Browse Features)
+Guest --> (Sign Up)
+Guest --> (Sign In)
+Guest --> (View Voices / TTS)
+
+' Registered user actions
+User --> (Browse Features)
+User --> (Sign In)
+User --> (Sign Out)
+User --> (Upload Resume)
+User --> (Manage Resume)
+User --> (Optimize Resume)
+User --> (Start Mock Interview)
+User --> (Start Live Interview)
+User --> (Prepare Hub)
+User --> (Take Quiz)
+User --> (Find Job)
+User --> (Book Consulting)
+User --> (Give Rating / Review)
+User --> (Get Assessment Report)
+User --> (View Voices / TTS)
+
+' System / AI interactions
+User ..> AI : "Use AI to"
+AI ..> (Resume Optimization)
+AI ..> (Interview Simulation)
+AI ..> (Summarize)
+AI ..> (Assessment Report Generation)
+AI ..> (Find Job / Job Matching)
+
+' Admin actions
+Admin --> (Manage Users)
+Admin --> (Manage Ratings)
+Admin --> (View Reports)
+
+' Additional relationships / includes
+("Start Mock Interview") .[#blue].> (Get Assessment Report) : <<include>>
+("Optimize Resume") .[#blue].> (Upload Resume) : <<include>>
+
+@enduml

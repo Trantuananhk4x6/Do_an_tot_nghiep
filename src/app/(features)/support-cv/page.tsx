@@ -14,7 +14,7 @@ import { QuotaStatusBanner } from '@/components/ui/quota-status-banner';
 import { cvEditor } from '@/app/(features)/support-cv/services/ai/editor.service';
 import { motion } from 'framer-motion';
 import Animated3DBackground from '@/components/ui/Animated3DBackground';
-import { FileText, Sparkles } from 'lucide-react';
+import { FileText, Sparkles, Upload, FileSearch, Edit3, Eye, Download, Check, Bot, BarChart2, Target, Zap, Briefcase, TrendingUp } from 'lucide-react';
 
 // Temporary type definition (will be replaced by new architecture)
 interface CVEditChange {
@@ -328,11 +328,11 @@ export default function SupportCVPage() {
               className="flex items-center justify-center gap-2"
             >
               {[
-                { key: 'upload', label: 'Upload', icon: '📤' },
-                { key: 'review', label: 'Review', icon: '📝' },
-                { key: 'edit', label: 'Edit', icon: '✏️' },
-                { key: 'preview', label: 'Preview', icon: '👁️' },
-                { key: 'export', label: 'Export', icon: '💾' }
+                { key: 'upload', label: 'Upload', icon: <Upload className="w-5 h-5" /> },
+                { key: 'review', label: 'Review', icon: <FileSearch className="w-5 h-5" /> },
+                { key: 'edit', label: 'Edit', icon: <Edit3 className="w-5 h-5" /> },
+                { key: 'preview', label: 'Preview', icon: <Eye className="w-5 h-5" /> },
+                { key: 'export', label: 'Export', icon: <Download className="w-5 h-5" /> }
               ].map((step, index) => {
                 const isActive = state.currentStep === step.key;
                 const isCompleted = ['upload', 'edit', 'preview', 'export'].indexOf(state.currentStep) > index;
@@ -380,13 +380,13 @@ export default function SupportCVPage() {
                           animate={{ scale: 1 }}
                           className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs z-20"
                         >
-                          ✓
+                          <Check className="w-3 h-3" />
                         </motion.div>
                       )}
                       <motion.span 
-                        animate={{ scale: isActive ? [1, 1.2, 1] : 1 }}
+                        animate={{ scale: isActive ? [1, 1.1, 1] : 1 }}
                         transition={{ duration: 2, repeat: isActive ? Infinity : 0 }}
-                        className="text-2xl relative z-10"
+                        className="relative z-10"
                       >
                         {step.icon}
                       </motion.span>
@@ -463,21 +463,21 @@ export default function SupportCVPage() {
             <div className="grid md:grid-cols-3 gap-6 mb-12">
               {[
                 {
-                  icon: "🤖",
+                  icon: <Bot className="w-12 h-12 text-purple-400" />,
                   title: "AI Analysis",
                   description: "Get instant feedback on your CV with our advanced AI that analyzes content, formatting, and ATS compatibility",
                   color: "from-purple-500/20 to-purple-600/20",
                   delay: 0.3
                 },
                 {
-                  icon: "✨",
+                  icon: <Sparkles className="w-12 h-12 text-blue-400" />,
                   title: "Smart Optimization",
                   description: "Automatically improve your CV with STAR method optimization and keyword enhancement",
                   color: "from-blue-500/20 to-blue-600/20",
                   delay: 0.4
                 },
                 {
-                  icon: "📊",
+                  icon: <BarChart2 className="w-12 h-12 text-pink-400" />,
                   title: "ATS Friendly",
                   description: "Ensure your CV passes Applicant Tracking Systems with optimized formatting and structure",
                   color: "from-pink-500/20 to-pink-600/20",
@@ -493,7 +493,7 @@ export default function SupportCVPage() {
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                   <div className="relative glass-effect border border-purple-500/30 rounded-2xl p-6 hover:border-purple-500/50 transition-all duration-300 h-full">
-                    <div className="text-5xl mb-4">{feature.icon}</div>
+                    <div className="mb-4">{feature.icon}</div>
                     <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
                     <p className="text-gray-400 leading-relaxed">{feature.description}</p>
                   </div>
@@ -517,16 +517,16 @@ export default function SupportCVPage() {
                 </h3>
                 <div className="grid md:grid-cols-2 gap-6">
                   {[
-                    { icon: "🎯", title: "Increase Interview Chances", desc: "Optimized for ATS systems used by 90% of companies" },
-                    { icon: "⚡", title: "Save Time", desc: "AI suggestions help you create a perfect CV in minutes" },
-                    { icon: "💼", title: "Professional Templates", desc: "Choose from multiple industry-standard designs" },
-                    { icon: "📈", title: "Track Progress", desc: "Get detailed scores and improvement recommendations" }
+                    { icon: <Target className="w-6 h-6 text-white" />, title: "Increase Interview Chances", desc: "Optimized for ATS systems used by 90% of companies" },
+                    { icon: <Zap className="w-6 h-6 text-white" />, title: "Save Time", desc: "AI suggestions help you create a perfect CV in minutes" },
+                    { icon: <Briefcase className="w-6 h-6 text-white" />, title: "Professional Templates", desc: "Choose from multiple industry-standard designs" },
+                    { icon: <TrendingUp className="w-6 h-6 text-white" />, title: "Track Progress", desc: "Get detailed scores and improvement recommendations" }
                   ].map((item, idx) => (
                     <div key={idx} className="flex items-start gap-4 group">
                       <div className="relative">
                         <div className="absolute inset-0 bg-gradient-to-r from-purple-600/30 to-pink-600/30 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
                         <div className="relative w-14 h-14 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                          <span className="text-2xl">{item.icon}</span>
+                          {item.icon}
                         </div>
                       </div>
                       <div className="flex-1">

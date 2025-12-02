@@ -1,6 +1,6 @@
 // import { SummaryResponse } from '../models/Summary';
 
-import { SummaryResponse } from "../models/Summary";
+import { SummaryResponse, SkillAnalysis, CareerRecommendation, ActionItem, CVCompleteness, ExperienceHighlight } from "../models/Summary";
 
 // export const generateSummary = async (file: File, keypoint: number = 5): Promise<SummaryResponse> => {
 //   try {
@@ -138,6 +138,55 @@ const extractJsonFromText = (text: string): string | null => {
   return null;
 };
 
+// Hàm sửa JSON bị truncate
+const repairTruncatedJson = (jsonStr: string): string => {
+  try {
+    // Try parsing first - if it works, return as is
+    JSON.parse(jsonStr);
+    return jsonStr;
+  } catch (e) {
+    // JSON is likely truncated, try to repair it
+    let repaired = jsonStr;
+    
+    // Count open/close brackets and braces
+    const openBraces = (repaired.match(/\{/g) || []).length;
+    const closeBraces = (repaired.match(/\}/g) || []).length;
+    const openBrackets = (repaired.match(/\[/g) || []).length;
+    const closeBrackets = (repaired.match(/\]/g) || []).length;
+    
+    // Remove any trailing incomplete strings or values
+    // Find the last complete property
+    const lastCompletePropertyMatch = repaired.match(/[\s\S]*(?:"[^"]*"\s*:\s*(?:"[^"]*"|true|false|null|\d+(?:\.\d+)?|\]|\}))/);
+    if (lastCompletePropertyMatch) {
+      repaired = lastCompletePropertyMatch[0];
+    }
+    
+    // Remove trailing comma if present
+    repaired = repaired.replace(/,\s*$/, '');
+    
+    // Add missing closing brackets/braces
+    const missingBrackets = openBrackets - (repaired.match(/\]/g) || []).length;
+    const missingBraces = openBraces - (repaired.match(/\}/g) || []).length;
+    
+    for (let i = 0; i < missingBrackets; i++) {
+      repaired += ']';
+    }
+    for (let i = 0; i < missingBraces; i++) {
+      repaired += '}';
+    }
+    
+    // Validate the repair worked
+    try {
+      JSON.parse(repaired);
+      console.log("[repairTruncatedJson] Successfully repaired JSON");
+      return repaired;
+    } catch (e2) {
+      console.warn("[repairTruncatedJson] Repair failed, returning original");
+      return jsonStr;
+    }
+  }
+};
+
 // Hàm clean và validate summary array
 const cleanSummaryArray = (arr: any[]): string[] => {
   if (!Array.isArray(arr)) return [];
@@ -178,127 +227,268 @@ export const generateSummary = async (
     ? text.slice(0, maxChars) + "\n\n...(đã cắt bớt)..."
     : text;
 
-  // Step 3: Language-specific instructions
+  // Step 3: Language-specific instructions - ENHANCED VERSION
   const languageInstructions: Record<string, string> = {
-    vi: `Phân tích văn bản CV sau và sinh ra tối đa ${keypoint} KEY POINTS (ý chính) BẰNG TIẾNG VIỆT về:
-- Các kỹ năng nổi bật nhất của ứng viên (ví dụ: ngôn ngữ lập trình, framework, công nghệ, soft skills).
-- Các công nghệ đã sử dụng trong các dự án thực tế.
-- Những thành tích, vai trò, hoặc điểm mạnh cần chú ý nhất của ứng viên.
+    vi: `Bạn là chuyên gia phân tích CV/Resume hàng đầu. Phân tích CV sau một cách CHI TIẾT và CHUYÊN SÂU:
 
-Đồng thời, hãy chỉ ra tối đa 3 NHƯỢC ĐIỂM hoặc điểm còn thiếu sót trong CV này (nếu có), và gợi ý cách cải thiện cụ thể cho từng nhược điểm.
+## YÊU CẦU PHÂN TÍCH:
 
-Chỉ trả về JSON đúng format sau, không kèm bất kỳ text nào khác, không bọc trong dấu \`\`\`json:`,
-    
-    en: `Analyze the CV text below and generate up to ${keypoint} KEY POINTS IN ENGLISH about:
-- The candidate's most prominent skills (e.g., programming languages, frameworks, technologies, soft skills).
-- Technologies used in actual projects.
-- Notable achievements, roles, or strengths of the candidate.
+1. **SKILLS ANALYSIS** (Phân tích kỹ năng chi tiết):
+   - Liệt kê TẤT CẢ kỹ năng phát hiện được
+   - Phân loại: technical (kỹ thuật), soft (mềm), language (ngôn ngữ), tool (công cụ)
+   - Đánh giá mức độ: beginner (1), intermediate (2), advanced (3), expert (4-5)
+   - Rating từ 1-5 dựa trên context trong CV
 
-Additionally, identify up to 3 WEAKNESSES or shortcomings in this CV (if any), and suggest specific improvements for each weakness.
+2. **CAREER RECOMMENDATIONS** (Gợi ý nghề nghiệp phù hợp):
+   - Đề xuất 3-5 vị trí công việc phù hợp nhất
+   - Điểm phù hợp (matchScore) từ 0-100
+   - Liệt kê kỹ năng cần có cho mỗi vị trí
 
-Only return JSON in the exact format below, without any other text or \`\`\`json wrapper:`,
+3. **ACTION ITEMS** (Hành động cải thiện):
+   - Liệt kê 3-5 việc cần làm để cải thiện CV
+   - Độ ưu tiên: high, medium, low
+   - Phân loại: skills, experience, education, format, content
+   - Mô tả tác động cụ thể
 
-    ja: `以下のCV文書を分析し、最大${keypoint}個のキーポイントを日本語で生成してください：
-- 候補者の最も顕著なスキル（例：プログラミング言語、フレームワーク、テクノロジー、ソフトスキル）。
-- 実際のプロジェクトで使用された技術。
-- 注目すべき成果、役割、または候補者の強み。
+4. **CV COMPLETENESS** (Đánh giá độ hoàn thiện):
+   - Điểm tổng thể từ 0-100
+   - Đánh giá từng phần: contact, summary, experience, education, skills, projects
+   - Trạng thái: complete, partial, missing
 
-さらに、このCVの最大3つの弱点または不足点（ある場合）を指摘し、各弱点に対する具体的な改善策を提案してください。
+5. **EXPERIENCE HIGHLIGHTS** (Điểm nổi bật kinh nghiệm):
+   - Vai trò, công ty, thời gian
+   - Thành tựu quan trọng
+   - Công nghệ sử dụng
 
-\`\`\`jsonラッパーなしで、以下の正確な形式でのみJSONを返してください：`,
+6. **OVERALL RATING** (Điểm tổng thể): 1-10
 
-    zh: `分析以下简历文本，用中文生成最多${keypoint}个关键点：
-- 候选人最突出的技能（例如：编程语言、框架、技术、软技能）。
-- 实际项目中使用的技术。
-- 值得注意的成就、角色或候选人的优势。
+7. **PROFESSIONAL SUMMARY** (Tóm tắt chuyên nghiệp): 2-3 câu mô tả profile
 
-此外，指出此简历中最多3个弱点或不足之处（如果有），并为每个弱点提供具体的改进建议。
+8. **KEY POINTS** (Các điểm chính): Tối đa ${keypoint} điểm
 
-仅返回以下确切格式的JSON，不要包含任何其他文本或\`\`\`json包装：`,
+9. **WEAKNESSES** (Nhược điểm & Gợi ý cải thiện): Tối đa 3 điểm
 
-    ko: `아래 CV 텍스트를 분석하고 한국어로 최대 ${keypoint}개의 핵심 포인트를 생성하세요：
-- 후보자의 가장 두드러진 기술 (예: 프로그래밍 언어, 프레임워크, 기술, 소프트 스킬).
-- 실제 프로젝트에서 사용된 기술.
-- 주목할 만한 성과, 역할 또는 후보자의 강점.
+Trả về JSON theo format sau, KHÔNG bọc trong \`\`\`json:`,
 
-또한, 이 CV에서 최대 3개의 약점 또는 부족한 점(있는 경우)을 지적하고 각 약점에 대한 구체적인 개선 제안을 제공하세요.
+    en: `You are a top-tier CV/Resume analysis expert. Analyze the following CV in DETAIL and DEPTH:
 
-\`\`\`json 래퍼 없이 아래의 정확한 형식으로만 JSON을 반환하세요：`
+## ANALYSIS REQUIREMENTS:
+
+1. **SKILLS ANALYSIS** (Detailed skill analysis):
+   - List ALL detected skills
+   - Categorize: technical, soft, language, tool
+   - Assess level: beginner (1), intermediate (2), advanced (3), expert (4-5)
+   - Rating 1-5 based on CV context
+
+2. **CAREER RECOMMENDATIONS** (Suitable job suggestions):
+   - Suggest 3-5 most suitable positions
+   - Match score (matchScore) from 0-100
+   - List required skills for each position
+
+3. **ACTION ITEMS** (Improvement actions):
+   - List 3-5 things to improve the CV
+   - Priority: high, medium, low
+   - Category: skills, experience, education, format, content
+   - Describe specific impact
+
+4. **CV COMPLETENESS** (Completion assessment):
+   - Overall score from 0-100
+   - Evaluate each section: contact, summary, experience, education, skills, projects
+   - Status: complete, partial, missing
+
+5. **EXPERIENCE HIGHLIGHTS**:
+   - Role, company, duration
+   - Key achievements
+   - Technologies used
+
+6. **OVERALL RATING**: 1-10
+
+7. **PROFESSIONAL SUMMARY**: 2-3 sentences describing profile
+
+8. **KEY POINTS**: Up to ${keypoint} points
+
+9. **WEAKNESSES**: Up to 3 points with suggestions
+
+Return JSON in the following format, NOT wrapped in \`\`\`json:`,
+
+    ja: `あなたはトップレベルのCV/履歴書分析の専門家です。以下のCVを詳細に分析してください。
+
+すべての分析は日本語で行い、JSON形式で返してください。\`\`\`jsonでラップしないでください。`,
+
+    zh: `您是顶级CV/简历分析专家。请详细深入地分析以下简历。
+
+所有分析请用中文完成，返回JSON格式，不要用\`\`\`json包装。`,
+
+    ko: `당신은 최고 수준의 CV/이력서 분석 전문가입니다. 다음 CV를 상세하게 분석하세요.
+
+모든 분석은 한국어로 작성하고, JSON 형식으로 반환하세요. \`\`\`json으로 감싸지 마세요.`
   };
 
   const languageInstruction = languageInstructions[language] || languageInstructions["vi"];
 
-  // JSON format examples for each language
+  // JSON format examples - ENHANCED VERSION
   const formatExamples: Record<string, string> = {
     vi: `{
   "summary": [
-    "Kỹ năng: Thành thạo Java, JavaScript, Python, C#",
-    "Công nghệ sử dụng: ReactJS, NodeJS, Spring Boot, MongoDB",
-    "Thành tích nổi bật: Vô địch Hackathon, phát triển hệ thống quản lý",
-    "Vai trò/điểm mạnh: Full-Stack Developer, có kinh nghiệm thiết kế database"
+    "Backend Developer với 3+ năm kinh nghiệm Java/Spring",
+    "Có kinh nghiệm xây dựng hệ thống microservices",
+    "Thành thạo React, TypeScript cho frontend"
   ],
+  "skillsAnalysis": [
+    {"name": "Java", "category": "technical", "level": "advanced", "rating": 4, "yearsOfExperience": "3 năm"},
+    {"name": "Spring Boot", "category": "technical", "level": "advanced", "rating": 4},
+    {"name": "React", "category": "technical", "level": "intermediate", "rating": 3},
+    {"name": "Communication", "category": "soft", "level": "advanced", "rating": 4},
+    {"name": "English", "category": "language", "level": "intermediate", "rating": 3}
+  ],
+  "careerRecommendations": [
+    {
+      "title": "Senior Backend Developer",
+      "matchScore": 85,
+      "description": "Phù hợp với kinh nghiệm Java/Spring và microservices",
+      "requiredSkills": ["Java", "Spring Boot", "Microservices", "SQL"],
+      "salaryRange": "25-40 triệu VND"
+    },
+    {
+      "title": "Full-Stack Developer",
+      "matchScore": 75,
+      "description": "Có thể phát triển với kỹ năng React hiện có",
+      "requiredSkills": ["Java", "React", "TypeScript", "REST API"],
+      "salaryRange": "20-35 triệu VND"
+    }
+  ],
+  "actionItems": [
+    {
+      "title": "Bổ sung chứng chỉ Cloud",
+      "description": "Lấy chứng chỉ AWS hoặc Azure để tăng cơ hội",
+      "priority": "high",
+      "category": "skills",
+      "impact": "Tăng 30% cơ hội được tuyển cho vị trí Senior"
+    },
+    {
+      "title": "Thêm số liệu cụ thể",
+      "description": "Thêm metrics cho các thành tựu (VD: giảm 40% thời gian xử lý)",
+      "priority": "high",
+      "category": "content",
+      "impact": "CV thuyết phục hơn với nhà tuyển dụng"
+    }
+  ],
+  "cvCompleteness": {
+    "overallScore": 72,
+    "sections": [
+      {"name": "Contact Info", "score": 100, "status": "complete"},
+      {"name": "Professional Summary", "score": 60, "status": "partial", "suggestions": ["Thêm USP cá nhân"]},
+      {"name": "Experience", "score": 80, "status": "complete"},
+      {"name": "Education", "score": 100, "status": "complete"},
+      {"name": "Skills", "score": 70, "status": "partial", "suggestions": ["Thêm soft skills"]},
+      {"name": "Projects", "score": 50, "status": "partial", "suggestions": ["Thêm link demo/GitHub"]}
+    ]
+  },
+  "experienceHighlights": [
+    {
+      "role": "Backend Developer",
+      "company": "TechCorp",
+      "duration": "2021 - Hiện tại",
+      "achievements": ["Phát triển hệ thống xử lý 1M requests/ngày", "Giảm 40% thời gian response"],
+      "technologies": ["Java", "Spring Boot", "PostgreSQL", "Redis"]
+    }
+  ],
+  "overallRating": 7,
+  "professionalSummary": "Backend Developer với 3+ năm kinh nghiệm chuyên sâu về Java và Spring Boot. Có khả năng thiết kế và xây dựng hệ thống microservices quy mô lớn, đam mê tối ưu hiệu suất.",
   "weaknesses": [
     {
-      "issue": "Chưa nêu rõ số năm kinh nghiệm",
-      "suggestion": "Thêm thông tin về số năm kinh nghiệm làm việc với từng công nghệ"
+      "issue": "Thiếu chứng chỉ chuyên môn",
+      "suggestion": "Bổ sung AWS Certified hoặc Oracle Java Certification"
+    },
+    {
+      "issue": "Chưa có số liệu cụ thể cho thành tựu",
+      "suggestion": "Thêm metrics định lượng cho mỗi achievement"
     }
   ]
 }`,
     en: `{
   "summary": [
-    "Skills: Proficient in Java, JavaScript, Python, C#",
-    "Technologies: ReactJS, NodeJS, Spring Boot, MongoDB",
-    "Achievements: Champion at Hackathon, developed management system",
-    "Role/Strengths: Full-Stack Developer, experienced in database design"
+    "Backend Developer with 3+ years Java/Spring experience",
+    "Experienced in building microservices systems",
+    "Proficient in React, TypeScript for frontend"
   ],
+  "skillsAnalysis": [
+    {"name": "Java", "category": "technical", "level": "advanced", "rating": 4, "yearsOfExperience": "3 years"},
+    {"name": "Spring Boot", "category": "technical", "level": "advanced", "rating": 4},
+    {"name": "Communication", "category": "soft", "level": "advanced", "rating": 4}
+  ],
+  "careerRecommendations": [
+    {
+      "title": "Senior Backend Developer",
+      "matchScore": 85,
+      "description": "Matches Java/Spring and microservices experience",
+      "requiredSkills": ["Java", "Spring Boot", "Microservices"],
+      "salaryRange": "$80K-$120K"
+    }
+  ],
+  "actionItems": [
+    {
+      "title": "Add Cloud Certifications",
+      "description": "Get AWS or Azure certification",
+      "priority": "high",
+      "category": "skills",
+      "impact": "30% higher chance for Senior positions"
+    }
+  ],
+  "cvCompleteness": {
+    "overallScore": 72,
+    "sections": [
+      {"name": "Contact Info", "score": 100, "status": "complete"},
+      {"name": "Experience", "score": 80, "status": "complete"}
+    ]
+  },
+  "experienceHighlights": [
+    {
+      "role": "Backend Developer",
+      "company": "TechCorp",
+      "duration": "2021 - Present",
+      "achievements": ["Built system handling 1M requests/day"],
+      "technologies": ["Java", "Spring Boot", "PostgreSQL"]
+    }
+  ],
+  "overallRating": 7,
+  "professionalSummary": "Backend Developer with 3+ years of deep expertise in Java and Spring Boot.",
   "weaknesses": [
     {
-      "issue": "Years of experience not clearly stated",
-      "suggestion": "Add information about years of experience with each technology"
+      "issue": "Missing certifications",
+      "suggestion": "Add AWS Certified or Oracle Java Certification"
     }
   ]
 }`,
     ja: `{
-  "summary": [
-    "スキル: Java、JavaScript、Python、C#に精通",
-    "技術: ReactJS、NodeJS、Spring Boot、MongoDB",
-    "実績: ハッカソン優勝、管理システム開発",
-    "役割/強み: フルスタック開発者、データベース設計の経験"
-  ],
-  "weaknesses": [
-    {
-      "issue": "経験年数が明確に記載されていない",
-      "suggestion": "各技術の経験年数に関する情報を追加する"
-    }
-  ]
+  "summary": ["Java/Spring経験3年以上のバックエンド開発者"],
+  "skillsAnalysis": [{"name": "Java", "category": "technical", "level": "advanced", "rating": 4}],
+  "careerRecommendations": [{"title": "シニアバックエンド開発者", "matchScore": 85, "description": "経験にマッチ", "requiredSkills": ["Java"]}],
+  "actionItems": [{"title": "クラウド資格取得", "description": "AWS資格を取得", "priority": "high", "category": "skills", "impact": "採用確率向上"}],
+  "cvCompleteness": {"overallScore": 72, "sections": [{"name": "連絡先", "score": 100, "status": "complete"}]},
+  "overallRating": 7,
+  "professionalSummary": "3年以上のJava経験を持つバックエンド開発者",
+  "weaknesses": [{"issue": "資格なし", "suggestion": "AWS資格取得を推奨"}]
 }`,
     zh: `{
-  "summary": [
-    "技能: 精通Java、JavaScript、Python、C#",
-    "技术: ReactJS、NodeJS、Spring Boot、MongoDB",
-    "成就: 黑客马拉松冠军，开发管理系统",
-    "角色/优势: 全栈开发者，有数据库设计经验"
-  ],
-  "weaknesses": [
-    {
-      "issue": "未明确说明工作年限",
-      "suggestion": "添加每项技术的工作年限信息"
-    }
-  ]
+  "summary": ["拥有3年以上Java/Spring经验的后端开发者"],
+  "skillsAnalysis": [{"name": "Java", "category": "technical", "level": "advanced", "rating": 4}],
+  "careerRecommendations": [{"title": "高级后端开发", "matchScore": 85, "description": "匹配经验", "requiredSkills": ["Java"]}],
+  "actionItems": [{"title": "获取云证书", "description": "获取AWS认证", "priority": "high", "category": "skills", "impact": "提高录用率"}],
+  "cvCompleteness": {"overallScore": 72, "sections": [{"name": "联系方式", "score": 100, "status": "complete"}]},
+  "overallRating": 7,
+  "professionalSummary": "拥有3年以上Java深度经验的后端开发者",
+  "weaknesses": [{"issue": "缺少证书", "suggestion": "建议获取AWS认证"}]
 }`,
     ko: `{
-  "summary": [
-    "기술: Java, JavaScript, Python, C#에 능숙",
-    "기술 스택: ReactJS, NodeJS, Spring Boot, MongoDB",
-    "성과: 해커톤 우승, 관리 시스템 개발",
-    "역할/강점: 풀스택 개발자, 데이터베이스 설계 경험"
-  ],
-  "weaknesses": [
-    {
-      "issue": "경력 연수가 명확하게 명시되지 않음",
-      "suggestion": "각 기술에 대한 경력 연수 정보 추가"
-    }
-  ]
+  "summary": ["3년 이상의 Java/Spring 경험을 가진 백엔드 개발자"],
+  "skillsAnalysis": [{"name": "Java", "category": "technical", "level": "advanced", "rating": 4}],
+  "careerRecommendations": [{"title": "시니어 백엔드 개발자", "matchScore": 85, "description": "경험과 일치", "requiredSkills": ["Java"]}],
+  "actionItems": [{"title": "클라우드 자격증 취득", "description": "AWS 자격증 취득", "priority": "high", "category": "skills", "impact": "채용 확률 향상"}],
+  "cvCompleteness": {"overallScore": 72, "sections": [{"name": "연락처", "score": 100, "status": "complete"}]},
+  "overallRating": 7,
+  "professionalSummary": "3년 이상의 Java 심층 경험을 가진 백엔드 개발자",
+  "weaknesses": [{"issue": "자격증 없음", "suggestion": "AWS 자격증 취득 권장"}]
 }`
   };
 
@@ -329,7 +519,7 @@ ${truncated}
     ],
     generationConfig: {
       temperature: 0.3,
-      maxOutputTokens: 2048,
+      maxOutputTokens: 4096,
       topK: 40,
       topP: 0.95,
       candidateCount: 1,
@@ -371,25 +561,28 @@ ${truncated}
     console.log("[generateSummary] Raw content text:", contentText);
 
     // Step 8: Extract JSON from content
-    const jsonStr = extractJsonFromText(contentText);
+    let jsonStr = extractJsonFromText(contentText);
     if (!jsonStr) {
       console.error("[generateSummary] Không tìm thấy JSON trong response");
       throw new Error("API không trả về JSON hợp lệ");
     }
 
-    console.log("[generateSummary] Extracted JSON string:", jsonStr);
+    console.log("[generateSummary] Extracted JSON string length:", jsonStr.length);
 
-    // Step 9: Parse JSON
+    // Step 9: Try to repair truncated JSON if needed
+    jsonStr = repairTruncatedJson(jsonStr);
+
+    // Step 10: Parse JSON
     let parsed: any;
     try {
       parsed = JSON.parse(jsonStr);
     } catch (parseErr) {
       console.error("[generateSummary] Lỗi parse JSON:", parseErr);
-      console.error("[generateSummary] JSON string:", jsonStr);
-      throw new Error("Không thể parse JSON từ API response");
+      console.error("[generateSummary] JSON string:", jsonStr.substring(0, 500) + "...");
+      throw new Error("Không thể parse JSON từ API response. Vui lòng thử lại.");
     }
 
-    // Step 10: Validate and clean response
+    // Step 11: Validate and clean response
     if (!parsed || typeof parsed !== 'object') {
       throw new Error("JSON response không đúng định dạng object");
     }
@@ -419,18 +612,106 @@ ${truncated}
 
     console.log("[generateSummary] Số weaknesses:", weaknesses.length);
 
+    // Step 12: Extract enhanced fields
+    const skillsAnalysis: SkillAnalysis[] = Array.isArray(parsed.skillsAnalysis)
+      ? parsed.skillsAnalysis
+          .filter((s: any) => s && typeof s === 'object' && s.name)
+          .map((s: any) => ({
+            name: String(s.name).trim(),
+            category: ['technical', 'soft', 'language', 'tool'].includes(s.category) ? s.category : 'technical',
+            level: ['beginner', 'intermediate', 'advanced', 'expert'].includes(s.level) ? s.level : 'intermediate',
+            rating: typeof s.rating === 'number' ? Math.min(5, Math.max(1, s.rating)) : 3,
+            yearsOfExperience: s.yearsOfExperience ? String(s.yearsOfExperience) : undefined
+          }))
+      : [];
+
+    const careerRecommendations: CareerRecommendation[] = Array.isArray(parsed.careerRecommendations)
+      ? parsed.careerRecommendations
+          .filter((c: any) => c && typeof c === 'object' && c.title)
+          .map((c: any) => ({
+            title: String(c.title).trim(),
+            matchScore: typeof c.matchScore === 'number' ? Math.min(100, Math.max(0, c.matchScore)) : 50,
+            description: c.description ? String(c.description).trim() : '',
+            requiredSkills: Array.isArray(c.requiredSkills) ? c.requiredSkills.map((s: any) => String(s).trim()) : [],
+            salaryRange: c.salaryRange ? String(c.salaryRange) : undefined
+          }))
+      : [];
+
+    const actionItems: ActionItem[] = Array.isArray(parsed.actionItems)
+      ? parsed.actionItems
+          .filter((a: any) => a && typeof a === 'object' && a.title)
+          .map((a: any) => ({
+            title: String(a.title).trim(),
+            description: a.description ? String(a.description).trim() : '',
+            priority: ['high', 'medium', 'low'].includes(a.priority) ? a.priority : 'medium',
+            category: ['skills', 'experience', 'education', 'format', 'content'].includes(a.category) ? a.category : 'content',
+            impact: a.impact ? String(a.impact).trim() : ''
+          }))
+      : [];
+
+    const cvCompleteness: CVCompleteness | undefined = parsed.cvCompleteness && typeof parsed.cvCompleteness === 'object'
+      ? {
+          overallScore: typeof parsed.cvCompleteness.overallScore === 'number' 
+            ? Math.min(100, Math.max(0, parsed.cvCompleteness.overallScore)) 
+            : 50,
+          sections: Array.isArray(parsed.cvCompleteness.sections)
+            ? parsed.cvCompleteness.sections.map((s: any) => ({
+                name: String(s.name || 'Unknown').trim(),
+                score: typeof s.score === 'number' ? Math.min(100, Math.max(0, s.score)) : 50,
+                status: ['complete', 'partial', 'missing'].includes(s.status) ? s.status : 'partial',
+                suggestions: Array.isArray(s.suggestions) ? s.suggestions.map((sg: any) => String(sg).trim()) : undefined
+              }))
+            : []
+        }
+      : undefined;
+
+    const experienceHighlights: ExperienceHighlight[] = Array.isArray(parsed.experienceHighlights)
+      ? parsed.experienceHighlights
+          .filter((e: any) => e && typeof e === 'object' && e.role)
+          .map((e: any) => ({
+            role: String(e.role).trim(),
+            company: e.company ? String(e.company).trim() : undefined,
+            duration: e.duration ? String(e.duration).trim() : undefined,
+            achievements: Array.isArray(e.achievements) ? e.achievements.map((a: any) => String(a).trim()) : [],
+            technologies: Array.isArray(e.technologies) ? e.technologies.map((t: any) => String(t).trim()) : []
+          }))
+      : [];
+
+    const overallRating = typeof parsed.overallRating === 'number' 
+      ? Math.min(10, Math.max(1, parsed.overallRating)) 
+      : undefined;
+
+    const professionalSummary = parsed.professionalSummary 
+      ? String(parsed.professionalSummary).trim() 
+      : undefined;
+
+    console.log("[generateSummary] Enhanced data extracted:", {
+      skillsCount: skillsAnalysis.length,
+      careersCount: careerRecommendations.length,
+      actionsCount: actionItems.length,
+      hasCompleteness: !!cvCompleteness,
+      experienceCount: experienceHighlights.length
+    });
+
     // Build a single-string summary and compute basic stats
     const summaryText = cleanedSummary.join("\n");
     const wordCount = summaryText.split(/\s+/).filter(Boolean).length;
     const readingTime = Math.max(1, Math.ceil(wordCount / 200)); // estimate minutes at 200 wpm
 
-return {
-  summary: summaryText,
-  keyPoints: cleanedSummary,
-  wordCount,
-  readingTime,
-  weaknesses: weaknesses.length > 0 ? weaknesses : undefined
-} satisfies SummaryResponse;
+    return {
+      summary: summaryText,
+      keyPoints: cleanedSummary,
+      wordCount,
+      readingTime,
+      weaknesses: weaknesses.length > 0 ? weaknesses : undefined,
+      skillsAnalysis: skillsAnalysis.length > 0 ? skillsAnalysis : undefined,
+      careerRecommendations: careerRecommendations.length > 0 ? careerRecommendations : undefined,
+      actionItems: actionItems.length > 0 ? actionItems : undefined,
+      cvCompleteness,
+      experienceHighlights: experienceHighlights.length > 0 ? experienceHighlights : undefined,
+      overallRating,
+      professionalSummary
+    } satisfies SummaryResponse;
 
   } catch (err: any) {
     console.error("[generateSummary] Lỗi:", err);

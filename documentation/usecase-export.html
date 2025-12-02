@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặc tả Use Case - AI Interview</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .btn-download {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-download:hover {
+            background: #45a049;
+        }
+        .use-case {
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+        }
+        .uc-title {
+            font-weight: bold;
+            font-size: 14pt;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+            font-size: 12pt;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #d9e2f3;
+            font-weight: bold;
+            text-align: center;
+        }
+        .col-label {
+            width: 25%;
+            font-weight: bold;
+            background-color: #f2f2f2;
+        }
+        .col-value {
+            width: 75%;
+        }
+        .col-stt {
+            width: 8%;
+            text-align: center;
+        }
+        .col-actor {
+            width: 46%;
+        }
+        .col-system {
+            width: 46%;
+        }
+        .section-header {
+            background-color: #d9e2f3;
+            font-weight: bold;
+            text-align: center;
+        }
+        table + table {
+            margin-top: -1px;
+        }
+    </style>
+</head>
+<body>
+    <button class="btn-download" id="downloadBtn">📥 Tải về Word (.doc)</button>
+    
+    <div class="container" id="export-content">
+        <h1>ĐẶC TẢ USE CASE - HỆ THỐNG AI INTERVIEW</h1>
+        
+        <!-- UC001: Phỏng vấn trực tiếp với AI -->
+        <div class="use-case">
+            <p class="uc-title">UC001: Hỗ trợ phỏng vấn trực tiếp (Live Interview)</p>
+            <table>
+                <tr>
+                    <td class="col-label">Use Case ID</td>
+                    <td class="col-value">UC001</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tên Use Case</td>
+                    <td class="col-value">Hỗ trợ phỏng vấn trực tiếp (Live Interview)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Actor</td>
+                    <td class="col-value">Người dùng (Ứng viên)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Mô tả</td>
+                    <td class="col-value">Cho phép người dùng chia sẻ màn hình trong buổi phỏng vấn thực, hệ thống sẽ ghi âm, chuyển đổi giọng nói thành văn bản (transcript) thông qua Deepgram, và AI sẽ hỗ trợ trả lời câu hỏi phỏng vấn theo chế độ Auto hoặc Manual</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tiền điều kiện</td>
+                    <td class="col-value">- Người dùng đã đăng nhập<br>- Trình duyệt hỗ trợ Screen Sharing và WebRTC<br>- Có microphone hoạt động<br>- Có Deepgram API Key đã được cấu hình</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Hậu điều kiện</td>
+                    <td class="col-value">- Transcript được ghi lại<br>- Người dùng nhận được gợi ý trả lời từ AI</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng chính (Main Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">1</td>
+                    <td>Truy cập trang Live Interview</td>
+                    <td>Hiển thị giao diện với video preview, transcript area và AI assistant panel</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">2</td>
+                    <td>Nhấn nút "Start"</td>
+                    <td>Yêu cầu quyền chia sẻ màn hình và microphone</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">3</td>
+                    <td>Cho phép chia sẻ màn hình + audio</td>
+                    <td>Kết nối WebSocket đến Deepgram để transcribe realtime</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">4</td>
+                    <td>Chọn chế độ: Auto hoặc Manual</td>
+                    <td>Lưu chế độ để xử lý câu hỏi phù hợp</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">5</td>
+                    <td>Thực hiện phỏng vấn (nói chuyện)</td>
+                    <td>Hiển thị transcript realtime từ Deepgram</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">6a</td>
+                    <td>[Auto Mode] AI tự động phát hiện câu hỏi</td>
+                    <td>Nhận diện pattern câu hỏi (có dấu ?) và tự động gửi đến AI</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">6b</td>
+                    <td>[Manual Mode] Bôi đen text và nhấn "Ask AI"</td>
+                    <td>Gửi text đã chọn đến AI để nhận gợi ý trả lời</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7</td>
+                    <td>Xem gợi ý trả lời từ AI</td>
+                    <td>Hiển thị câu trả lời trong AI Assistant panel với nút Copy</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">8</td>
+                    <td>Nhấn "Stop" để kết thúc</td>
+                    <td>Dừng recording, đóng WebSocket, thông báo kết thúc</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng thay thế (Alternate Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">2a</td>
+                    <td>Từ chối quyền chia sẻ màn hình</td>
+                    <td>Hiển thị thông báo "Permission Denied" với hướng dẫn</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">3a</td>
+                    <td>Không có audio trong screen share</td>
+                    <td>Hiển thị cảnh báo "No audio detected" và hướng dẫn tick "Share audio"</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">5a</td>
+                    <td>WebSocket bị ngắt kết nối</td>
+                    <td>Hiển thị thông báo lỗi kết nối</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7a</td>
+                    <td>Nhấn "Delete" để xóa transcript</td>
+                    <td>Xóa toàn bộ transcript và reset trạng thái</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- UC002: Phỏng vấn thử với AI -->
+        <div class="use-case">
+            <p class="uc-title">UC002: Phỏng vấn thử với AI (Mock Interview)</p>
+            <table>
+                <tr>
+                    <td class="col-label">Use Case ID</td>
+                    <td class="col-value">UC002</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tên Use Case</td>
+                    <td class="col-value">Phỏng vấn thử với AI (Mock Interview)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Actor</td>
+                    <td class="col-value">Người dùng (Ứng viên)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Mô tả</td>
+                    <td class="col-value">Cho phép người dùng luyện tập phỏng vấn với AI thông qua video avatar (D-ID), hỗ trợ đa ngôn ngữ, nhận diện giọng nói và đánh giá chi tiết sau khi kết thúc</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tiền điều kiện</td>
+                    <td class="col-value">- Người dùng đã đăng nhập<br>- Đã tạo Interview Set trong Prepare Hub<br>- Trình duyệt hỗ trợ Speech Recognition<br>- Có microphone và camera (tùy chọn)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Hậu điều kiện</td>
+                    <td class="col-value">- Kết quả đánh giá được lưu vào sessionStorage<br>- Người dùng được chuyển đến trang Assessment Report</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng chính (Main Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">1</td>
+                    <td>Truy cập trang Mock Interview</td>
+                    <td>Hiển thị landing page với giới thiệu tính năng</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">2</td>
+                    <td>Nhấn "Start Your Interview"</td>
+                    <td>Hiển thị Modal chọn Interview Set</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">3</td>
+                    <td>Chọn Interview Set từ danh sách</td>
+                    <td>Load câu hỏi và ngôn ngữ từ Interview Set đã chọn</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">4</td>
+                    <td>Chọn AI Interviewer (Voice/Avatar)</td>
+                    <td>Khởi tạo D-ID avatar và Speech Synthesis</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">5</td>
+                    <td>Bật/Tắt camera (tùy chọn)</td>
+                    <td>Hiển thị webcam stream của người dùng</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">6</td>
+                    <td>Nghe câu hỏi từ AI avatar</td>
+                    <td>Avatar D-ID đọc câu hỏi bằng giọng nói (đa ngôn ngữ)</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7</td>
+                    <td>Trả lời bằng giọng nói hoặc nhập text</td>
+                    <td>Ghi nhận câu trả lời qua Speech Recognition hoặc input</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">8</td>
+                    <td>Tiếp tục với các câu hỏi tiếp theo</td>
+                    <td>Avatar đọc transition phrase + câu hỏi tiếp theo</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">9</td>
+                    <td>Hoàn thành tất cả câu hỏi</td>
+                    <td>Gọi API assess-interview để AI đánh giá toàn bộ</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">10</td>
+                    <td>Xem báo cáo đánh giá</td>
+                    <td>Chuyển đến trang Assessment Report với điểm số chi tiết</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng thay thế (Alternate Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">3a</td>
+                    <td>Chưa có Interview Set nào</td>
+                    <td>Hướng dẫn tạo Interview Set trong Prepare Hub</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7a</td>
+                    <td>Microphone không hoạt động</td>
+                    <td>Hiển thị lỗi, cho phép nhập text thay thế</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">8a</td>
+                    <td>Nhấn "Leave" để thoát sớm</td>
+                    <td>Xác nhận, đánh giá các câu đã trả lời và hiển thị kết quả</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">9a</td>
+                    <td>-</td>
+                    <td>API rate limit: Thông báo và lưu session để thử lại sau</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- UC003: Làm bài Quiz kiến thức -->
+        <div class="use-case">
+            <p class="uc-title">UC003: Làm bài Quiz đánh giá kỹ năng</p>
+            <table>
+                <tr>
+                    <td class="col-label">Use Case ID</td>
+                    <td class="col-value">UC003</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tên Use Case</td>
+                    <td class="col-value">Làm bài Quiz đánh giá kỹ năng</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Actor</td>
+                    <td class="col-value">Người dùng (Ứng viên)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Mô tả</td>
+                    <td class="col-value">Cho phép người dùng làm bài quiz đánh giá kỹ năng qua 7 bước: Upload CV (tùy chọn) → Chọn lĩnh vực → Chọn cấp bậc → Chọn độ khó → Chọn số câu → Làm quiz → Xem feedback chi tiết. AI tạo câu hỏi dựa trên CV và các tiêu chí đã chọn</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tiền điều kiện</td>
+                    <td class="col-value">- Người dùng đã đăng nhập</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Hậu điều kiện</td>
+                    <td class="col-value">- Kết quả quiz được hiển thị với Enhanced Feedback<br>- Người dùng nhận được phân tích chi tiết từng câu trả lời</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng chính (Main Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">1</td>
+                    <td>Truy cập trang Quiz</td>
+                    <td>Hiển thị Step 1: CVUploadStep</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">2</td>
+                    <td>Tải lên CV hoặc nhấn "Bỏ qua"</td>
+                    <td>Phân tích CV để gợi ý lĩnh vực (nếu có)</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">3</td>
+                    <td>Chọn lĩnh vực (Step 2: FieldSelection)</td>
+                    <td>Hiển thị danh sách lĩnh vực: IT, Marketing, HR, Finance...</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">4</td>
+                    <td>Chọn cấp bậc (Step 3: LevelSelection)</td>
+                    <td>Hiển thị: Fresher, Junior, Mid-level, Senior</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">5</td>
+                    <td>Chọn độ khó (Step 4: DifficultySelection)</td>
+                    <td>Hiển thị: Easy, Medium, Hard</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">6</td>
+                    <td>Chọn số lượng câu hỏi (Step 5: QuestionCount)</td>
+                    <td>Hiển thị các tùy chọn: 5, 10, 15, 20 câu</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7</td>
+                    <td>Bắt đầu làm quiz (Step 6: QuizSession)</td>
+                    <td>AI tạo bộ câu hỏi và hiển thị từng câu với timer</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">8</td>
+                    <td>Chọn đáp án cho từng câu</td>
+                    <td>Ghi nhận câu trả lời, hiển thị progress bar</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">9</td>
+                    <td>Nộp bài sau khi hoàn thành</td>
+                    <td>Tính điểm và gọi AI tạo Enhanced Feedback</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">10</td>
+                    <td>Xem kết quả (Step 7: EnhancedFeedback)</td>
+                    <td>Hiển thị: Điểm số, Đáp án đúng/sai, Giải thích chi tiết từng câu</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng thay thế (Alternate Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">2a</td>
+                    <td>Bỏ qua upload CV</td>
+                    <td>Chuyển thẳng đến bước chọn lĩnh vực</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7a</td>
+                    <td>-</td>
+                    <td>Lỗi tạo câu hỏi: Hiển thị thông báo lỗi, cho phép thử lại</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">8a</td>
+                    <td>Nhấn nút "Back" để quay lại câu trước</td>
+                    <td>Hiển thị câu hỏi trước và đáp án đã chọn</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">10a</td>
+                    <td>Nhấn "Try Again"</td>
+                    <td>Reset về bước đầu để làm quiz mới</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- UC004: Tìm kiếm việc làm -->
+        <div class="use-case">
+            <p class="uc-title">UC004: Tìm kiếm việc làm thông minh (Find Job)</p>
+            <table>
+                <tr>
+                    <td class="col-label">Use Case ID</td>
+                    <td class="col-value">UC004</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tên Use Case</td>
+                    <td class="col-value">Tìm kiếm việc làm thông minh (Find Job)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Actor</td>
+                    <td class="col-value">Người dùng (Ứng viên)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Mô tả</td>
+                    <td class="col-value">Cho phép người dùng tìm kiếm việc làm phù hợp qua 5 bước: Upload CV → Chọn lĩnh vực → Chọn cấp bậc → Tùy chỉnh địa điểm → Xem kết quả. Hệ thống phân tích CV, gợi ý lĩnh vực và tổng hợp link từ nhiều nền tảng tuyển dụng</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tiền điều kiện</td>
+                    <td class="col-value">- Người dùng đã đăng nhập<br>- Có kết nối internet</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Hậu điều kiện</td>
+                    <td class="col-value">- Danh sách link việc làm từ nhiều nền tảng được hiển thị<br>- Có Market Insights cho lĩnh vực đã chọn</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng chính (Main Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">1</td>
+                    <td>Truy cập trang Find Job</td>
+                    <td>Hiển thị Step 1: Upload CV với animated background</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">2</td>
+                    <td>Tải lên CV (PDF/DOCX)</td>
+                    <td>Gọi AI phân tích CV: skills, location, experience level</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">3</td>
+                    <td>Xem gợi ý lĩnh vực (Step 2)</td>
+                    <td>Hiển thị các lĩnh vực được gợi ý từ CV với Match Score</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">4</td>
+                    <td>Chọn lĩnh vực mong muốn</td>
+                    <td>Lưu lĩnh vực, hiển thị Market Insights (tùy chọn)</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">5</td>
+                    <td>Chọn cấp bậc (Step 3)</td>
+                    <td>Hiển thị: Fresher, Junior, Mid-level, Senior với gợi ý từ CV</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">6</td>
+                    <td>Nhập tùy chọn (Step 4)</td>
+                    <td>Hiển thị form: Địa điểm (auto-detect), Remote/Onsite, Salary range</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7</td>
+                    <td>Xem kết quả (Step 5)</td>
+                    <td>Hiển thị Market Insights + Links đến các nền tảng tuyển dụng</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">8</td>
+                    <td>Click vào nền tảng để ứng tuyển</td>
+                    <td>Mở link tìm kiếm đã được format với keyword + location</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng thay thế (Alternate Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">2a</td>
+                    <td>-</td>
+                    <td>Lỗi phân tích CV: Hiển thị thông báo, cho phép thử lại</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">4a</td>
+                    <td>Nhấn "Xem thông tin thị trường"</td>
+                    <td>Hiển thị Market Insights panel với trends, salary, demand</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">*</td>
+                    <td>Nhấn "Quay lại" ở bất kỳ step nào</td>
+                    <td>Quay về step trước, giữ nguyên data đã nhập</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- UC005: Chuẩn bị phỏng vấn (Prepare Hub) -->
+        <div class="use-case">
+            <p class="uc-title">UC005: Chuẩn bị bộ câu hỏi phỏng vấn (Prepare Hub)</p>
+            <table>
+                <tr>
+                    <td class="col-label">Use Case ID</td>
+                    <td class="col-value">UC005</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tên Use Case</td>
+                    <td class="col-value">Chuẩn bị bộ câu hỏi phỏng vấn (Prepare Hub)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Actor</td>
+                    <td class="col-value">Người dùng (Ứng viên)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Mô tả</td>
+                    <td class="col-value">Cho phép người dùng tạo và quản lý các bộ câu hỏi phỏng vấn (Interview Set). AI sẽ tự động tạo câu hỏi dựa trên CV, tên công ty, vị trí ứng tuyển và Job Description. Các Interview Set được sử dụng cho Mock Interview</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tiền điều kiện</td>
+                    <td class="col-value">- Người dùng đã đăng nhập<br>- Đã upload ít nhất 1 CV trong Resume</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Hậu điều kiện</td>
+                    <td class="col-value">- Interview Set được lưu vào database<br>- Có thể sử dụng cho Mock Interview</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng chính (Main Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">1</td>
+                    <td>Truy cập trang Prepare Hub</td>
+                    <td>Hiển thị danh sách Interview Sets đã tạo (dạng bảng)</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">2</td>
+                    <td>Nhấn "Add New" để tạo Interview Set mới</td>
+                    <td>Hiển thị dialog form nhập thông tin</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">3</td>
+                    <td>Chọn CV từ dropdown</td>
+                    <td>Load danh sách CV từ Resume đã upload</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">4</td>
+                    <td>Nhập thông tin: Company Name, Position</td>
+                    <td>Validate các trường bắt buộc</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">5</td>
+                    <td>Nhập Job Description (mô tả công việc)</td>
+                    <td>Lưu JD để AI phân tích và tạo câu hỏi phù hợp</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">6</td>
+                    <td>Chọn ngôn ngữ phỏng vấn (EN/VI/JA/ZH/KO)</td>
+                    <td>Lưu ngôn ngữ cho Speech Synthesis</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7</td>
+                    <td>Nhấn "Save" để lưu</td>
+                    <td>Gọi AI API tạo bộ câu hỏi dựa trên CV + JD</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">8</td>
+                    <td>Xem Interview Set mới trong danh sách</td>
+                    <td>Hiển thị set mới với các thông tin và actions</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">9</td>
+                    <td>Nhấn "View" để xem câu hỏi chi tiết</td>
+                    <td>Hiển thị danh sách câu hỏi + câu trả lời mẫu</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">10</td>
+                    <td>Nhấn "Start Mock" để bắt đầu phỏng vấn</td>
+                    <td>Chuyển đến Mock Interview với Interview Set đã chọn</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng thay thế (Alternate Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">3a</td>
+                    <td>Chưa có CV nào</td>
+                    <td>Hiển thị thông báo cần upload CV trước</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7a</td>
+                    <td>-</td>
+                    <td>Lỗi tạo câu hỏi: Hiển thị thông báo, cho phép thử lại</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">8a</td>
+                    <td>Nhấn "Delete" để xóa Interview Set</td>
+                    <td>Xác nhận và xóa Interview Set khỏi database</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">9a</td>
+                    <td>Thêm câu hỏi thủ công</td>
+                    <td>Cho phép thêm câu hỏi tùy chỉnh vào Interview Set</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- UC006: Hỗ trợ tạo CV -->
+        <div class="use-case">
+            <p class="uc-title">UC006: Xây dựng và tối ưu CV (Support CV)</p>
+            <table>
+                <tr>
+                    <td class="col-label">Use Case ID</td>
+                    <td class="col-value">UC006</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tên Use Case</td>
+                    <td class="col-value">Xây dựng và tối ưu CV (Support CV)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Actor</td>
+                    <td class="col-value">Người dùng (Ứng viên)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Mô tả</td>
+                    <td class="col-value">Cho phép người dùng tải lên CV để AI phân tích, review và tự động chỉnh sửa theo phương pháp STAR. Hỗ trợ so sánh trước/sau, chỉnh sửa từng thay đổi, chọn mẫu template và xuất PDF chuyên nghiệp</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tiền điều kiện</td>
+                    <td class="col-value">- Người dùng đã đăng nhập<br>- Có file CV định dạng PDF hoặc DOCX</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Hậu điều kiện</td>
+                    <td class="col-value">- CV được cải thiện và có thể export<br>- Người dùng có thể tải CV mới dạng PDF</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng chính (Main Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">1</td>
+                    <td>Truy cập trang Support CV</td>
+                    <td>Hiển thị landing page với Upload step active</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">2</td>
+                    <td>Tải lên file CV (PDF/DOCX)</td>
+                    <td>Parse CV và trích xuất thông tin vào các sections</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">3</td>
+                    <td>Xem kết quả Review CV</td>
+                    <td>Hiển thị điểm ATS, điểm Impact, điểm rõ ràng, điểm mạnh, điểm yếu và gợi ý</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">4</td>
+                    <td>Nhấn "Auto Edit" để AI tự động sửa</td>
+                    <td>Hiển thị loading dialog với progress và AI cải thiện từng section</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">5</td>
+                    <td>Xem so sánh trước/sau chỉnh sửa</td>
+                    <td>Hiển thị side-by-side comparison với từng thay đổi có reason</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">6</td>
+                    <td>Chọn Accept/Reject từng thay đổi</td>
+                    <td>Apply các thay đổi đã chọn vào CV</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7</td>
+                    <td>Chỉnh sửa thêm nếu cần (Edit step)</td>
+                    <td>Cho phép edit trực tiếp từng section: Personal, Experience, Education, Skills...</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">8</td>
+                    <td>Chọn mẫu CV (Template)</td>
+                    <td>Hiển thị các mẫu: ATS-friendly, Modern, Creative...</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">9</td>
+                    <td>Xem Preview CV</td>
+                    <td>Hiển thị CV với template đã chọn dạng live preview</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">10</td>
+                    <td>Xuất CV dạng PDF</td>
+                    <td>Tạo file PDF và download về máy</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng thay thế (Alternate Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">2a</td>
+                    <td>Nhấn "Start from Scratch"</td>
+                    <td>Chuyển thẳng đến Edit step với CV trống</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">4a</td>
+                    <td>Nhấn "Manual Edit"</td>
+                    <td>Bỏ qua Auto Edit, chuyển thẳng đến Edit step</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">4b</td>
+                    <td>-</td>
+                    <td>API Quota Exceeded: Hiển thị thông báo lỗi và gợi ý Manual Edit</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">6a</td>
+                    <td>Reject All changes</td>
+                    <td>Giữ nguyên CV gốc, quay về Review step</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7a</td>
+                    <td>Nhấn "Back to Review"</td>
+                    <td>Quay lại Review step để xem lại đánh giá</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- UC007: Phân tích CV chuyên sâu -->
+        <div class="use-case">
+            <p class="uc-title">UC007: Phân tích CV chuyên sâu (Summarize)</p>
+            <table>
+                <tr>
+                    <td class="col-label">Use Case ID</td>
+                    <td class="col-value">UC007</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tên Use Case</td>
+                    <td class="col-value">Phân tích CV chuyên sâu (Summarize)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Actor</td>
+                    <td class="col-value">Người dùng (Ứng viên)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Mô tả</td>
+                    <td class="col-value">Cho phép người dùng tải lên CV hoặc file âm thanh để AI phân tích toàn diện: điểm CV, phân tích kỹ năng theo danh mục, gợi ý nghề nghiệp phù hợp, action items để cải thiện, và điểm nổi bật kinh nghiệm</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tiền điều kiện</td>
+                    <td class="col-value">- Người dùng đã đăng nhập<br>- Có file CV (PDF/DOCX/TXT) hoặc file âm thanh (MP3/WAV/OGG)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Hậu điều kiện</td>
+                    <td class="col-value">- Nhận được báo cáo phân tích chi tiết với nhiều sections<br>- Có gợi ý nghề nghiệp với Match Score</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng chính (Main Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">1</td>
+                    <td>Truy cập trang Summarize</td>
+                    <td>Hiển thị giao diện với 3D animated background</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">2</td>
+                    <td>Chọn ngôn ngữ báo cáo (VI/EN/JA/ZH/KO)</td>
+                    <td>Lưu ngôn ngữ cho AI response</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">3</td>
+                    <td>Tải lên file CV hoặc âm thanh</td>
+                    <td>Validate file (PDF, DOCX, TXT, MP3, WAV, OGG, max 50MB)</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">4</td>
+                    <td>Nhấn "Generate Summary"</td>
+                    <td>Gọi AI Service phân tích nội dung</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">5</td>
+                    <td>Xem CV Score (vòng tròn điểm)</td>
+                    <td>Hiển thị điểm CV, Overall Rating (sao), Word Count, Reading Time</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">6</td>
+                    <td>Xem Skills Analysis</td>
+                    <td>Hiển thị kỹ năng theo 4 nhóm: Technical, Soft Skills, Language, Tools</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7</td>
+                    <td>Xem Career Recommendations</td>
+                    <td>Hiển thị các vị trí phù hợp với Match Score %, Salary Range, Required Skills</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">8</td>
+                    <td>Xem Action Items</td>
+                    <td>Hiển thị các việc cần làm với Priority (High/Medium/Low) và Impact</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">9</td>
+                    <td>Xem CV Completeness</td>
+                    <td>Hiển thị độ hoàn thiện từng section với status và suggestions</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">10</td>
+                    <td>Xem Experience Highlights</td>
+                    <td>Hiển thị timeline kinh nghiệm với Role, Company, Achievements, Technologies</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng thay thế (Alternate Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">3a</td>
+                    <td>Upload file âm thanh</td>
+                    <td>Chuyển đổi audio thành text trước khi phân tích</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">3b</td>
+                    <td>File không đúng định dạng</td>
+                    <td>Hiển thị thông báo định dạng hỗ trợ</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">4a</td>
+                    <td>-</td>
+                    <td>Lỗi phân tích: Hiển thị thông báo và cho phép thử lại</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- UC008: Quản lý tài liệu người dùng -->
+        <div class="use-case">
+            <p class="uc-title">UC008: Quản lý CV/Tài liệu (Resume/User Documents)</p>
+            <table>
+                <tr>
+                    <td class="col-label">Use Case ID</td>
+                    <td class="col-value">UC008</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tên Use Case</td>
+                    <td class="col-value">Quản lý CV/Tài liệu (Resume)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Actor</td>
+                    <td class="col-value">Người dùng (Ứng viên)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Mô tả</td>
+                    <td class="col-value">Cho phép người dùng upload, xem, xóa các CV (Resume) để sử dụng cho các tính năng khác như Prepare Hub, Quiz, Find Job, và Support CV</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tiền điều kiện</td>
+                    <td class="col-value">- Người dùng đã đăng nhập</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Hậu điều kiện</td>
+                    <td class="col-value">- CV được lưu trữ trong cloud storage<br>- CV có thể được sử dụng ở các tính năng khác</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng chính (Main Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">1</td>
+                    <td>Truy cập trang Resume</td>
+                    <td>Gọi API fetchResumes để load danh sách CV</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">2</td>
+                    <td>Xem danh sách CV trong bảng</td>
+                    <td>Hiển thị bảng với các cột: Tên file, Ngày upload, Actions</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">3</td>
+                    <td>Nhấn "Upload" để tải CV mới</td>
+                    <td>Hiển thị input file để chọn file</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">4</td>
+                    <td>Chọn file PDF/DOCX</td>
+                    <td>Validate định dạng và kích thước file</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">5</td>
+                    <td>Xác nhận upload</td>
+                    <td>Upload file lên cloud storage, lưu metadata vào database</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">6</td>
+                    <td>Xem CV vừa upload trong danh sách</td>
+                    <td>Refresh bảng hiển thị CV mới</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng thay thế (Alternate Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">4a</td>
+                    <td>File không đúng định dạng</td>
+                    <td>Hiển thị thông báo lỗi định dạng</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">4b</td>
+                    <td>File quá lớn (> giới hạn)</td>
+                    <td>Hiển thị thông báo file quá lớn</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">6a</td>
+                    <td>Nhấn icon "View" để xem CV</td>
+                    <td>Mở preview CV trong modal/tab mới</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">6b</td>
+                    <td>Nhấn icon "Delete" để xóa CV</td>
+                    <td>Xác nhận và xóa CV khỏi database + storage</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- UC009: Đánh giá và nhận xét hệ thống (Reviews) -->
+        <div class="use-case">
+            <p class="uc-title">UC009: Đánh giá và nhận xét hệ thống (Reviews)</p>
+            <table>
+                <tr>
+                    <td class="col-label">Use Case ID</td>
+                    <td class="col-value">UC009</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tên Use Case</td>
+                    <td class="col-value">Đánh giá và nhận xét hệ thống (Reviews)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Actor</td>
+                    <td class="col-value">Người dùng (Ứng viên)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Mô tả</td>
+                    <td class="col-value">Cho phép người dùng đánh giá hệ thống AI Interview bằng cách chấm sao (1-5 sao), viết nhận xét về trải nghiệm sử dụng, xem đánh giá của người dùng khác và lọc đánh giá theo số sao. Hệ thống hiển thị thống kê: điểm trung bình, phân bố đánh giá và tổng số lượt đánh giá</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tiền điều kiện</td>
+                    <td class="col-value">- Người dùng đã đăng nhập (để gửi đánh giá)<br>- Không cần đăng nhập để xem đánh giá</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Hậu điều kiện</td>
+                    <td class="col-value">- Đánh giá được lưu vào database<br>- Thống kê được cập nhật realtime<br>- Nếu đã đánh giá trước đó, cập nhật đánh giá thay vì tạo mới</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng chính (Main Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">1</td>
+                    <td>Truy cập trang Reviews</td>
+                    <td>Gọi API GET /api/ratings để load tất cả đánh giá</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">2</td>
+                    <td>Xem thống kê tổng quan</td>
+                    <td>Hiển thị: Điểm trung bình (Average Rating), Tổng số đánh giá, Biểu đồ phân bố sao</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">3</td>
+                    <td>Click vào số sao trong biểu đồ</td>
+                    <td>Lọc danh sách đánh giá theo số sao đã chọn</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">4</td>
+                    <td>Xem danh sách đánh giá của người dùng khác</td>
+                    <td>Hiển thị: Avatar, Tên người dùng, Số sao, Nội dung nhận xét, Ngày đánh giá</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">5</td>
+                    <td>Chọn số sao để đánh giá (1-5 sao)</td>
+                    <td>Highlight các sao đã chọn với hiệu ứng hover</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">6</td>
+                    <td>Nhập nhận xét về trải nghiệm (tùy chọn)</td>
+                    <td>Ghi nhận nội dung vào textarea</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7</td>
+                    <td>Nhấn "Submit Review"</td>
+                    <td>Gọi API POST /api/ratings với userEmail, userName, rating, comment</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">8</td>
+                    <td>Xem thông báo thành công</td>
+                    <td>Hiển thị "Thank you for your review! 🎉" và reload danh sách</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">9</td>
+                    <td>Xem đánh giá mới trong danh sách</td>
+                    <td>Scroll đến section reviews và hiển thị đánh giá vừa gửi</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng thay thế (Alternate Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">1a</td>
+                    <td>Chưa đăng nhập</td>
+                    <td>Hiển thị form đánh giá với nút "Sign In" để yêu cầu đăng nhập</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">5a</td>
+                    <td>Đã đánh giá trước đó</td>
+                    <td>Hiển thị đánh giá cũ, nút "Update Review" thay vì "Submit Review"</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7a</td>
+                    <td>Chưa chọn số sao</td>
+                    <td>Hiển thị thông báo "Please select a rating!"</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7b</td>
+                    <td>-</td>
+                    <td>Lỗi mạng: Hiển thị "Network error. Please check your connection and try again."</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">3a</td>
+                    <td>Nhấn "Clear filter"</td>
+                    <td>Hiển thị lại tất cả đánh giá không lọc</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- UC010: Đăng nhập hệ thống (Login) -->
+        <div class="use-case">
+            <p class="uc-title">UC010: Đăng nhập hệ thống (Login)</p>
+            <table>
+                <tr>
+                    <td class="col-label">Use Case ID</td>
+                    <td class="col-value">UC010</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tên Use Case</td>
+                    <td class="col-value">Đăng nhập hệ thống (Login)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Actor</td>
+                    <td class="col-value">Người dùng (Ứng viên)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Mô tả</td>
+                    <td class="col-value">Cho phép người dùng đăng nhập vào hệ thống AI Interview thông qua Clerk Authentication. Hỗ trợ đăng nhập bằng email/password hoặc đăng nhập qua OAuth (Google, GitHub, Microsoft). Sau khi đăng nhập thành công, người dùng có thể truy cập các tính năng được bảo vệ</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Tiền điều kiện</td>
+                    <td class="col-value">- Người dùng có tài khoản đã đăng ký<br>- Trình duyệt hỗ trợ JavaScript và cookies<br>- Có kết nối internet</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Hậu điều kiện</td>
+                    <td class="col-value">- Session được tạo và lưu vào cookies<br>- Người dùng được redirect về trang trước hoặc trang chủ<br>- Có thể truy cập các route được bảo vệ: Live Interview, Mock Interview, Prepare Hub, Resume, Quiz</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng chính (Main Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">1</td>
+                    <td>Truy cập route được bảo vệ khi chưa đăng nhập</td>
+                    <td>Middleware kiểm tra auth, redirect đến trang /sign-in</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">2</td>
+                    <td>Xem form đăng nhập Clerk</td>
+                    <td>Hiển thị Clerk SignIn component với các options đăng nhập</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">3</td>
+                    <td>Nhập Email address</td>
+                    <td>Validate định dạng email</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">4</td>
+                    <td>Nhập Password</td>
+                    <td>Ẩn mật khẩu với input type password</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">5</td>
+                    <td>Nhấn "Continue" để đăng nhập</td>
+                    <td>Gửi credentials đến Clerk API để xác thực</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">6</td>
+                    <td>-</td>
+                    <td>Xác thực thành công: Tạo session, lưu cookies</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">7</td>
+                    <td>Được redirect về trang đã yêu cầu</td>
+                    <td>Redirect về route được bảo vệ ban đầu hoặc trang chủ</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th colspan="3" class="section-header">Luồng thay thế (Alternate Flow)</th>
+                </tr>
+                <tr>
+                    <th class="col-stt">STT</th>
+                    <th class="col-actor">Actor</th>
+                    <th class="col-system">Hệ thống</th>
+                </tr>
+                <tr>
+                    <td class="col-stt">2a</td>
+                    <td>Chọn đăng nhập bằng Google</td>
+                    <td>Redirect đến Google OAuth, sau đó callback về Clerk</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">2b</td>
+                    <td>Chọn đăng nhập bằng GitHub</td>
+                    <td>Redirect đến GitHub OAuth, sau đó callback về Clerk</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">2c</td>
+                    <td>Chọn đăng nhập bằng Microsoft</td>
+                    <td>Redirect đến Microsoft OAuth, sau đó callback về Clerk</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">5a</td>
+                    <td>Nhập sai email hoặc password</td>
+                    <td>Hiển thị thông báo "Invalid credentials" hoặc "User not found"</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">5b</td>
+                    <td>Nhấn "Forgot password?"</td>
+                    <td>Chuyển đến flow reset password của Clerk</td>
+                </tr>
+                <tr>
+                    <td class="col-stt">*</td>
+                    <td>Nhấn "Sign up" (nếu chưa có tài khoản)</td>
+                    <td>Redirect đến trang /sign-up để đăng ký tài khoản mới</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <button class="btn-download" id="downloadBtn2">📥 Tải về Word (.doc)</button>
+
+    <script>
+        function exportToWord() {
+            try {
+                var content = document.getElementById("export-content").innerHTML;
+                
+                var html = "<!DOCTYPE html>" +
+                    "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>" +
+                    "<head>" +
+                    "<meta charset='utf-8'>" +
+                    "<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>" +
+                    "<title>Dac ta Use Case - AI Interview</title>" +
+                    "<style>" +
+                    "body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; }" +
+                    "h1 { text-align: center; font-size: 16pt; }" +
+                    ".uc-title { font-weight: bold; font-size: 14pt; margin: 20px 0 10px 0; }" +
+                    "table { width: 100%; border-collapse: collapse; margin-bottom: 0; }" +
+                    "th, td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }" +
+                    "th { background-color: #d9e2f3; font-weight: bold; text-align: center; }" +
+                    ".col-label { width: 25%; font-weight: bold; background-color: #f2f2f2; }" +
+                    ".col-stt { width: 8%; text-align: center; }" +
+                    ".section-header { background-color: #d9e2f3; font-weight: bold; text-align: center; }" +
+                    ".use-case { page-break-inside: avoid; margin-bottom: 30px; }" +
+                    "</style>" +
+                    "</head>" +
+                    "<body>" + content + "</body>" +
+                    "</html>";
+                
+                var blob = new Blob(["\ufeff" + html], {
+                    type: "application/msword;charset=utf-8"
+                });
+                
+                var url = window.URL.createObjectURL(blob);
+                var a = document.createElement("a");
+                a.style.display = "none";
+                a.href = url;
+                a.download = "Dac_ta_Use_Case_AI_Interview.doc";
+                
+                document.body.appendChild(a);
+                a.click();
+                
+                setTimeout(function() {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 100);
+                
+                alert("Da tai file thanh cong!");
+            } catch (error) {
+                alert("Loi khi xuat file: " + error.message);
+                console.error("Export error:", error);
+            }
+        }
+        
+        document.getElementById("downloadBtn").addEventListener("click", exportToWord);
+        document.getElementById("downloadBtn2").addEventListener("click", exportToWord);
+    </script>
+</body>
+</html>

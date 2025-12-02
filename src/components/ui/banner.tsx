@@ -103,7 +103,7 @@ const Banner = () => {
           </motion.div>
 
           <motion.h1 
-            className="text-4xl font-extrabold sm:text-6xl text-gray-100 leading-tight mb-6"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-100 leading-tight mb-4 sm:mb-6 px-2"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -119,7 +119,7 @@ const Banner = () => {
           </motion.h1>
 
           <motion.p 
-            className="mt-6 sm:text-xl/relaxed text-gray-300 max-w-2xl mx-auto"
+            className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto px-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
@@ -130,48 +130,48 @@ const Banner = () => {
           
           {/* Stats or features mini cards with stagger animation */}
           <motion.div 
-            className="mt-12 flex flex-wrap justify-center gap-6 text-sm"
+            className="mt-6 sm:mt-10 lg:mt-12 flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 text-sm px-2 sm:px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.6 }}
           >
             <motion.div 
-              className="glass-effect px-6 py-3 rounded-full border border-purple-500/20 hover:border-purple-500/50 hover:scale-110 transition-all cursor-pointer"
-              whileHover={{ y: -5 }}
+              className="glass-effect px-3 sm:px-5 py-2 sm:py-2.5 rounded-full border border-purple-500/20 hover:border-purple-500/50 hover:scale-105 transition-all cursor-pointer"
+              whileHover={{ y: -3 }}
             >
-              <span className="text-purple-400 font-semibold">✨ AI-Powered</span>
+              <span className="text-purple-400 font-semibold text-[10px] sm:text-xs md:text-sm whitespace-nowrap">✨ AI-Powered</span>
             </motion.div>
             <motion.div 
-              className="glass-effect px-6 py-3 rounded-full border border-pink-500/20 hover:border-pink-500/50 hover:scale-110 transition-all cursor-pointer"
-              whileHover={{ y: -5 }}
+              className="glass-effect px-3 sm:px-5 py-2 sm:py-2.5 rounded-full border border-pink-500/20 hover:border-pink-500/50 hover:scale-105 transition-all cursor-pointer"
+              whileHover={{ y: -3 }}
             >
-              <span className="text-pink-400 font-semibold">🎯 Real-time Feedback</span>
+              <span className="text-pink-400 font-semibold text-[10px] sm:text-xs md:text-sm whitespace-nowrap">🎯 Feedback</span>
             </motion.div>
             <motion.div 
-              className="glass-effect px-6 py-3 rounded-full border border-blue-500/20 hover:border-blue-500/50 hover:scale-110 transition-all cursor-pointer"
-              whileHover={{ y: -5 }}
+              className="glass-effect px-3 sm:px-5 py-2 sm:py-2.5 rounded-full border border-blue-500/20 hover:border-blue-500/50 hover:scale-105 transition-all cursor-pointer"
+              whileHover={{ y: -3 }}
             >
-              <span className="text-blue-400 font-semibold">📈 Track Progress</span>
+              <span className="text-blue-400 font-semibold text-[10px] sm:text-xs md:text-sm whitespace-nowrap">📈 Progress</span>
             </motion.div>
             <motion.a 
               href="/reviews"
-              className="glass-effect px-6 py-3 rounded-full border border-yellow-500/20 hover:border-yellow-500/50 transition-all"
-              whileHover={{ y: -5, scale: 1.1 }}
+              className="glass-effect px-3 sm:px-5 py-2 sm:py-2.5 rounded-full border border-yellow-500/20 hover:border-yellow-500/50 transition-all"
+              whileHover={{ y: -3, scale: 1.05 }}
             >
-              <span className="text-yellow-400 font-semibold">⭐ See Reviews</span>
+              <span className="text-yellow-400 font-semibold text-[10px] sm:text-xs md:text-sm whitespace-nowrap">⭐ Reviews</span>
             </motion.a>
           </motion.div>
           <motion.div 
-            className="mt-8 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-center px-8"
+            className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-4 items-center justify-center px-4 sm:px-8"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.8 }}
           >
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
               <Button
                 size="lg"
                 onClick={() => setIsWaitlistOpen(true)}
-                className="relative w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-6 text-lg rounded-xl shadow-neon hover:shadow-neon-hover transition-all duration-300 overflow-hidden group"
+                className="relative w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg rounded-xl shadow-neon hover:shadow-neon-hover transition-all duration-300 overflow-hidden group"
               >
                 <span className="relative z-10">Join Waitlist</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

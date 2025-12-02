@@ -1,0 +1,113 @@
+@startuml activity-diagram-quiz
+title Activity Diagram - Quiz (Đánh giá kỹ năng)
+skinparam backgroundColor #FEFEFE
+skinparam ActivityBackgroundColor #E8F4FD
+skinparam ActivityBorderColor #3498DB
+skinparam ActivityStartColor #27AE60
+skinparam ActivityEndColor #E74C3C
+skinparam ActivityDiamondBackgroundColor #F39C12
+skinparam ActivityDiamondBorderColor #E67E22
+skinparam SwimlaneBorderColor #2C3E50
+skinparam SwimlaneTitleBackgroundColor #34495E
+skinparam SwimlaneTitleFontColor white
+
+|User|
+start
+:Chọn "Quiz" trên menu;
+
+|System|
+:Hiển thị giao diện Quiz;
+:Hiển thị bước Upload CV;
+
+|User|
+if (Có CV để upload?) then (Có)
+  :Upload file CV;
+  |System|
+  :Phân tích CV;
+  :Trích xuất kỹ năng và ngành nghề;
+  :Gợi ý ngành nghề phù hợp;
+else (Không)
+  :Nhấn "Bỏ qua";
+endif
+
+|System|
+:Hiển thị danh sách ngành nghề;
+
+|User|
+:Chọn ngành nghề (Field);
+
+|System|
+:Hiển thị các cấp bậc kinh nghiệm;
+
+|User|
+:Chọn cấp bậc (Intern/Fresher/Junior/Middle/Senior);
+
+|System|
+:Hiển thị các độ khó;
+
+|User|
+:Chọn độ khó (Easy/Medium/Hard/Expert);
+
+|System|
+:Hiển thị tùy chọn số câu hỏi;
+
+|User|
+:Chọn số câu hỏi (5/10/15/20);
+:Nhấn "Bắt đầu Quiz";
+
+|System|
+:Gọi AI tạo câu hỏi;
+:Hiển thị loading "Đang tạo câu hỏi...";
+
+if (Tạo câu hỏi thành công?) then (Thành công)
+  :Hiển thị câu hỏi đầu tiên;
+else (Lỗi)
+  :Hiển thị thông báo lỗi;
+  :Cho phép thử lại;
+  stop
+endif
+
+|User|
+repeat
+  :Đọc câu hỏi và các đáp án;
+  :Chọn đáp án;
+  
+  |System|
+  :Ghi nhận câu trả lời;
+  :Chuyển sang câu tiếp theo;
+  
+  |User|
+repeat while (Còn câu hỏi?) is (Có)
+->Không;
+
+|System|
+:Tính điểm số;
+:Gọi AI tạo feedback chi tiết;
+:Hiển thị kết quả:
+- Điểm số tổng thể
+- Phân tích từng câu hỏi
+- Điểm mạnh và điểm yếu
+- Tài liệu học tập gợi ý;
+
+|User|
+:Xem kết quả và feedback;
+
+if (Muốn làm lại?) then (Có)
+  :Nhấn "Làm lại Quiz";
+  |System|
+  :Reset về bước chọn ngành nghề;
+else (Không)
+  :Hoàn thành;
+endif
+
+stop
+
+legend right
+  |= Ký hiệu |= Mô tả |
+  | Hình oval | Bắt đầu/Kết thúc |
+  | Hình chữ nhật | Hoạt động |
+  | Hình thoi | Điều kiện |
+  | Swimlane | Phân chia Actor |
+endlegend
+
+@enduml

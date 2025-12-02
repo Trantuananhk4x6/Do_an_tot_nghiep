@@ -59,7 +59,7 @@ const Header = () => {
                 href={"/resume"} 
                 className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-3 px-10 rounded-xl shadow-neon hover:shadow-neon-hover transition-all duration-300 inline-block text-lg font-semibold hover:scale-105"
               >
-                Dashboard
+                Start Interview
               </Link>
             </SignedIn>
           </div>
@@ -126,11 +126,11 @@ const Header = () => {
             {/* Auth Buttons */}
             <div className="flex gap-2 sm:gap-4 items-center w-full sm:w-auto justify-end">
               <SignedOut>
-                <SignUpButton mode="modal">
+                {/* <SignUpButton mode="modal">
                   <button className="glass-effect border border-white/10 hover:bg-white/5 text-gray-300 px-4 py-2 rounded-xl transition-all duration-300 w-full sm:w-auto">
                     Sign Up
                   </button>
-                </SignUpButton>
+                </SignUpButton> */}
               </SignedOut>
               <SignedOut>
                 <SignInButton mode="modal">

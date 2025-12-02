@@ -1,0 +1,168 @@
+@startuml activity-diagram-login
+title Activity Diagram - Login (Đăng nhập hệ thống)
+skinparam backgroundColor #FEFEFE
+skinparam ActivityBackgroundColor #E8F4FD
+skinparam ActivityBorderColor #3498DB
+skinparam ActivityStartColor #27AE60
+skinparam ActivityEndColor #E74C3C
+skinparam ActivityDiamondBackgroundColor #F39C12
+skinparam ActivityDiamondBorderColor #E67E22
+skinparam SwimlaneBorderColor #2C3E50
+skinparam SwimlaneTitleBackgroundColor #34495E
+skinparam SwimlaneTitleFontColor white
+
+|User|
+start
+:Truy cập route được bảo vệ;
+
+|System|
+:Middleware kiểm tra authentication;
+:Gọi clerkMiddleware với isProtectedRoute;
+
+if (Đã đăng nhập?) then (Có)
+  :Cho phép truy cập route;
+  |User|
+  :Sử dụng tính năng;
+  stop
+else (Chưa)
+  :auth.protect() được gọi;
+  :Redirect đến /sign-in;
+endif
+
+|User|
+:Xem trang đăng nhập;
+
+|System|
+:Render Clerk SignIn component;
+:Hiển thị các tùy chọn đăng nhập:
+- Email/Password
+- Google OAuth
+- GitHub OAuth;
+
+|User|
+if (Chọn Email/Password?) then (Có)
+  :Nhập Email address;
+  
+  |System|
+  if (Email hợp lệ?) then (Có)
+    :Chấp nhận email;
+  else (Không)
+    :Hiển thị lỗi định dạng email;
+    |User|
+    :Nhập lại email;
+  endif
+  
+  |User|
+  :Nhập Password;
+  :Nhấn "Continue";
+  
+  |System|
+  :Xác thực credentials với Clerk API;
+  
+  if (Credentials hợp lệ?) then (Có)
+    :Tạo session token;
+    :Lưu session vào cookies;
+    :Redirect về route ban đầu hoặc trang chủ;
+    
+    |User|
+    :Truy cập trang yêu cầu thành công;
+    stop
+    
+  else (Không)
+    :Hiển thị thông báo lỗi;
+    
+    |User|
+    if (Quên mật khẩu?) then (Có)
+      :Nhấn "Forgot password?";
+      |System|
+      :Gửi email reset password;
+      |User|
+      :Kiểm tra email và reset password;
+      :Đăng nhập lại với password mới;
+      stop
+    else (Không)
+      :Nhập lại thông tin;
+    endif
+  endif
+  
+else (Không)
+endif
+
+|User|
+if (Chọn Google OAuth?) then (Có)
+  |System|
+  :Redirect đến Google OAuth;
+  
+  |User|
+  :Chọn tài khoản Google;
+  :Cấp quyền cho ứng dụng;
+  
+  |System|
+  :Nhận callback từ Google;
+  :Xác thực OAuth token;
+  
+  if (Xác thực thành công?) then (Có)
+    :Tạo hoặc link tài khoản;
+    :Tạo session;
+    :Lưu session vào cookies;
+    :Redirect về trang chủ;
+    
+    |User|
+    :Đăng nhập thành công;
+    stop
+  else (Không)
+    :Hiển thị lỗi OAuth;
+    |User|
+    :Thử phương thức khác;
+  endif
+
+else (Không)
+endif
+
+|User|
+if (Chọn GitHub OAuth?) then (Có)
+  |System|
+  :Redirect đến GitHub OAuth;
+  
+  |User|
+  :Đăng nhập GitHub;
+  :Cấp quyền cho ứng dụng;
+  
+  |System|
+  :Nhận callback từ GitHub;
+  :Xác thực OAuth token;
+  :Tạo session;
+  :Lưu session, redirect về trang chủ;
+  
+  |User|
+  :Đăng nhập thành công;
+  stop
+
+else (Không)
+endif
+
+|User|
+if (Chưa có tài khoản?) then (Có)
+  :Nhấn "Sign up";
+  
+  |System|
+  :Redirect đến /sign-up;
+  :Hiển thị form đăng ký;
+  
+  |User|
+  :Thực hiện đăng ký tài khoản mới;
+  :Sau khi đăng ký xong, đăng nhập;
+else (Không)
+endif
+
+stop
+
+legend right
+  |= Ký hiệu |= Mô tả |
+  | Hình oval | Bắt đầu/Kết thúc |
+  | Hình chữ nhật | Hoạt động |
+  | Hình thoi | Điều kiện |
+  | Swimlane | Phân chia Actor |
+endlegend
+
+@enduml

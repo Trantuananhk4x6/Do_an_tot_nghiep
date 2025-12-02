@@ -1,6 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+import { 
+  Bot, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Lightbulb, 
+  Wand2, 
+  Edit3,
+  Target,
+  TrendingUp,
+  FileText,
+  Check,
+  Zap,
+  Shield,
+  BarChart3
+} from 'lucide-react';
 import { CVData } from '@/app/(features)/support-cv/types/cv.types';
 
 interface CVReview {
@@ -45,10 +60,10 @@ export default function CVReviewPanel({
     <div className="max-w-6xl mx-auto animate-fade-in-up">
       {/* Header */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full mb-4 glow-effect">
-          <span className="text-4xl">🤖</span>
+        <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl mb-4 shadow-lg">
+          <Bot className="w-10 h-10 text-white" />
         </div>
-        <h2 className="text-4xl font-bold gradient-text mb-2">
+        <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent mb-2">
           AI CV Review Complete
         </h2>
         <p className="text-gray-300 text-lg">
@@ -57,10 +72,13 @@ export default function CVReviewPanel({
       </div>
 
       {/* Overall Score Card */}
-      <div className="glass-effect border-2 border-purple-500/50 rounded-2xl p-8 mb-6 glow-effect">
+      <div className="glass-effect border-2 border-purple-500/50 rounded-2xl p-8 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <h3 className="text-2xl font-bold text-white mb-2">Overall Score</h3>
+            <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+              <Target className="w-6 h-6 text-purple-400" />
+              Overall Score
+            </h3>
             <p className="text-gray-300">Based on ATS compatibility, impact, and clarity</p>
           </div>
           <div className="text-center">
@@ -77,14 +95,17 @@ export default function CVReviewPanel({
         <div className="grid grid-cols-3 gap-6 mt-8 pt-6 border-t border-white/10">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-300">ATS Compatibility</span>
+              <span className="text-sm text-gray-300 flex items-center gap-2">
+                <Shield className="w-4 h-4 text-green-400" />
+                ATS Compatibility
+              </span>
               <span className={`text-lg font-bold ${getScoreColor(review.atsScore)}`}>
                 {review.atsScore}%
               </span>
             </div>
             <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
               <div
-                className={`h-full ${
+                className={`h-full transition-all duration-500 ${
                   review.atsScore >= 80 ? 'bg-green-500' :
                   review.atsScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
                 }`}
@@ -95,14 +116,17 @@ export default function CVReviewPanel({
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-300">Impact & Results</span>
+              <span className="text-sm text-gray-300 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-blue-400" />
+                Impact & Results
+              </span>
               <span className={`text-lg font-bold ${getScoreColor(review.impactScore)}`}>
                 {review.impactScore}%
               </span>
             </div>
             <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
               <div
-                className={`h-full ${
+                className={`h-full transition-all duration-500 ${
                   review.impactScore >= 80 ? 'bg-green-500' :
                   review.impactScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
                 }`}
@@ -113,14 +137,17 @@ export default function CVReviewPanel({
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-300">Clarity & Format</span>
+              <span className="text-sm text-gray-300 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-purple-400" />
+                Clarity & Format
+              </span>
               <span className={`text-lg font-bold ${getScoreColor(review.clarityScore)}`}>
                 {review.clarityScore}%
               </span>
             </div>
             <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
               <div
-                className={`h-full ${
+                className={`h-full transition-all duration-500 ${
                   review.clarityScore >= 80 ? 'bg-green-500' :
                   review.clarityScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
                 }`}
@@ -135,13 +162,15 @@ export default function CVReviewPanel({
         {/* Strengths */}
         <div className="glass-effect border border-green-500/30 rounded-xl p-6">
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-3xl">✅</span>
+            <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-green-400" />
+            </div>
             <h3 className="text-xl font-bold text-green-400">Strengths</h3>
           </div>
           <ul className="space-y-3">
             {review.strengths.map((strength, index) => (
               <li key={index} className="flex items-start gap-2 text-gray-300">
-                <span className="text-green-400 mt-1">●</span>
+                <Check className="w-4 h-4 text-green-400 mt-1 shrink-0" />
                 <span>{strength}</span>
               </li>
             ))}
@@ -151,13 +180,15 @@ export default function CVReviewPanel({
         {/* Weaknesses */}
         <div className="glass-effect border border-red-500/30 rounded-xl p-6">
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-3xl">⚠️</span>
+            <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+            </div>
             <h3 className="text-xl font-bold text-red-400">Areas for Improvement</h3>
           </div>
           <ul className="space-y-3">
             {review.weaknesses.map((weakness, index) => (
               <li key={index} className="flex items-start gap-2 text-gray-300">
-                <span className="text-red-400 mt-1">●</span>
+                <AlertTriangle className="w-4 h-4 text-red-400 mt-1 shrink-0" />
                 <span>{weakness}</span>
               </li>
             ))}
@@ -168,13 +199,17 @@ export default function CVReviewPanel({
       {/* AI Suggestions */}
       <div className="glass-effect border border-purple-500/30 rounded-xl p-6 mb-8">
         <div className="flex items-center gap-3 mb-4">
-          <span className="text-3xl">💡</span>
+          <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+            <Lightbulb className="w-5 h-5 text-purple-400" />
+          </div>
           <h3 className="text-xl font-bold text-purple-400">AI Recommendations</h3>
         </div>
         <div className="space-y-3">
           {review.suggestions.map((suggestion, index) => (
             <div key={index} className="flex items-start gap-3 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
-              <span className="text-purple-400 font-bold text-sm mt-0.5">{index + 1}</span>
+              <span className="w-6 h-6 rounded-full bg-purple-500 text-white text-xs font-bold flex items-center justify-center shrink-0">
+                {index + 1}
+              </span>
               <p className="text-gray-300 text-sm leading-relaxed">{suggestion}</p>
             </div>
           ))}
@@ -196,7 +231,13 @@ export default function CVReviewPanel({
           >
             <div className="relative z-10">
               <div className="flex items-center justify-center gap-3 mb-3">
-                <span className="text-4xl">{isAutoEditing ? '⚙️' : '🤖'}</span>
+                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                  {isAutoEditing ? (
+                    <Zap className="w-6 h-6 animate-pulse" />
+                  ) : (
+                    <Wand2 className="w-6 h-6" />
+                  )}
+                </div>
                 <span className="text-2xl font-bold">Auto Edit</span>
               </div>
               <p className="text-sm text-white/90 leading-relaxed mb-4">
@@ -207,19 +248,19 @@ export default function CVReviewPanel({
               </p>
               <div className="space-y-2 text-xs text-white/80 text-left">
                 <div className="flex items-center gap-2">
-                  <span>✓</span>
+                  <Check className="w-3 h-3" />
                   <span>Apply STAR method to achievements</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span>✓</span>
+                  <Check className="w-3 h-3" />
                   <span>Add quantifiable metrics</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span>✓</span>
+                  <Check className="w-3 h-3" />
                   <span>Improve action verbs</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span>✓</span>
+                  <Check className="w-3 h-3" />
                   <span>Enhance ATS compatibility</span>
                 </div>
               </div>
@@ -236,7 +277,9 @@ export default function CVReviewPanel({
             className="group border-2 border-purple-500 hover:border-purple-400 text-white rounded-xl p-6 transition-all duration-300 hover:bg-purple-500/20 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="flex items-center justify-center gap-3 mb-3">
-              <span className="text-4xl">✏️</span>
+              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                <Edit3 className="w-6 h-6 text-purple-400" />
+              </div>
               <span className="text-2xl font-bold">Manual Edit</span>
             </div>
             <p className="text-sm text-gray-300 leading-relaxed mb-4">
@@ -244,19 +287,19 @@ export default function CVReviewPanel({
             </p>
             <div className="space-y-2 text-xs text-gray-400 text-left">
               <div className="flex items-center gap-2">
-                <span>✓</span>
+                <Check className="w-3 h-3" />
                 <span>Full control over all changes</span>
               </div>
               <div className="flex items-center gap-2">
-                <span>✓</span>
+                <Check className="w-3 h-3" />
                 <span>View AI suggestions per section</span>
               </div>
               <div className="flex items-center gap-2">
-                <span>✓</span>
+                <Check className="w-3 h-3" />
                 <span>Accept or reject suggestions</span>
               </div>
               <div className="flex items-center gap-2">
-                <span>✓</span>
+                <Check className="w-3 h-3" />
                 <span>Customize as you prefer</span>
               </div>
             </div>
@@ -265,8 +308,9 @@ export default function CVReviewPanel({
 
         {/* Info Note */}
         <div className="mt-6 pt-6 border-t border-white/10">
-          <p className="text-sm text-gray-400 text-center">
-            💡 <strong>Tip:</strong> Auto Edit is recommended for best results, but you can still make manual adjustments afterwards
+          <p className="text-sm text-gray-400 text-center flex items-center justify-center gap-2">
+            <Lightbulb className="w-4 h-4 text-purple-400" />
+            <span><strong>Tip:</strong> Auto Edit is recommended for best results, but you can still make manual adjustments afterwards</span>
           </p>
         </div>
       </div>

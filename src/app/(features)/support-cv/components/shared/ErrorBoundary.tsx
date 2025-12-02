@@ -1,6 +1,7 @@
 'use client';
 
 import React, { Component, ReactNode, ErrorInfo } from 'react';
+import { XCircle } from 'lucide-react';
 
 // ============================================================================
 // Types
@@ -57,7 +58,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         <div className="min-h-[400px] flex items-center justify-center">
           <div className="glass-effect border-2 border-red-500/50 rounded-xl p-8 max-w-lg">
             <div className="flex items-start gap-4">
-              <span className="text-5xl">❌</span>
+              <XCircle className="w-12 h-12 text-red-400 flex-shrink-0" />
               <div className="flex-1">
                 <h3 className="text-2xl font-bold text-red-400 mb-2">
                   Something went wrong

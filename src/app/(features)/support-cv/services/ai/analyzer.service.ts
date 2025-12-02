@@ -25,6 +25,7 @@ export interface AnalysisResult {
 class CVAnalyzerService {
   async analyze(text: string): Promise<Result<AnalysisResult, Error>> {
     console.log('[CV Analyzer] Starting analysis...');
+    console.log('[CV Analyzer] Text length:', text.length);
 
     // Check if AI is available
     if (!geminiClient.isAvailable()) {
@@ -33,22 +34,39 @@ class CVAnalyzerService {
     }
 
     try {
-      // Use rate limiter
+      // Use rate limiter with cache key based on text hash
+      const cacheKey = `cv-analyze-${this.hashText(text.slice(0, 500))}`;
+      
       const result = await rateLimiter.execute(async () => {
         return await geminiClient.generateContent(this.buildPrompt(text), {
-          temperature: 0.3,
+          temperature: 0.2, // Lower for more consistent JSON output
+          maxOutputTokens: 4096,
         });
-      });
+      }, cacheKey);
 
       if (!result.success) {
         console.warn('[CV Analyzer] AI failed, using fallback');
         return this.fallbackAnalysis(text);
       }
 
+      console.log('[CV Analyzer] Raw AI response length:', result.data.text.length);
+      console.log('[CV Analyzer] First 500 chars:', result.data.text.substring(0, 500));
+
       // Parse JSON response
       const parseResult = parseJSONResponse<CVData>(result.data.text);
       if (!parseResult.success) {
-        console.error('[CV Analyzer] Failed to parse JSON');
+        console.error('[CV Analyzer] Failed to parse JSON, trying to extract manually');
+        
+        // Try to extract JSON from response
+        const manualParse = this.tryExtractJSON(result.data.text);
+        if (manualParse) {
+          let cvData = this.cleanCVData(manualParse);
+          const score = this.calculateScore(cvData);
+          const missingFields = this.findMissingFields(cvData);
+          console.log(`[CV Analyzer] ✓ Manual extraction successful. Score: ${score}/100`);
+          return Ok({ cvData, score, missingFields });
+        }
+        
         return this.fallbackAnalysis(text);
       }
 
@@ -71,165 +89,132 @@ class CVAnalyzerService {
     }
   }
 
+  /**
+   * Simple hash for cache key
+   */
+  private hashText(text: string): string {
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      const char = text.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash).toString(36);
+  }
+
+  /**
+   * Try to manually extract JSON from malformed response
+   */
+  private tryExtractJSON(text: string): CVData | null {
+    try {
+      // Remove common issues
+      let cleaned = text
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .replace(/^\s*json\s*/i, '')
+        .trim();
+
+      // Find JSON object boundaries
+      const firstBrace = cleaned.indexOf('{');
+      const lastBrace = cleaned.lastIndexOf('}');
+      
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+      }
+
+      // Fix common JSON issues
+      cleaned = cleaned
+        .replace(/,\s*}/g, '}')  // Remove trailing commas
+        .replace(/,\s*]/g, ']')  // Remove trailing commas in arrays
+        .replace(/'/g, '"')      // Replace single quotes
+        .replace(/\n/g, ' ')     // Remove newlines inside strings
+        .replace(/\t/g, ' ');    // Remove tabs
+
+      const parsed = JSON.parse(cleaned);
+      console.log('[CV Analyzer] Manual JSON extraction successful');
+      return parsed;
+    } catch (e) {
+      console.error('[CV Analyzer] Manual JSON extraction failed:', e);
+      return null;
+    }
+  }
+
   private buildPrompt(text: string): string {
-    return `You are an expert CV parser. Extract ONLY the information that exists in the CV text. Do NOT make up or infer information.
+    // Truncate text if too long
+    const maxLength = 8000;
+    const truncatedText = text.length > maxLength 
+      ? text.slice(0, maxLength) + '...[truncated]' 
+      : text;
 
-**CV TEXT:**
-${text.slice(0, 10000)}
+    return `Parse this CV/Resume into JSON. Return ONLY valid JSON, no markdown, no explanation.
 
-**STRICT OUTPUT FORMAT (JSON only, no markdown):**
+CV TEXT:
+${truncatedText}
+
+REQUIRED JSON FORMAT (return exactly this structure):
 {
   "personalInfo": {
     "fullName": "string",
-    "title": "string",
-    "email": "string", 
-    "phone": "string",
-    "location": "string",
-    "linkedin": "string",
-    "github": "string",
-    "website": "string",
-    "summary": "string"
+    "title": "string or empty",
+    "email": "string or empty",
+    "phone": "string or empty",
+    "location": "string or empty",
+    "linkedin": "string or empty",
+    "github": "string or empty",
+    "website": "string or empty",
+    "summary": "string or empty"
   },
   "experiences": [
     {
       "id": "exp-1",
-      "company": "string",
-      "position": "string",
-      "location": "string",
-      "startDate": "YYYY-MM",
-      "endDate": "YYYY-MM",
+      "company": "Company Name",
+      "position": "Job Title",
+      "location": "City",
+      "startDate": "YYYY-MM or Month YYYY",
+      "endDate": "YYYY-MM or Present",
       "current": false,
-      "description": "string (1 sentence summary)",
-      "achievements": ["bullet point 1", "bullet point 2"]
+      "description": "Brief role description",
+      "achievements": ["Achievement 1", "Achievement 2"]
     }
   ],
   "education": [
     {
       "id": "edu-1",
-      "school": "string",
-      "degree": "string",
-      "field": "string",
-      "location": "string",
-      "startDate": "YYYY-MM",
-      "endDate": "YYYY-MM",
-      "gpa": "string",
-      "achievements": ["string"]
+      "school": "University Name",
+      "degree": "Bachelor/Master/PhD",
+      "field": "Major/Field of Study",
+      "location": "City",
+      "startDate": "YYYY",
+      "endDate": "YYYY",
+      "gpa": "if mentioned",
+      "achievements": ["Coursework or honors"]
     }
   ],
   "skills": [
-    {
-      "id": "skill-1",
-      "category": "Languages|Frameworks|Databases|Tools|Cloud|Other",
-      "name": "Java",
-      "level": "intermediate"
-    }
+    {"id": "skill-1", "category": "Languages", "name": "Java", "level": "intermediate"},
+    {"id": "skill-2", "category": "Frameworks", "name": "React", "level": "intermediate"}
   ],
   "projects": [
     {
       "id": "proj-1",
-      "name": "Project Name (NOT section header)",
-      "description": "Full description",
+      "name": "Project Name",
+      "description": "What the project does",
       "technologies": ["Tech1", "Tech2"],
-      "link": "string",
-      "startDate": "YYYY-MM",
-      "endDate": "YYYY-MM",
-      "achievements": ["string"]
+      "link": "",
+      "achievements": []
     }
   ],
   "certifications": [],
-  "languages": [
-    {
-      "id": "lang-1",
-      "name": "English",
-      "proficiency": "professional"
-    }
-  ],
-  "awards": [
-    {
-      "id": "award-1",
-      "title": "Award title",
-      "issuer": "Organization",
-      "date": "YYYY-MM",
-      "description": "What was achieved"
-    }
-  ]
+  "languages": [{"id": "lang-1", "name": "English", "proficiency": "professional"}],
+  "awards": [{"id": "award-1", "title": "Award Name", "issuer": "Organization", "date": "YYYY", "description": ""}]
 }
 
-**CRITICAL PARSING RULES - FOLLOW EXACTLY:**
-
-1. **SKILLS - PARSE EACH SKILL INDIVIDUALLY:**
-   ❌ WRONG: {"category": "Languages", "name": "Java, JavaScript, Python"}
-   ✅ CORRECT: Create 3 separate objects
-   
-   ❌ WRONG: Put entire sentences or paragraphs in skills
-   ✅ CORRECT: Only technology/tool names (max 3 words)
-   
-   Categories mapping:
-   - "Languages" → Java, Python, C#, JavaScript, TypeScript, etc.
-   - "Frameworks" → React, Spring Boot, Flask, NextJS, TensorFlow, etc.
-   - "Databases" → MySQL, MongoDB, SQL Server, PostgreSQL, etc.
-   - "Tools" → Git, Docker, Jenkins, VS Code, etc.
-   - "Cloud" → AWS, Azure, GCP, etc.
-   - "Other" → Only if doesn't fit above categories
-   
-   **NEVER include work experience text, course names, or job descriptions in skills!**
-
-2. **PROJECTS - IDENTIFY REAL PROJECTS:**
-   Look for these patterns in CV:
-   - Project names (e.g., "Restaurant management", "Detection System")
-   - Year/date associated with project
-   - Technical descriptions with "Built", "Developed", "Created"
-   
-   ❌ DO NOT treat these as projects:
-   - Section headers ("PROJECTS", "WORK EXPERIENCE")
-   - Award titles ("Champion at X Hackathon")
-   - Course names ("Learning, Requirement Analysis")
-   
-   ✅ Extract FULL description from CV, including:
-   - What was built
-   - Technologies used
-   - Role/contribution
-   - Team size if mentioned
-   - Achievements/impact
-
-3. **AWARDS vs PROJECTS:**
-   Awards keywords: Champion, Winner, Award, Recognition, Honor, Prize, Competition
-   Projects keywords: Built, Developed, Created, Implemented, System, Platform, Application
-   
-   Example:
-   - "Champion at BizTech Hackathon" → AWARD (even if followed by project description)
-   - "Restaurant management 2023" → PROJECT
-
-4. **WORK EXPERIENCE:**
-   - Extract clean company name
-   - Extract exact position title
-   - Description: 1 sentence overview of role
-   - Achievements: Each bullet point as separate array item
-   - **DO NOT mix work experience into skills or other sections**
-
-5. **DATA QUALITY:**
-   - NO duplicate entries
-   - NO placeholder text
-   - NO made-up information
-   - If data not in CV, use empty string "" or empty array []
-   - Dates: YYYY-MM format (if only year, use YYYY-01)
-
-6. **VALIDATION:**
-   - Skill names: 1-3 words maximum
-   - Project names: NOT generic headers, must be actual project titles
-   - Categories: Use exact names from schema
-   - IDs: Sequential (skill-1, skill-2, proj-1, etc.)
-
-**STEP-BY-STEP PROCESS:**
-1. Read CV section by section
-2. Identify SKILLS section → parse each technology individually
-3. Identify PROJECTS section → extract each project with full details
-4. Identify AWARDS section → separate from projects
-5. Cross-check: Ensure no content mixing between sections
-
-**OUTPUT:**
-Return ONLY the JSON object. No markdown, no explanations, no code blocks.
-`;
+RULES:
+1. Parse EACH skill separately (not comma-separated in one entry)
+2. Skill categories: Languages, Frameworks, Databases, Tools, Cloud, Other
+3. Use "Present" for current positions
+4. If info not in CV, use empty string "" or empty array []
+5. Return ONLY the JSON object, nothing else`;
   }
 
   private fallbackAnalysis(text: string): Result<AnalysisResult, Error> {
@@ -250,25 +235,178 @@ Return ONLY the JSON object. No markdown, no explanations, no code blocks.
   }
 
   private basicParse(text: string): CVData {
-    // Basic regex-based parsing
+    console.log('[CV Analyzer] Basic parse - text length:', text.length);
+    
+    // Clean and normalize text
+    const normalizedText = text
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n');
+    
+    // Split by line breaks
+    const lines = normalizedText
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+
+    console.log('[CV Analyzer] Basic parse - total lines:', lines.length);
+
+    // Extract email and phone
     const emailMatch = text.match(/[\w.-]+@[\w.-]+\.\w+/);
     const phoneMatch = text.match(/[\+\(]?\d{1,4}[\)\s-]?\d{3,4}[\s-]?\d{3,4}/);
-    
-    const lines = text.split('\n').filter(line => line.trim());
-    const fullName = lines[0] || '';
+    const linkedinMatch = text.match(/linkedin\.com\/in\/([a-zA-Z0-9-]+)/i);
+    const githubMatch = text.match(/github\.com\/([a-zA-Z0-9-]+)/i);
+
+    // Find name (first line that's not a section header and has proper length)
+    let fullName = '';
+    for (const line of lines.slice(0, 5)) {
+      if (line.length >= 3 && line.length <= 50 && 
+          !line.includes('@') && 
+          !/^(skills|experience|education|projects|summary)/i.test(line) &&
+          !/^\d{3,}/.test(line)) { // Not starting with numbers (phone)
+        fullName = line;
+        break;
+      }
+    }
+
+    // Extract skills (look for skills section)
+    const skills: CVData['skills'] = [];
+    const skillsIndex = lines.findIndex(l => /^skills/i.test(l));
+    if (skillsIndex >= 0) {
+      const nextSectionIndex = lines.findIndex((l, i) => 
+        i > skillsIndex && /^(experience|education|projects|certifications)/i.test(l)
+      );
+      const endIndex = nextSectionIndex > 0 ? nextSectionIndex : Math.min(skillsIndex + 10, lines.length);
+      
+      // Get skill lines
+      const skillLines = lines.slice(skillsIndex + 1, endIndex).join(' ');
+      const skillTokens = skillLines
+        .split(/[,;•\-\n]/)
+        .map(s => s.trim())
+        .filter(s => s.length > 1 && s.length < 40);
+
+      skillTokens.forEach((skill, i) => {
+        let category = 'Other';
+        const lowerSkill = skill.toLowerCase();
+        
+        if (/java|python|javascript|typescript|c\+\+|c#|ruby|go|php|swift|kotlin/i.test(lowerSkill)) {
+          category = 'Languages';
+        } else if (/react|angular|vue|spring|django|flask|express|nextjs|node/i.test(lowerSkill)) {
+          category = 'Frameworks';
+        } else if (/sql|mysql|postgresql|mongodb|redis|oracle|database/i.test(lowerSkill)) {
+          category = 'Databases';
+        } else if (/git|docker|kubernetes|jenkins|aws|azure|gcp|linux/i.test(lowerSkill)) {
+          category = 'Tools';
+        }
+
+        skills.push({
+          id: `skill-${i + 1}`,
+          name: skill,
+          category,
+          level: 'intermediate'
+        });
+      });
+    }
+
+    // Extract experiences
+    const experiences: CVData['experiences'] = [];
+    const expIndex = lines.findIndex(l => /^(work\s+)?experience/i.test(l));
+    if (expIndex >= 0) {
+      const eduIndex = lines.findIndex((l, i) => i > expIndex && /^education/i.test(l));
+      const endIndex = eduIndex > 0 ? eduIndex : Math.min(expIndex + 30, lines.length);
+      
+      let currentExp: any = null;
+      let expId = 0;
+
+      for (let i = expIndex + 1; i < endIndex; i++) {
+        const line = lines[i];
+        
+        // Check if this is a job title (contains common job keywords)
+        if (/(engineer|developer|manager|analyst|designer|lead|director|specialist|intern)/i.test(line) && 
+            line.length < 100) {
+          if (currentExp && currentExp.position) {
+            experiences.push(currentExp);
+          }
+          currentExp = {
+            id: `exp-${++expId}`,
+            position: line,
+            company: '',
+            location: '',
+            startDate: '',
+            endDate: '',
+            current: false,
+            description: '',
+            achievements: []
+          };
+        } else if (currentExp && !currentExp.company && line.length > 3) {
+          // Next line after job title is usually company
+          currentExp.company = line.replace(/[•\-–|]/g, '').trim();
+        } else if (currentExp && /^[•\-–*]/.test(line)) {
+          // Bullet point = achievement
+          currentExp.achievements.push(line.replace(/^[•\-–*]\s*/, ''));
+        }
+      }
+      
+      if (currentExp && currentExp.position) {
+        experiences.push(currentExp);
+      }
+    }
+
+    // Extract education
+    const education: CVData['education'] = [];
+    const eduIndex = lines.findIndex(l => /^education/i.test(l));
+    if (eduIndex >= 0) {
+      const nextSection = lines.findIndex((l, i) => i > eduIndex && /^(skills|projects|certifications)/i.test(l));
+      const endIndex = nextSection > 0 ? nextSection : Math.min(eduIndex + 15, lines.length);
+      
+      let currentEdu: any = null;
+      let eduId = 0;
+
+      for (let i = eduIndex + 1; i < endIndex; i++) {
+        const line = lines[i];
+        
+        if (/(university|college|institute|school|bachelor|master|phd)/i.test(line) && line.length < 150) {
+          if (currentEdu) education.push(currentEdu);
+          
+          currentEdu = {
+            id: `edu-${++eduId}`,
+            school: line.includes('University') || line.includes('College') ? line : '',
+            degree: '',
+            field: '',
+            location: '',
+            startDate: '',
+            endDate: '',
+            gpa: '',
+            achievements: []
+          };
+
+          // Extract degree from line
+          const degreeMatch = line.match(/(bachelor|master|phd|b\.?s\.?|m\.?s\.?|m\.?b\.?a\.?)/i);
+          if (degreeMatch) {
+            currentEdu.degree = degreeMatch[1];
+          }
+        } else if (currentEdu && !currentEdu.school && line.length > 3) {
+          currentEdu.school = line;
+        }
+      }
+      
+      if (currentEdu) education.push(currentEdu);
+    }
 
     return {
       personalInfo: {
-        fullName: fullName.trim(),
+        fullName: fullName || 'Your Name',
         title: '',
         email: emailMatch?.[0] || '',
         phone: phoneMatch?.[0] || '',
         location: '',
-        summary: 'Please fill in your professional summary'
+        linkedin: linkedinMatch ? `https://linkedin.com/in/${linkedinMatch[1]}` : '',
+        github: githubMatch ? `https://github.com/${githubMatch[1]}` : '',
+        website: '',
+        summary: ''
       },
-      experiences: [],
-      education: [],
-      skills: [],
+      experiences,
+      education,
+      skills,
       projects: [],
       certifications: [],
       languages: [],
@@ -282,12 +420,26 @@ Return ONLY the JSON object. No markdown, no explanations, no code blocks.
   private cleanCVData(cvData: CVData): CVData {
     console.log('[CV Analyzer] Cleaning CV data...');
 
-    return {
-      ...cvData,
-      skills: this.cleanSkills(cvData.skills),
-      projects: this.cleanProjects(cvData.projects),
-      awards: cvData.awards ? this.cleanAwards(cvData.awards) : []
+    // Ensure all arrays exist
+    const cleaned: CVData = {
+      personalInfo: cvData.personalInfo || {
+        fullName: '',
+        title: '',
+        email: '',
+        phone: '',
+        location: '',
+        summary: ''
+      },
+      experiences: Array.isArray(cvData.experiences) ? cvData.experiences : [],
+      education: Array.isArray(cvData.education) ? cvData.education : [],
+      skills: Array.isArray(cvData.skills) ? this.cleanSkills(cvData.skills) : [],
+      projects: Array.isArray(cvData.projects) ? this.cleanProjects(cvData.projects) : [],
+      certifications: Array.isArray(cvData.certifications) ? cvData.certifications : [],
+      languages: Array.isArray(cvData.languages) ? cvData.languages : [],
+      awards: Array.isArray(cvData.awards) ? this.cleanAwards(cvData.awards) : []
     };
+
+    return cleaned;
   }
 
   /**
@@ -306,10 +458,6 @@ Return ONLY the JSON object. No markdown, no explanations, no code blocks.
       // Category should be valid
       if (skill.category.length > 30) return false;
       
-      // Check for common parsing errors (sentences in skill names)
-      const hasCommonWords = /\b(and|the|with|for|using|to|in|on|at|of)\b/i.test(skill.name);
-      if (hasCommonWords && skill.name.split(' ').length > 3) return false;
-      
       return true;
     }).map((skill, index) => ({
       ...skill,
@@ -324,55 +472,12 @@ Return ONLY the JSON object. No markdown, no explanations, no code blocks.
   private cleanProjects(projects: any[]): any[] {
     if (!projects || !Array.isArray(projects)) return [];
 
-    // Keywords that indicate this is NOT a real project name (EXACT matches or starts with)
-    const invalidExactNames = [
-      'PROJECTS', 'Projects', 'PROJECT',
-      'WORK EXPERIENCE', 'Work Experience',
-      'EDUCATION', 'Education',
-      'SKILLS', 'Skills',  // Only if it's the WHOLE name, not part of project name
-      'Learning, Requirement Analysis', // This is an award
-      'APIs for smooth', // Fragment
-      'REST API', // Too generic
-      'E-commerce', // Too generic
-      'Data visualization' // Too generic
-    ];
-
-    // Action verbs that indicate a description, not a project name
-    const descriptionStarters = /^(Built|Created|Developed|Designed|Implemented|Established|Launched|Produced|Engineered|Constructed|Wrote|Made)\s/i;
+    const invalidNames = ['PROJECTS', 'Projects', 'PROJECT', 'WORK EXPERIENCE'];
 
     return projects.filter(project => {
-      // Must have name
-      if (!project.name) {
-        console.log(`[CV Analyzer] Filtered out project with no name`);
-        return false;
-      }
-      
-      const trimmedName = project.name.trim();
-      
-      // Check against invalid names (EXACT match or STARTS WITH only)
-      const isInvalid = invalidExactNames.some(invalid => {
-        const lowerName = trimmedName.toLowerCase();
-        const lowerInvalid = invalid.toLowerCase();
-        return lowerName === lowerInvalid || lowerName.startsWith(lowerInvalid + ' ');
-      });
-      
-      if (isInvalid) {
-        console.log(`[CV Analyzer] Filtered out invalid project: ${project.name}`);
-        return false;
-      }
-      
-      // Project name shouldn't be too long (but allow up to 120 chars for descriptive names)
-      if (trimmedName.length > 120) {
-        console.log(`[CV Analyzer] Filtered out project (too long): ${project.name}`);
-        return false;
-      }
-      
-      // Project name shouldn't start with action verbs followed by space (likely a description)
-      if (descriptionStarters.test(trimmedName)) {
-        console.log(`[CV Analyzer] Filtered out description as project name: ${project.name}`);
-        return false;
-      }
-      
+      if (!project.name) return false;
+      if (invalidNames.includes(project.name.trim())) return false;
+      if (project.name.length > 120) return false;
       return true;
     }).map((project, index) => ({
       ...project,
@@ -383,13 +488,13 @@ Return ONLY the JSON object. No markdown, no explanations, no code blocks.
   }
 
   /**
-   * Clean awards - ensure proper format
+   * Clean awards
    */
   private cleanAwards(awards: any[]): any[] {
     if (!awards || !Array.isArray(awards)) return [];
 
     return awards
-      .filter(award => award.title && award.issuer)
+      .filter(award => award.title)
       .map((award, index) => ({
         ...award,
         id: award.id || `award-${index + 1}`

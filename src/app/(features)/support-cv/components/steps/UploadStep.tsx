@@ -4,6 +4,7 @@ import React, { useCallback } from 'react';
 import { useCVBuilder } from '../../contexts/CVBuilderContext';
 import { useCVUpload } from '../../hooks/useCVUpload';
 import { useCVReview } from '../../hooks/useCVReview';
+import { Paperclip, Upload, Edit, Bot, Star, BarChart2, Rocket, XCircle, Lightbulb } from 'lucide-react';
 
 // ============================================================================
 // Component
@@ -92,7 +93,7 @@ export function UploadStep() {
         {!upload.isProcessing ? (
           <>
             <div className="text-center">
-              <div className="text-8xl mb-6 animate-float">📎</div>
+              <Paperclip className="w-20 h-20 mx-auto mb-6 text-purple-400 animate-float" />
               <h3 className="text-2xl font-bold text-white mb-2">
                 Drop your CV PDF here
               </h3>
@@ -109,8 +110,9 @@ export function UploadStep() {
                   className="hidden"
                   disabled={upload.isProcessing}
                 />
-                <span className="px-8 py-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl font-medium cursor-pointer hover:from-purple-600 hover:to-blue-600 transition-all duration-300 inline-block shadow-lg hover:shadow-xl glow-effect">
-                  📤 Choose PDF File
+                <span className="px-8 py-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl font-medium cursor-pointer hover:from-purple-600 hover:to-blue-600 transition-all duration-300 inline-flex items-center gap-2 shadow-lg hover:shadow-xl glow-effect">
+                  <Upload className="w-5 h-5" />
+                  Choose PDF File
                 </span>
               </label>
 
@@ -124,27 +126,28 @@ export function UploadStep() {
               {/* Start from Scratch */}
               <button
                 onClick={handleStartFromScratch}
-                className="px-8 py-4 border-2 border-purple-500 text-purple-400 rounded-xl font-medium hover:bg-purple-500/20 transition-all duration-300"
+                className="px-8 py-4 border-2 border-purple-500 text-purple-400 rounded-xl font-medium hover:bg-purple-500/20 transition-all duration-300 inline-flex items-center gap-2"
                 disabled={upload.isProcessing}
               >
-                ✏️ Start from Blank Template
+                <Edit className="w-5 h-5" />
+                Start from Blank Template
               </button>
             </div>
 
             {/* Features */}
             <div className="mt-12 grid grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="text-3xl mb-2">🤖</div>
+                <Bot className="w-8 h-8 mx-auto mb-2 text-blue-400" />
                 <p className="text-sm text-white font-medium">AI Auto-Extract</p>
                 <p className="text-xs text-gray-400">Automatic data extraction</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl mb-2">⭐</div>
+                <Star className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
                 <p className="text-sm text-white font-medium">STAR Method</p>
                 <p className="text-xs text-gray-400">Optimize achievements</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl mb-2">📊</div>
+                <BarChart2 className="w-8 h-8 mx-auto mb-2 text-green-400" />
                 <p className="text-sm text-white font-medium">Smart Metrics</p>
                 <p className="text-xs text-gray-400">Add quantifiable results</p>
               </div>
@@ -152,7 +155,7 @@ export function UploadStep() {
           </>
         ) : (
           <div className="text-center">
-            <div className="text-8xl mb-6 animate-bounce">🚀</div>
+            <Rocket className="w-20 h-20 mx-auto mb-6 text-purple-400 animate-bounce" />
             <h3 className="text-2xl font-bold text-white mb-4">
               Processing Your CV
             </h3>
@@ -177,7 +180,7 @@ export function UploadStep() {
       {/* Error Message */}
       {upload.error && (
         <div className="mt-6 glass-effect border-2 border-red-500/50 rounded-xl p-6 flex items-start gap-4 animate-fade-in bg-red-500/10">
-          <span className="text-4xl flex-shrink-0">❌</span>
+          <XCircle className="w-10 h-10 flex-shrink-0 text-red-400" />
           <div className="flex-1">
             <h4 className="font-bold text-red-400 mb-2 text-lg">
               Upload Failed
@@ -198,7 +201,7 @@ export function UploadStep() {
       {/* Tips */}
       <div className="mt-8 glass-effect border border-purple-500/30 rounded-xl p-6 glow-effect-pink">
         <div className="flex items-start gap-4">
-          <span className="text-3xl animate-float">💡</span>
+          <Lightbulb className="w-8 h-8 flex-shrink-0 text-yellow-400 animate-float" />
           <div>
             <h4 className="font-bold text-purple-300 mb-2">Tips for Best Results</h4>
             <ul className="space-y-1 text-gray-300 text-sm">

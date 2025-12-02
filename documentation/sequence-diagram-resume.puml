@@ -1,0 +1,183 @@
+@startuml sequence-diagram-resume
+title Sequence Diagram - Resume (Quản lý CV/Tài liệu)
+skinparam backgroundColor #FEFEFE
+skinparam ParticipantBackgroundColor #E8F4FD
+skinparam ParticipantBorderColor #3498DB
+skinparam SequenceGroupBackgroundColor #F3E5F5
+skinparam NoteBackgroundColor #FFFDE7
+skinparam NoteBorderColor #F9A825
+
+actor "Người dùng" as User
+participant "Resume Page\n(page.tsx)" as ResumePage
+participant "Resume Services\n(resumeServices.ts)" as Services
+participant "API\n(/api/resume)" as API
+participant "PDF Loader\n(pdf-loader.ts)" as PDFLoader
+database "Database\n(Resume Table)" as DB
+
+== Tải trang và Load danh sách CV ==
+
+User -> ResumePage: Truy cập /resume
+activate ResumePage
+
+ResumePage -> ResumePage: setLoading(true)
+ResumePage -> Services: fetchResumes()
+activate Services
+
+Services -> API: GET /api/resume
+activate API
+
+API -> API: currentUser() - Kiểm tra auth
+alt Chưa đăng nhập
+    API --> Services: 401 Unauthorized
+    Services --> ResumePage: Error
+    ResumePage --> User: Redirect to /sign-in
+else Đã đăng nhập
+    API -> DB: SELECT * FROM Resume\nWHERE userEmail = ?
+    activate DB
+    DB --> API: resumes[]
+    deactivate DB
+    
+    API --> Services: resumes[]
+    deactivate API
+    
+    Services --> ResumePage: resumes[]
+    deactivate Services
+    
+    ResumePage -> ResumePage: setResumes(data)
+    ResumePage -> ResumePage: setLoading(false)
+    
+    alt Có resume
+        ResumePage --> User: Hiển thị ResumeTable với danh sách CV
+    else Không có resume
+        ResumePage --> User: Hiển thị "No Resumes Yet"
+    end
+end
+
+deactivate ResumePage
+
+== Upload CV mới ==
+
+User -> ResumePage: Nhấn nút "Upload"
+activate ResumePage
+
+ResumePage --> User: Hiển thị ResumeDialog
+
+User -> ResumePage: Chọn file và nhấn Upload
+ResumePage -> ResumePage: setUploading(true)
+
+ResumePage -> Services: uploadResume(file)
+activate Services
+
+Services -> Services: Tạo FormData
+Services -> API: POST /api/resume\nContent-Type: multipart/form-data
+activate API
+
+API -> API: formData.get("file")
+
+alt File không tồn tại
+    API --> Services: 400 "No file uploaded"
+    Services --> ResumePage: Error
+    ResumePage -> ResumePage: toast({ variant: "destructive" })
+    ResumePage --> User: Hiển thị thông báo lỗi
+else File hợp lệ
+    API -> API: file.arrayBuffer()
+    API -> API: Buffer.from(arrayBuffer)
+    
+    API -> PDFLoader: getPDFContent(pdfSource)
+    activate PDFLoader
+    PDFLoader -> PDFLoader: Parse PDF thành text
+    PDFLoader --> API: content (text)
+    deactivate PDFLoader
+    
+    API -> API: currentUser()
+    
+    API -> DB: INSERT INTO Resume\n(name, jsonResume, userEmail)
+    activate DB
+    DB --> API: { id }
+    deactivate DB
+    
+    API --> Services: "Success updated resume"
+    deactivate API
+    
+    Services --> ResumePage: response
+    deactivate Services
+    
+    ResumePage -> ResumePage: toast({ description: response })
+    ResumePage -> ResumePage: closeDialog()
+    
+    ResumePage -> Services: fetchResumes() [reload]
+    activate Services
+    Services -> API: GET /api/resume
+    activate API
+    API -> DB: SELECT * FROM Resume
+    activate DB
+    DB --> API: updated resumes[]
+    deactivate DB
+    API --> Services: resumes[]
+    deactivate API
+    Services --> ResumePage: resumes[]
+    deactivate Services
+    
+    ResumePage -> ResumePage: setResumes(data)
+    ResumePage -> ResumePage: setUploading(false)
+    ResumePage --> User: Hiển thị CV mới trong danh sách
+end
+
+deactivate ResumePage
+
+== Xóa CV ==
+
+User -> ResumePage: Nhấn icon "Delete" trên resume
+activate ResumePage
+
+ResumePage --> User: Hiển thị dialog xác nhận
+
+User -> ResumePage: Xác nhận xóa
+
+ResumePage -> Services: deleteResume(id)
+activate Services
+
+Services -> API: DELETE /api/resume?id=xxx
+activate API
+
+API -> API: searchParams.get("id")
+
+API -> DB: DELETE FROM Resume\nWHERE id = ?
+activate DB
+DB --> API: { rowCount }
+deactivate DB
+
+alt rowCount < 1
+    API --> Services: 404 "Not Found Any Item"
+    Services --> ResumePage: Error
+    ResumePage -> ResumePage: toast({ variant: "destructive" })
+    ResumePage --> User: Hiển thị thông báo lỗi
+else Xóa thành công
+    API --> Services: "Resume deleted successfully"
+    deactivate API
+    
+    Services --> ResumePage: response
+    deactivate Services
+    
+    ResumePage -> ResumePage: toast({ description: response })
+    
+    ResumePage -> Services: fetchResumes() [reload]
+    activate Services
+    Services -> API: GET /api/resume
+    activate API
+    API -> DB: SELECT * FROM Resume
+    activate DB
+    DB --> API: updated resumes[]
+    deactivate DB
+    API --> Services: resumes[]
+    deactivate API
+    Services --> ResumePage: resumes[]
+    deactivate Services
+    
+    ResumePage -> ResumePage: setResumes(data)
+    ResumePage --> User: Hiển thị danh sách đã cập nhật
+end
+
+deactivate ResumePage
+
+@enduml

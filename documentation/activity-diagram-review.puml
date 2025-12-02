@@ -1,0 +1,135 @@
+@startuml activity-diagram-review
+title Activity Diagram - Reviews (Đánh giá hệ thống)
+skinparam backgroundColor #FEFEFE
+skinparam ActivityBackgroundColor #E8F4FD
+skinparam ActivityBorderColor #3498DB
+skinparam ActivityStartColor #27AE60
+skinparam ActivityEndColor #E74C3C
+skinparam ActivityDiamondBackgroundColor #F39C12
+skinparam ActivityDiamondBorderColor #E67E22
+skinparam SwimlaneBorderColor #2C3E50
+skinparam SwimlaneTitleBackgroundColor #34495E
+skinparam SwimlaneTitleFontColor white
+
+|User|
+start
+:Chọn "Reviews" trên menu;
+
+|System|
+:Hiển thị giao diện Reviews;
+:Gọi API GET /api/ratings;
+:Load tất cả đánh giá từ database;
+:Tính điểm trung bình (Average Rating);
+:Tính phân bố đánh giá theo số sao;
+:Hiển thị thống kê và danh sách đánh giá;
+
+|User|
+:Xem thống kê tổng quan;
+
+if (Muốn lọc theo số sao?) then (Có)
+  :Click vào số sao trong biểu đồ;
+  |System|
+  :Lọc danh sách theo số sao đã chọn;
+  :Hiển thị nút "Clear filter";
+else (Không)
+endif
+
+|User|
+:Xem danh sách đánh giá của người dùng khác;
+
+|System|
+:Hiển thị từng đánh giá với:
+- Avatar, Tên người dùng
+- Số sao (1-5)
+- Nội dung nhận xét
+- Ngày đánh giá;
+
+|User|
+if (Muốn gửi đánh giá?) then (Có)
+  
+  |System|
+  if (Đã đăng nhập?) then (Có)
+    :Kiểm tra người dùng đã đánh giá trước đó chưa;
+    
+    if (Đã đánh giá trước đó?) then (Có)
+      :Load đánh giá cũ vào form;
+      :Hiển thị nút "Update Review";
+    else (Chưa)
+      :Hiển thị form đánh giá trống;
+      :Hiển thị nút "Submit Review";
+    endif
+    
+    |User|
+    :Chọn số sao (1-5 sao);
+    
+    |System|
+    :Highlight các sao được chọn;
+    
+    |User|
+    :Nhập nhận xét (tùy chọn);
+    :Nhấn "Submit Review" hoặc "Update Review";
+    
+    |System|
+    if (Đã chọn số sao?) then (Có)
+      :Gọi API POST /api/ratings;
+      :Gửi: userEmail, userName, rating, comment;
+      
+      if (API call thành công?) then (Thành công)
+        
+        if (Đánh giá đã tồn tại?) then (Có)
+          :UPDATE rating trong database;
+          :Hiển thị "Review updated successfully!";
+        else (Chưa)
+          :INSERT rating mới vào database;
+          :Hiển thị "Thank you for your review!";
+        endif
+        
+        :Reload danh sách đánh giá;
+        :Cập nhật thống kê;
+        :Scroll đến section reviews;
+        
+        |User|
+        :Xem đánh giá của mình trong danh sách;
+        
+      else (Lỗi)
+        :Hiển thị thông báo lỗi mạng;
+        |User|
+        :Thử gửi lại;
+      endif
+      
+    else (Chưa)
+      :Hiển thị "Please select a rating!";
+      |User|
+      :Quay lại chọn số sao;
+    endif
+    
+  else (Chưa)
+    :Hiển thị thông báo yêu cầu đăng nhập;
+    :Hiển thị nút "Sign In";
+    
+    |User|
+    if (Nhấn Sign In?) then (Có)
+      :Được redirect đến trang đăng nhập;
+      stop
+    else (Không)
+      :Chỉ xem đánh giá;
+    endif
+  endif
+  
+else (Không)
+  :Tiếp tục xem đánh giá;
+endif
+
+|User|
+:Kết thúc phiên xem/đánh giá;
+stop
+
+legend right
+  |= Ký hiệu |= Mô tả |
+  | Hình oval | Bắt đầu/Kết thúc |
+  | Hình chữ nhật | Hoạt động |
+  | Hình thoi | Điều kiện |
+  | Swimlane | Phân chia Actor |
+endlegend
+
+@enduml

@@ -1,0 +1,122 @@
+@startuml activity-diagram-support-cv
+title Activity Diagram - Support CV (Quản lý và Tối ưu CV)
+skinparam backgroundColor #FEFEFE
+skinparam ActivityBackgroundColor #E8F4FD
+skinparam ActivityBorderColor #3498DB
+skinparam ActivityStartColor #27AE60
+skinparam ActivityEndColor #E74C3C
+skinparam ActivityDiamondBackgroundColor #F39C12
+skinparam ActivityDiamondBorderColor #E67E22
+skinparam SwimlaneBorderColor #2C3E50
+skinparam SwimlaneTitleBackgroundColor #34495E
+skinparam SwimlaneTitleFontColor white
+
+|User|
+start
+:Chọn "Support CV" trên menu;
+
+|System|
+:Hiển thị trang Landing Support CV;
+
+|User|
+:Upload file CV (PDF/DOCX);
+
+|System|
+:Parse CV và trích xuất thông tin:
+- Personal Info
+- Experiences
+- Education
+- Skills
+- Projects
+- Certifications;
+
+:Gọi AI để review CV;
+
+if (Review thành công?) then (Thành công)
+  :Hiển thị Review Panel với điểm số:
+  - Overall Score
+  - ATS Score
+  - Impact Score
+  - Clarity Score;
+  
+  :Hiển thị Strengths và Weaknesses;
+else (Lỗi)
+  :Tạo review mặc định;
+endif
+
+|User|
+:Xem review và đánh giá;
+
+if (Muốn Auto Edit?) then (Có)
+  :Nhấn "Auto Edit";
+  
+  |System|
+  :Hiển thị dialog loading với tiến trình;
+  :AI phân tích và tạo đề xuất chỉnh sửa;
+  
+  if (Auto Edit thành công?) then (Thành công)
+    :Hiển thị Comparison View (Before/After);
+    
+    |User|
+    repeat
+      :Xem từng thay đổi;
+      if (Chấp nhận thay đổi?) then (Có)
+        :Đánh dấu "Accept";
+      else (Không)
+        :Đánh dấu "Reject";
+      endif
+    repeat while (Còn thay đổi?) is (Có)
+    ->Không;
+    
+    :Nhấn "Apply Changes";
+    
+    |System|
+    :Áp dụng các thay đổi đã chấp nhận;
+    
+  else (Lỗi)
+    :Thông báo lỗi;
+    :Cho phép chỉnh sửa thủ công;
+  endif
+  
+else (Không)
+  :Bỏ qua Auto Edit;
+endif
+
+|System|
+:Chuyển sang bước Editor;
+
+|User|
+:Chỉnh sửa CV thủ công (nếu cần);
+
+|System|
+:Hiển thị danh sách Templates;
+
+|User|
+:Chọn template CV (ATS-Friendly, Modern, Creative...);
+
+|System|
+:Hiển thị Preview CV với template đã chọn;
+
+|User|
+if (Hài lòng với CV?) then (Có)
+  :Nhấn "Export";
+  
+  |System|
+  :Chọn định dạng (PDF/DOCX);
+  :Xuất file CV;
+  :Download file;
+else (Không)
+  :Quay lại chỉnh sửa;
+endif
+
+stop
+
+legend right
+  |= Ký hiệu |= Mô tả |
+  | Hình oval | Bắt đầu/Kết thúc |
+  | Hình chữ nhật | Hoạt động |
+  | Hình thoi | Điều kiện |
+  | Swimlane | Phân chia Actor |
+endlegend
+
+@enduml

@@ -1,0 +1,136 @@
+@startuml sequence-diagram-support-cv
+title Sequence Diagram - Support CV (Quản lý và Tối ưu CV)
+skinparam backgroundColor #FEFEFE
+skinparam ParticipantBackgroundColor #E8F4FD
+skinparam ParticipantBorderColor #3498DB
+skinparam SequenceLifeLineBorderColor #95A5A6
+skinparam SequenceMessageAlign center
+
+actor "Người dùng" as User
+participant "Giao diện\nSupport CV" as UI
+participant "CV Parser\nService" as Parser
+participant "CV Review\nService" as ReviewService
+participant "CV Editor\nService" as EditorService
+participant "Export\nService" as ExportService
+participant "AI Backend" as AI
+
+autonumber
+
+== Bước 1: Upload và Parse CV ==
+
+User -> UI: Chọn "Support CV"
+activate UI
+UI --> User: Hiển thị trang Landing
+
+User -> UI: Upload file CV (PDF)
+UI -> Parser: Parse CV file
+activate Parser
+Parser -> Parser: Trích xuất text và structure
+Parser --> UI: CVData object
+note right of Parser
+  CVData:
+  - personalInfo
+  - experiences[]
+  - education[]
+  - skills[]
+  - projects[]
+  - certifications[]
+end note
+deactivate Parser
+
+== Bước 2: AI Review CV ==
+
+UI -> ReviewService: Review CV
+activate ReviewService
+ReviewService -> AI: Đánh giá CV
+AI --> ReviewService: Review result
+ReviewService --> UI: Review scores & feedback
+deactivate ReviewService
+
+UI --> User: Hiển thị Review Panel
+note right of User
+  **Scores:**
+  - Overall: 72/100
+  - ATS: 68/100
+  - Impact: 75/100
+  - Clarity: 70/100
+  
+  **Strengths:**
+  - Clear structure
+  - Good experience
+  
+  **Weaknesses:**
+  - Missing keywords
+  - Weak summary
+end note
+
+== Bước 3: Auto Edit (Tùy chọn) ==
+
+alt Người dùng chọn Auto Edit
+    User -> UI: Nhấn "Auto Edit"
+    UI --> User: Hiển thị loading dialog
+    
+    UI -> EditorService: autoEdit(cvData, review)
+    activate EditorService
+    EditorService -> AI: Tạo đề xuất chỉnh sửa
+    AI --> EditorService: Danh sách changes
+    EditorService --> UI: CVEditChanges[]
+    deactivate EditorService
+    
+    UI --> User: Hiển thị Comparison View
+    note right of User
+      **Before → After**
+      
+      Summary: "I am a developer"
+      → "Results-driven Frontend 
+         Developer with 3+ years..."
+      
+      [Accept] [Reject]
+    end note
+    
+    loop Cho mỗi thay đổi
+        User -> UI: Accept hoặc Reject
+        UI -> UI: Cập nhật trạng thái change
+    end
+    
+    User -> UI: Nhấn "Apply Changes"
+    UI -> UI: Áp dụng changes đã accept
+end
+
+== Bước 4: Manual Edit ==
+
+UI --> User: Hiển thị Editor
+User -> UI: Chỉnh sửa các section
+UI -> UI: Cập nhật CVData
+
+== Bước 5: Chọn Template và Preview ==
+
+UI --> User: Hiển thị Templates
+User -> UI: Chọn template (VD: ATS-Friendly)
+UI --> User: Hiển thị Preview với template
+
+== Bước 6: Export ==
+
+User -> UI: Nhấn "Export"
+UI -> ExportService: Export CV
+activate ExportService
+ExportService -> ExportService: Generate PDF/DOCX
+ExportService --> UI: File blob
+deactivate ExportService
+
+UI --> User: Download file CV
+
+deactivate UI
+
+legend right
+  |= Thành phần |= Mô tả |
+  | Người dùng | Actor chính |
+  | Giao diện Support CV | Frontend React Component |
+  | CV Parser Service | Service parse file CV |
+  | CV Review Service | Service đánh giá CV |
+  | CV Editor Service | Service auto-edit CV |
+  | Export Service | Service xuất file |
+  | AI Backend | AI xử lý review & edit |
+endlegend
+
+@enduml

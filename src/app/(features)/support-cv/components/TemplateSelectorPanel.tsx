@@ -6,6 +6,10 @@ import { CVTemplate, CVData } from '../types/cv.types';
 import { CV_TEMPLATES, TemplateInfo } from '../templates/templateData';
 import { recommendTemplate, AITemplateResult } from '../services/aiTemplateRecommender';
 import TemplatePreviewCard from './TemplatePreviewCard';
+import { 
+  FileText, Bot, Eye, Trophy, RefreshCw, X, Lightbulb, 
+  Briefcase, Sparkles, FolderOpen, Loader2
+} from 'lucide-react';
 
 interface TemplateSelectorPanelProps {
   selectedTemplate: CVTemplate;
@@ -64,7 +68,7 @@ export default function TemplateSelectorPanel({
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg">
-                <span className="text-2xl">📝</span>
+                <FileText className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h3 className="text-lg font-bold bg-gradient-to-r from-purple-300 via-pink-300 to-blue-300 bg-clip-text text-transparent">
@@ -82,7 +86,7 @@ export default function TemplateSelectorPanel({
                 onClick={getAIRecommendation}
                 className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 rounded-xl text-sm font-semibold hover:from-purple-600 hover:to-blue-600 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105"
               >
-                <span className="text-lg">🤖</span>
+                <Bot className="w-5 h-5" />
                 <span>Get AI Recommendation</span>
               </button>
             )}
@@ -95,7 +99,7 @@ export default function TemplateSelectorPanel({
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="relative bg-gradient-to-r from-purple-500/30 to-blue-500/30 px-5 py-3 border-b border-purple-500/30">
           <h4 className="text-sm font-bold text-white flex items-center gap-2">
-            <span className="text-lg">👁️</span>
+            <Eye className="w-4 h-4" />
             <span>Live Preview</span>
           </h4>
         </div>
@@ -156,7 +160,7 @@ export default function TemplateSelectorPanel({
         <div className="glass-effect border-2 border-purple-500/50 rounded-xl p-4 glow-effect">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">
-              <span className="text-2xl animate-float">🤖</span>
+              <Bot className="w-6 h-6 text-purple-400 animate-float" />
               <div>
                 <h4 className="text-sm font-bold text-white">AI Recommendation</h4>
                 <p className="text-xs text-purple-300">Powered by Gemini</p>
@@ -164,15 +168,15 @@ export default function TemplateSelectorPanel({
             </div>
             <button
               onClick={() => setShowAIPanel(false)}
-              className="text-gray-400 hover:text-gray-200 text-lg transition-colors"
+              className="text-gray-400 hover:text-gray-200 transition-colors"
             >
-              ✕
+              <X className="w-5 h-5" />
             </button>
           </div>
 
           {isLoadingAI ? (
             <div className="flex items-center justify-center py-6">
-              <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-500 border-t-transparent"></div>
+              <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
             </div>
           ) : aiRecommendation ? (
             <div className="space-y-3">
@@ -186,7 +190,7 @@ export default function TemplateSelectorPanel({
               {/* Top Pick */}
               <div className="bg-gradient-to-r from-yellow-400 to-orange-400 rounded-lg p-3 text-white animate-pulse-glow">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xl">🏆</span>
+                  <Trophy className="w-5 h-5" />
                   <span className="font-bold text-sm">Top Pick</span>
                 </div>
                 <p className="text-xs text-white/90 mb-2">
@@ -205,7 +209,8 @@ export default function TemplateSelectorPanel({
                 onClick={getAIRecommendation}
                 className="text-xs text-purple-300 hover:text-purple-200 font-medium flex items-center gap-1 transition-colors"
               >
-                🔄 Refresh Recommendation
+                <RefreshCw className="w-3 h-3" />
+                <span>Refresh Recommendation</span>
               </button>
             </div>
           ) : (
@@ -225,7 +230,7 @@ export default function TemplateSelectorPanel({
           onClick={() => setShowAIPanel(true)}
           className="w-full glass-effect border border-purple-500/50 text-purple-300 py-2 rounded-lg text-sm font-medium hover:bg-purple-500/20 transition-all flex items-center justify-center gap-2"
         >
-          <span>🤖</span>
+          <Bot className="w-4 h-4" />
           <span>Show AI Recommendation</span>
         </button>
       )}
@@ -233,7 +238,10 @@ export default function TemplateSelectorPanel({
       {/* Template Gallery */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-bold text-white">All Templates</h4>
+          <h4 className="text-sm font-bold text-white flex items-center gap-2">
+            <FolderOpen className="w-4 h-4 text-purple-400" />
+            All Templates
+          </h4>
           <span className="text-xs text-gray-400">{CV_TEMPLATES.length} templates</span>
         </div>
         
@@ -260,9 +268,10 @@ export default function TemplateSelectorPanel({
 
       {/* Tips */}
       <div className="glass-effect border border-blue-500/30 rounded-lg p-3">
-        <p className="text-xs text-blue-300 leading-relaxed">
-          <strong>💡 Tip:</strong> Choose ATS-Friendly for online applications. 
-          Creative templates work best for design roles.
+        <p className="text-xs text-blue-300 leading-relaxed flex items-start gap-2">
+          <Lightbulb className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <span><strong>Tip:</strong> Choose ATS-Friendly for online applications. 
+          Creative templates work best for design roles.</span>
         </p>
       </div>
     </div>

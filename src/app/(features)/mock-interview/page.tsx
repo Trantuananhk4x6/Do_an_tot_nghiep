@@ -167,11 +167,14 @@ const MockInterviewPage = () => {
       console.log('✅ Added user message');
       
       // ✅ NEW: Record candidate response in transcript AND link to question
-      if (interviewSession) {
+      // Use local variable to avoid async state issues
+      let updatedSession = interviewSession;
+      
+      if (updatedSession) {
         const timeSinceStart = Date.now() - interviewStartTime.current;
         const currentQuestion = interviewQuestions[currentQuestionIndex];
         
-        interviewSession.transcript.push({
+        updatedSession.transcript.push({
           speaker: 'candidate',
           message: transcription,
           timestamp: timeSinceStart,
@@ -180,16 +183,16 @@ const MockInterviewPage = () => {
         });
         
         // ✅ Track question-answer pair for scoring
-        if (!interviewSession.questionsAsked) {
-          interviewSession.questionsAsked = [];
+        if (!updatedSession.questionsAsked) {
+          updatedSession.questionsAsked = [];
         }
         
         // Update or add question-answer pair
-        const existingQA = interviewSession.questionsAsked.find(qa => qa.questionId === currentQuestion?.id);
+        const existingQA = updatedSession.questionsAsked.find(qa => qa.questionId === currentQuestion?.id);
         if (existingQA) {
           existingQA.candidateAnswer = transcription;
         } else {
-          interviewSession.questionsAsked.push({
+          updatedSession.questionsAsked.push({
             questionId: currentQuestion?.id || currentQuestionIndex,
             question: currentQuestion?.question || '',
             expectedAnswer: currentQuestion?.answer || '',
@@ -198,7 +201,7 @@ const MockInterviewPage = () => {
           });
         }
         
-        setInterviewSession({...interviewSession});
+        setInterviewSession({...updatedSession});
         console.log('✅ Recorded candidate response with question link');
       }
 
@@ -221,10 +224,10 @@ const MockInterviewPage = () => {
         // Add AI message với câu hỏi tiếp theo
         const aiMessage = addMessage(fullResponse, false);
         
-        // ✅ NEW: Record interviewer question in transcript
-        if (interviewSession) {
+        // ✅ NEW: Record interviewer question in transcript - use updatedSession
+        if (updatedSession) {
           const timeSinceStart = Date.now() - interviewStartTime.current;
-          interviewSession.transcript.push({
+          updatedSession.transcript.push({
             speaker: 'interviewer',
             message: fullResponse,
             timestamp: timeSinceStart,
@@ -233,10 +236,10 @@ const MockInterviewPage = () => {
           });
           
           // ✅ Pre-register question in questionsAsked (will be updated when user answers)
-          if (!interviewSession.questionsAsked) {
-            interviewSession.questionsAsked = [];
+          if (!updatedSession.questionsAsked) {
+            updatedSession.questionsAsked = [];
           }
-          interviewSession.questionsAsked.push({
+          updatedSession.questionsAsked.push({
             questionId: nextQuestion?.id || nextQuestionIndex,
             question: nextQuestion?.question || '',
             expectedAnswer: nextQuestion?.answer || '',
@@ -244,7 +247,7 @@ const MockInterviewPage = () => {
             timestamp: timeSinceStart
           });
           
-          setInterviewSession({...interviewSession});
+          setInterviewSession({...updatedSession});
           console.log('✅ Recorded next question in transcript');
         }
         
@@ -269,10 +272,77 @@ const MockInterviewPage = () => {
         const voiceGender = selectedVoice?.gender || 'female';
         await speechSynthesis.current.speak(endMessage, voiceGender, interviewLanguage);
         
-        // Tự động chuyển đến trang báo cáo sau 3 giây
-        setTimeout(() => {
-          router.push('/assessment-report');
-        }, 3000);
+        // ✅ FIX: Gọi API assess-interview TRƯỚC khi chuyển trang
+        try {
+          console.log('🚀 Auto-generating assessment after completing all questions...');
+          
+          // Calculate duration
+          const endTime = Date.now();
+          const durationInSeconds = Math.floor((endTime - interviewStartTime.current) / 1000);
+          
+          // ✅ Use updatedSession which has latest data
+          const sessionToUse = updatedSession || interviewSession;
+          
+          // Complete the session data
+          const completeSession = {
+            ...sessionToUse,
+            endTime,
+            duration: durationInSeconds,
+            questionsAsked: sessionToUse?.questionsAsked || [],
+            interviewer: {
+              ...sessionToUse?.interviewer,
+              yearsOfExperience: sessionToUse?.interviewer?.yearsOfExperience || 10,
+              focusAreas: sessionToUse?.interviewer?.focusAreas || ['Technical Skills'],
+              interviewStyle: sessionToUse?.interviewer?.interviewStyle || 'Professional'
+            }
+          };
+          
+          console.log('📊 Session stats:');
+          console.log('  - Duration:', durationInSeconds, 'seconds');
+          console.log('  - Transcript entries:', completeSession.transcript?.length || 0);
+          console.log('  - Questions asked:', completeSession.questionsAsked?.length || 0);
+          
+          // Call AI assessment API
+          const response = await axios.post('/api/assess-interview', {
+            interviewSession: completeSession
+          }, {
+            timeout: 90000
+          });
+          
+          if (response.data.success && response.data.assessment) {
+            console.log('✅ Assessment generated successfully!');
+            console.log('  - Overall Score:', response.data.assessment.overallScore);
+            
+            // Save assessment to sessionStorage
+            sessionStorage.setItem('latestAssessment', JSON.stringify(response.data.assessment));
+            sessionStorage.setItem('interviewSession', JSON.stringify(completeSession));
+            
+            console.log('💾 Saved assessment to sessionStorage');
+          } else {
+            console.error('❌ Assessment API error:', response.data.error);
+            // Still save session data
+            sessionStorage.setItem('interviewSession', JSON.stringify(completeSession));
+          }
+          
+          // Chuyển đến trang báo cáo sau 2 giây
+          setTimeout(() => {
+            // Cleanup
+            speechSynthesis.current.stop();
+            resetState();
+            setInputText("");
+            setIsProcessing(false);
+            setPlayingMessageId(null);
+            router.push('/assessment-report');
+          }, 2000);
+          
+        } catch (assessError) {
+          console.error('❌ Error generating assessment:', assessError);
+          // Still navigate even on error
+          setTimeout(() => {
+            resetState();
+            router.push('/assessment-report');
+          }, 2000);
+        }
       }
 
     } catch (error) {
@@ -280,7 +350,7 @@ const MockInterviewPage = () => {
     } finally {
       setIsProcessing(false);
     }
-  }, [addMessage, isProcessing, selectedVoice, currentQuestionIndex, interviewQuestions, router, interviewSession, interviewLanguage]);
+  }, [addMessage, isProcessing, selectedVoice, currentQuestionIndex, interviewQuestions, router, interviewSession, interviewLanguage, resetState]);
 
   // Khai báo handleTranscript - CHỈ update UI, KHÔNG submit
   const handleTranscript = useCallback((text: string) => {
@@ -703,7 +773,7 @@ const MockInterviewPage = () => {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
-                  className="text-6xl font-bold mb-6"
+                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6"
                 >
                   <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
                     Mock Interview
@@ -714,7 +784,7 @@ const MockInterviewPage = () => {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.3 }}
-                  className="text-xl text-gray-300 mb-4 max-w-3xl mx-auto leading-relaxed"
+                  className="text-base sm:text-lg md:text-xl text-gray-300 mb-3 sm:mb-4 max-w-3xl mx-auto leading-relaxed px-4"
                 >
                   Practice your interview skills with our AI-powered interviewer. Get real-time feedback and improve your responses.
                 </motion.p>
@@ -723,17 +793,17 @@ const MockInterviewPage = () => {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.4 }}
-                  className="flex items-center justify-center gap-6 text-sm text-gray-400 mb-12"
+                  className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm text-gray-400 mb-8 sm:mb-12 px-4"
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                     <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                     <span>AI-Powered</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                     <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
                     <span>Real-time Feedback</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                     <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
                     <span>Video Interview</span>
                   </div>
@@ -743,19 +813,21 @@ const MockInterviewPage = () => {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.5 }}
+                  className="px-4"
                 >
                   <Button
                     variant={"default"}
                     size={"lg"}
                     onClick={() => setShowLanguageModal(true)}
-                    className="relative group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-7 text-lg rounded-2xl shadow-2xl hover:shadow-neon transition-all duration-300 overflow-hidden"
+                    className="relative group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 sm:px-8 md:px-10 py-5 sm:py-6 md:py-7 text-base sm:text-lg rounded-xl sm:rounded-2xl shadow-2xl hover:shadow-neon transition-all duration-300 overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-                    <span className="relative flex items-center gap-3">
-                      <span className="text-2xl">🎤</span>
-                      Start Your Interview
+                    <span className="relative flex items-center gap-2 sm:gap-3">
+                      <span className="text-xl sm:text-2xl">🎤</span>
+                      <span className="hidden sm:inline">Start Your Interview</span>
+                      <span className="sm:hidden">Start Interview</span>
                       <motion.svg 
-                        className="h-5 w-5" 
+                        className="h-4 w-4 sm:h-5 sm:w-5" 
                         fill="none" 
                         viewBox="0 0 24 24" 
                         stroke="currentColor"
@@ -770,7 +842,7 @@ const MockInterviewPage = () => {
               </div>
 
               {/* Feature Grid */}
-              <div className="grid md:grid-cols-3 gap-6 mb-12">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12 px-4">
                 {[
                   {
                     icon: "🤖",
@@ -802,10 +874,10 @@ const MockInterviewPage = () => {
                     className="relative group"
                   >
                     <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                    <div className="relative glass-effect border border-purple-500/30 rounded-2xl p-8 hover:border-purple-500/50 transition-all duration-300 h-full">
-                      <div className="text-5xl mb-4">{feature.icon}</div>
-                      <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
-                      <p className="text-gray-400 leading-relaxed">{feature.description}</p>
+                    <div className="relative glass-effect border border-purple-500/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 hover:border-purple-500/50 transition-all duration-300 h-full">
+                      <div className="text-3xl sm:text-4xl md:text-5xl mb-3 sm:mb-4">{feature.icon}</div>
+                      <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">{feature.title}</h3>
+                      <p className="text-gray-400 leading-relaxed text-sm sm:text-base">{feature.description}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -816,16 +888,16 @@ const MockInterviewPage = () => {
                 initial={{ y: 40, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.9 }}
-                className="relative glass-effect border border-purple-500/30 rounded-2xl p-8"
+                className="relative glass-effect border border-purple-500/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 mx-4"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5" />
                 <div className="relative">
-                  <h3 className="text-2xl font-bold text-center mb-8">
+                  <h3 className="text-xl sm:text-2xl font-bold text-center mb-6 sm:mb-8">
                     <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                       How It Works
                     </span>
                   </h3>
-                  <div className="grid md:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
                     {[
                       { step: "1", icon: "🎯", title: "Choose Topic", desc: "Select interview type" },
                       { step: "2", icon: "🎤", title: "Start Interview", desc: "Answer AI questions" },
@@ -833,17 +905,17 @@ const MockInterviewPage = () => {
                       { step: "4", icon: "📈", title: "Improve", desc: "Track your progress" }
                     ].map((item, idx) => (
                       <div key={idx} className="text-center group">
-                        <div className="relative inline-block mb-4">
+                        <div className="relative inline-block mb-3 sm:mb-4">
                           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/30 to-pink-600/30 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                          <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center mx-auto shadow-lg group-hover:scale-110 transition-transform">
-                            <span className="text-3xl">{item.icon}</span>
+                          <div className="relative w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-xl sm:rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center mx-auto shadow-lg group-hover:scale-110 transition-transform">
+                            <span className="text-xl sm:text-2xl md:text-3xl">{item.icon}</span>
                           </div>
-                          <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                          <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow-lg">
                             {item.step}
                           </div>
                         </div>
-                        <h4 className="font-bold text-white mb-2">{item.title}</h4>
-                        <p className="text-sm text-gray-400">{item.desc}</p>
+                        <h4 className="font-bold text-white text-sm sm:text-base mb-1 sm:mb-2">{item.title}</h4>
+                        <p className="text-xs sm:text-sm text-gray-400">{item.desc}</p>
                       </div>
                     ))}
                   </div>
@@ -853,25 +925,25 @@ const MockInterviewPage = () => {
           </motion.div>
           </div>
         ) : (
-          <div className="h-full flex flex-col p-6">
+          <div className="h-full flex flex-col p-3 sm:p-4 lg:p-6">
             {/* Header */}
-            <div className="glass-effect rounded-2xl p-4 mb-4 border border-white/10">
+            <div className="glass-effect rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-3 sm:mb-4 border border-white/10">
               <div className="flex justify-between items-center">
                 <div className="flex flex-col gap-1">
-                  <h1 className="text-xl font-semibold gradient-text">Mock Interview</h1>
-                  <div className="flex items-center gap-2 text-gray-400 text-sm">
-                    <Clock className="h-4 w-4" />
+                  <h1 className="text-base sm:text-lg lg:text-xl font-semibold gradient-text">Mock Interview</h1>
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-gray-400 text-xs sm:text-sm">
+                    <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                     <InterviewTimer 
                       isStarted={isStarted} 
                       onReset={() => setElapsedTime(0)} 
                     />
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <Button
                     onClick={handleCameraToggle}
                     className={cn(
-                      "rounded-full w-10 h-10 p-0 flex items-center justify-center transition-all duration-300",
+                      "rounded-full w-8 h-8 sm:w-10 sm:h-10 p-0 flex items-center justify-center transition-all duration-300",
                       isCameraOn 
                         ? "bg-gradient-to-br from-purple-600 to-pink-600 hover:shadow-neon" 
                         : "glass-effect border border-white/10 hover:bg-white/5"
@@ -880,14 +952,14 @@ const MockInterviewPage = () => {
                   >
                     <Camera 
                       className={cn(
-                        "h-5 w-5 transition-colors duration-200", 
+                        "h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200", 
                         isCameraOn ? "text-white" : "text-gray-400"
                       )} 
                     />
                   </Button>
                   <Button
                     onClick={handleLeaveInterview}
-                    className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-full px-4 py-2 text-sm transition-all duration-300"
+                    className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm transition-all duration-300"
                   >
                     Leave
                   </Button>
@@ -896,11 +968,11 @@ const MockInterviewPage = () => {
             </div>
 
             {/* Main Content */}
-            <div className="flex gap-4 flex-1 min-h-0">
+            <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 flex-1 min-h-0">
               {/* Video Section */}
-              <div className="w-[30%] flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
+              <div className="w-full lg:w-[30%] flex flex-row lg:flex-col gap-3 sm:gap-4 overflow-x-auto lg:overflow-y-auto custom-scrollbar lg:pr-2">
                 {/* AI Interviewer Video */}
-                <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 bg-black/50 shadow-neon flex-shrink-0">
+                <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-purple-500/30 bg-black/50 shadow-neon flex-shrink-0 min-w-[200px] sm:min-w-[250px] lg:min-w-0">
                   <div className="relative w-full" style={{ paddingBottom: '75%' }}>
                     <div className="absolute inset-0">
                       <DIDTalkingHead
@@ -913,24 +985,24 @@ const MockInterviewPage = () => {
                       />
                     </div>
                   </div>
-                  <div className="absolute top-3 left-3 glass-effect px-3 py-1.5 rounded-full border border-purple-500/30">
-                    <span className="text-xs text-purple-300 font-semibold flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                  <div className="absolute top-2 left-2 sm:top-3 sm:left-3 glass-effect px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-purple-500/30">
+                    <span className="text-[10px] sm:text-xs text-purple-300 font-semibold flex items-center gap-1.5 sm:gap-2">
+                      <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-purple-500 animate-pulse" />
                       AI Interviewer
                     </span>
                   </div>
                 </div>
                 
                 {/* Your Camera */}
-                <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 bg-black/50 shadow-neon flex-shrink-0">
+                <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-purple-500/30 bg-black/50 shadow-neon flex-shrink-0 min-w-[200px] sm:min-w-[250px] lg:min-w-0">
                   <WebcamStream 
                     ref={videoRef}
                     isActive={isCameraOn}
                     onStreamReady={handleStreamReady}
                   />
-                  <div className="absolute top-3 left-3 glass-effect px-3 py-1.5 rounded-full border border-purple-500/30">
-                    <span className="text-xs text-blue-300 font-semibold flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${isCameraOn ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
+                  <div className="absolute top-2 left-2 sm:top-3 sm:left-3 glass-effect px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-purple-500/30">
+                    <span className="text-[10px] sm:text-xs text-blue-300 font-semibold flex items-center gap-1.5 sm:gap-2">
+                      <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isCameraOn ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
                       {isCameraOn ? 'Your Camera' : 'Camera Off'}
                     </span>
                   </div>
@@ -938,8 +1010,8 @@ const MockInterviewPage = () => {
               </div>
 
               {/* Chat Section */}
-              <div className="w-[70%] flex flex-col gap-4" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-                <div className="flex-1 glass-effect rounded-2xl border border-white/10 overflow-hidden" style={{ maxHeight: 'calc(100vh - 300px)' }}>
+              <div className="w-full lg:w-[70%] flex flex-col gap-3 sm:gap-4 flex-1 lg:flex-initial" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+                <div className="flex-1 glass-effect rounded-xl sm:rounded-2xl border border-white/10 overflow-hidden min-h-[200px] sm:min-h-[300px]" style={{ maxHeight: 'calc(100vh - 300px)' }}>
                   <div className="h-full overflow-y-auto custom-scrollbar">
                     <InterviewTranscript
                       messages={messages.map((msg) => ({
@@ -949,7 +1021,7 @@ const MockInterviewPage = () => {
                     />
                   </div>
                 </div>
-                <div className="glass-effect rounded-2xl border border-white/10 p-4">
+                <div className="glass-effect rounded-xl sm:rounded-2xl border border-white/10 p-3 sm:p-4">
                   <InterviewInput
                     isProcessing={isProcessing}
                     onSubmit={handleSubmit}

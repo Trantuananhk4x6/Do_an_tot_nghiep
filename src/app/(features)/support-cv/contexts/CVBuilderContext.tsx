@@ -9,6 +9,12 @@ import { CVData, CVTemplate } from '../types/cv.types';
 
 export type CVStep = 'upload' | 'review' | 'comparison' | 'edit' | 'preview' | 'export';
 
+export interface SectionOrder {
+  id: string;
+  label: string;
+  visible: boolean;
+}
+
 export interface CVBuilderState {
   currentStep: CVStep;
   selectedTemplate: CVTemplate;
@@ -17,6 +23,7 @@ export interface CVBuilderState {
   editedCV: CVData | null;   // After auto-edit
   reviewData: any | null;
   autoEditChanges: any[];
+  sectionOrder: SectionOrder[]; // Track section order & visibility
   isProcessing: boolean;
   error: string | null;
 }
@@ -28,6 +35,7 @@ type CVBuilderAction =
   | { type: 'SET_REVIEW_DATA'; payload: any }
   | { type: 'SET_AUTO_EDIT_RESULT'; payload: { original: CVData; edited: CVData; changes: any[] } }
   | { type: 'APPLY_CHANGES'; payload: CVData }
+  | { type: 'SET_SECTION_ORDER'; payload: SectionOrder[] }
   | { type: 'SET_PROCESSING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'RESET' };
@@ -64,6 +72,7 @@ const initialState: CVBuilderState = {
   editedCV: null,
   reviewData: null,
   autoEditChanges: [],
+  sectionOrder: [], // Will be initialized from CVPreview
   isProcessing: false,
   error: null
 };
@@ -105,6 +114,9 @@ function cvBuilderReducer(state: CVBuilderState, action: CVBuilderAction): CVBui
         autoEditChanges: []
       };
     
+    case 'SET_SECTION_ORDER':
+      return { ...state, sectionOrder: action.payload };
+    
     case 'SET_PROCESSING':
       return { ...state, isProcessing: action.payload };
     
@@ -132,6 +144,7 @@ interface CVBuilderContextValue {
     setReviewData: (data: any) => void;
     setAutoEditResult: (original: CVData, edited: CVData, changes: any[]) => void;
     applyChanges: (data: CVData) => void;
+    setSectionOrder: (order: SectionOrder[]) => void;
     setProcessing: (processing: boolean) => void;
     setError: (error: string | null) => void;
     reset: () => void;
@@ -170,6 +183,10 @@ export function CVBuilderProvider({ children }: { children: ReactNode }) {
 
     applyChanges: useCallback((data: CVData) => {
       dispatch({ type: 'APPLY_CHANGES', payload: data });
+    }, []),
+
+    setSectionOrder: useCallback((order: SectionOrder[]) => {
+      dispatch({ type: 'SET_SECTION_ORDER', payload: order });
     }, []),
 
     setProcessing: useCallback((processing: boolean) => {

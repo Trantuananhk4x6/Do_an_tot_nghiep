@@ -58,7 +58,7 @@ export interface InterviewSession {
   
   transcript: TranscriptEntry[];
   
-  // ✅ NEW: Store questions with expected answers for accurate scoring
+
   questionsAsked?: QuestionAnswerPair[];
   
   assessment?: AssessmentResult;

@@ -1,0 +1,236 @@
+@startuml sequence-diagram-login
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam ParticipantBackgroundColor #E3F2FD
+skinparam ParticipantBorderColor #1565C0
+skinparam SequenceGroupBackgroundColor #F3E5F5
+skinparam NoteBackgroundColor #FFFDE7
+skinparam NoteBorderColor #F9A825
+
+title Sequence Diagram - UC010: Đăng nhập hệ thống (Login)
+
+actor "Người dùng" as User
+participant "Browser" as Browser
+participant "Next.js\nMiddleware" as Middleware
+participant "Sign-in Page\n(page.tsx)" as SignInPage
+participant "Clerk SignIn\nComponent" as ClerkUI
+participant "Clerk\nAuthentication API" as ClerkAPI
+participant "OAuth Provider\n(Google/GitHub/Microsoft)" as OAuth
+database "Clerk\nDatabase" as ClerkDB
+
+== Truy cập Route được bảo vệ khi chưa đăng nhập ==
+
+User -> Browser: Truy cập /live-interview
+activate Browser
+
+Browser -> Middleware: Request /live-interview
+activate Middleware
+
+Middleware -> Middleware: createRouteMatcher(["/live-interview(.*)",\n"/mock-interview(.*)", "/prepare-hub(.*)",\n"/resume(.*)", "/quiz(.*)"])
+Middleware -> Middleware: isProtectedRoute(req) = true
+
+Middleware -> ClerkAPI: auth.protect()
+activate ClerkAPI
+ClerkAPI --> Middleware: No session found
+deactivate ClerkAPI
+
+Middleware --> Browser: Redirect 302 to /sign-in?redirect_url=/live-interview
+deactivate Middleware
+
+Browser --> User: Hiển thị trang đăng nhập
+
+== Hiển thị Form đăng nhập ==
+
+Browser -> SignInPage: Load /sign-in
+activate SignInPage
+
+SignInPage -> ClerkUI: <SignIn />
+activate ClerkUI
+
+ClerkUI --> User: Hiển thị form đăng nhập với:\n- Email/Password fields\n- Google button\n- GitHub button\n- Microsoft button\n- "Sign up" link
+deactivate ClerkUI
+deactivate SignInPage
+
+== Phương thức 1: Đăng nhập bằng Email/Password ==
+
+User -> ClerkUI: Nhập email address
+activate ClerkUI
+ClerkUI -> ClerkUI: Validate email format
+ClerkUI --> User: Email hợp lệ ✓
+
+User -> ClerkUI: Nhập password
+User -> ClerkUI: Click "Continue"
+
+ClerkUI -> ClerkAPI: POST /sign-in\n{ identifier: email, password: password }
+activate ClerkAPI
+
+ClerkAPI -> ClerkDB: Find user by email
+activate ClerkDB
+ClerkDB --> ClerkAPI: user data
+deactivate ClerkDB
+
+alt Email không tồn tại
+    ClerkAPI --> ClerkUI: Error: "User not found"
+    ClerkUI --> User: Hiển thị thông báo lỗi
+else Password không đúng
+    ClerkAPI -> ClerkAPI: Verify password hash
+    ClerkAPI --> ClerkUI: Error: "Invalid credentials"
+    ClerkUI --> User: Hiển thị thông báo lỗi
+else Đăng nhập thành công
+    ClerkAPI -> ClerkAPI: Verify password hash ✓
+    ClerkAPI -> ClerkAPI: Generate session token
+    ClerkAPI -> ClerkDB: Create session record
+    activate ClerkDB
+    ClerkDB --> ClerkAPI: session created
+    deactivate ClerkDB
+    
+    ClerkAPI --> ClerkUI: { session_token, user_data }
+    deactivate ClerkAPI
+    
+    ClerkUI -> Browser: Set cookies:\n- __session\n- __client_uat
+    ClerkUI --> Browser: Redirect to /live-interview
+    deactivate ClerkUI
+    
+    Browser -> Middleware: Request /live-interview (with session cookie)
+    activate Middleware
+    Middleware -> ClerkAPI: Verify session
+    activate ClerkAPI
+    ClerkAPI --> Middleware: Session valid ✓
+    deactivate ClerkAPI
+    Middleware --> Browser: Allow access
+    deactivate Middleware
+    
+    Browser --> User: Hiển thị trang Live Interview
+end
+
+deactivate Browser
+
+== Phương thức 2: Đăng nhập bằng Google OAuth ==
+
+User -> ClerkUI: Click "Continue with Google"
+activate ClerkUI
+
+ClerkUI -> Browser: Redirect to Google OAuth
+activate Browser
+Browser -> OAuth: GET /oauth/authorize\n?client_id=xxx&redirect_uri=xxx&scope=email,profile
+activate OAuth
+
+OAuth --> User: Hiển thị trang đăng nhập Google
+
+User -> OAuth: Chọn tài khoản Google
+User -> OAuth: Cho phép ứng dụng truy cập
+
+OAuth -> OAuth: Generate authorization code
+OAuth --> Browser: Redirect to Clerk callback\n?code=xxx
+deactivate OAuth
+
+Browser -> ClerkAPI: GET /oauth/callback?code=xxx
+activate ClerkAPI
+
+ClerkAPI -> OAuth: Exchange code for tokens
+activate OAuth
+OAuth --> ClerkAPI: { access_token, id_token, refresh_token }
+deactivate OAuth
+
+ClerkAPI -> ClerkAPI: Extract user info from id_token
+ClerkAPI -> ClerkDB: Find or create user
+activate ClerkDB
+ClerkDB --> ClerkAPI: user data
+deactivate ClerkDB
+
+ClerkAPI -> ClerkAPI: Generate session token
+ClerkAPI -> ClerkDB: Create session
+activate ClerkDB
+ClerkDB --> ClerkAPI: session created
+deactivate ClerkDB
+
+ClerkAPI --> Browser: Set session cookies\nRedirect to /live-interview
+deactivate ClerkAPI
+deactivate Browser
+deactivate ClerkUI
+
+Browser --> User: Đăng nhập thành công\nHiển thị trang Live Interview
+
+== Phương thức 3: Đăng nhập bằng GitHub OAuth ==
+
+User -> ClerkUI: Click "Continue with GitHub"
+activate ClerkUI
+
+ClerkUI -> Browser: Redirect to GitHub OAuth
+activate Browser
+Browser -> OAuth: GET /login/oauth/authorize
+activate OAuth
+
+OAuth --> User: Hiển thị trang đăng nhập GitHub
+User -> OAuth: Đăng nhập và authorize
+
+OAuth --> Browser: Redirect với authorization code
+deactivate OAuth
+
+Browser -> ClerkAPI: Process OAuth callback
+activate ClerkAPI
+ClerkAPI -> OAuth: Exchange code for tokens
+activate OAuth
+OAuth --> ClerkAPI: { access_token }
+deactivate OAuth
+
+ClerkAPI -> ClerkDB: Find or create user
+activate ClerkDB
+ClerkDB --> ClerkAPI: user
+deactivate ClerkDB
+
+ClerkAPI -> ClerkAPI: Create session
+ClerkAPI --> Browser: Set cookies, redirect
+deactivate ClerkAPI
+deactivate Browser
+deactivate ClerkUI
+
+Browser --> User: Đăng nhập thành công
+
+== Flow Reset Password ==
+
+User -> ClerkUI: Click "Forgot password?"
+activate ClerkUI
+
+ClerkUI -> ClerkAPI: Request password reset
+activate ClerkAPI
+
+ClerkAPI -> ClerkAPI: Generate reset token
+ClerkAPI -> ClerkAPI: Send reset email
+ClerkAPI --> ClerkUI: Email sent confirmation
+deactivate ClerkAPI
+
+ClerkUI --> User: Hiển thị "Check your email"
+deactivate ClerkUI
+
+note over User: Người dùng check email\nvà click link reset password
+
+User -> ClerkUI: Nhập password mới
+activate ClerkUI
+
+ClerkUI -> ClerkAPI: POST /reset-password\n{ token, new_password }
+activate ClerkAPI
+ClerkAPI -> ClerkDB: Update password hash
+activate ClerkDB
+ClerkDB --> ClerkAPI: success
+deactivate ClerkDB
+ClerkAPI --> ClerkUI: Password updated
+deactivate ClerkAPI
+
+ClerkUI --> User: Password đã được cập nhật\nQuay lại đăng nhập
+deactivate ClerkUI
+
+== Flow Đăng ký (Sign Up) ==
+
+User -> ClerkUI: Click "Sign up"
+activate ClerkUI
+
+ClerkUI -> Browser: Redirect to /sign-up
+activate Browser
+Browser --> User: Hiển thị trang đăng ký
+deactivate Browser
+deactivate ClerkUI
+
+note over User: Thực hiện đăng ký\n(xem UC đăng ký riêng)
+
+@enduml

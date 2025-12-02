@@ -55,17 +55,45 @@ export async function extractTextFromPDF(file: File): Promise<string> {
         const page = await pdf.getPage(pageNum);
         const textContent = await page.getTextContent();
 
-        const pageText = textContent.items
-          .map((item: any) => ('str' in item ? item.str : ''))
-          .join(' ');
+        // Build text with proper line detection
+        let lastY: number | null = null;
+        let pageText = '';
+        
+        for (const item of textContent.items) {
+          if (!('str' in item) || !item.str) continue;
+          
+          // Check if this is a new line (Y position changed significantly)
+          // PDF coordinates have Y increasing upward, so different Y = new line
+          const currentY = item.transform ? item.transform[5] : null;
+          
+          if (lastY !== null && currentY !== null) {
+            const yDiff = Math.abs(lastY - currentY);
+            // If Y changed by more than 3 units, it's a new line
+            if (yDiff > 3) {
+              pageText += '\n';
+            } else if (pageText.length > 0 && !pageText.endsWith(' ') && !pageText.endsWith('\n')) {
+              // Same line, add space between items
+              pageText += ' ';
+            }
+          }
+          
+          pageText += item.str;
+          lastY = currentY;
+        }
 
-        fullText += pageText + '\n';
+        fullText += pageText + '\n\n'; // Double newline between pages
       } catch (pageErr) {
         console.error(`Error reading page ${pageNum}:`, pageErr);
       }
     }
 
-    return fullText.trim();
+    // Clean up extra whitespace while preserving line structure
+    return fullText
+      .replace(/[ \t]+/g, ' ')     // Multiple spaces to single space
+      .replace(/ \n/g, '\n')       // Remove trailing spaces before newlines  
+      .replace(/\n /g, '\n')       // Remove leading spaces after newlines
+      .replace(/\n{3,}/g, '\n\n')  // Max 2 consecutive newlines
+      .trim();
   } catch (err) {
     console.error('Error extracting PDF:', err);
     throw new Error('Cannot extract content from PDF file');

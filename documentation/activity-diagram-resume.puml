@@ -1,0 +1,129 @@
+@startuml activity-diagram-resume
+title Activity Diagram - Resume (Quản lý CV/Tài liệu)
+skinparam backgroundColor #FEFEFE
+skinparam ActivityBackgroundColor #E8F4FD
+skinparam ActivityBorderColor #3498DB
+skinparam ActivityStartColor #27AE60
+skinparam ActivityEndColor #E74C3C
+skinparam ActivityDiamondBackgroundColor #F39C12
+skinparam ActivityDiamondBorderColor #E67E22
+skinparam SwimlaneBorderColor #2C3E50
+skinparam SwimlaneTitleBackgroundColor #34495E
+skinparam SwimlaneTitleFontColor white
+
+|User|
+start
+:Chọn "Resume" trên menu;
+
+|System|
+:Kiểm tra authentication;
+
+if (Đã đăng nhập?) then (Có)
+  :Gọi API GET /api/resume;
+  :Truy vấn database theo userEmail;
+  
+  if (Có resume trong database?) then (Có)
+    :Hiển thị danh sách resume trong bảng;
+  else (Không)
+    :Hiển thị thông báo "No Resumes Yet";
+    :Hiển thị hướng dẫn upload;
+  endif
+  
+else (Chưa)
+  :Redirect đến trang đăng nhập;
+  stop
+endif
+
+|User|
+if (Muốn upload CV mới?) then (Có)
+  :Nhấn nút "Upload";
+  
+  |System|
+  :Hiển thị dialog upload file;
+  
+  |User|
+  :Chọn file CV (PDF/DOCX);
+  :Nhấn "Upload" trong dialog;
+  
+  |System|
+  :Hiển thị loading "Uploading...";
+  :Tạo FormData với file;
+  :Gọi API POST /api/resume;
+  
+  if (File hợp lệ?) then (Có)
+    :Parse PDF/DOCX thành text content;
+    :Lưu vào database với userEmail;
+    :Hiển thị toast "Success updated resume";
+    :Đóng dialog;
+    :Reload danh sách resume;
+    
+    |User|
+    :Xem CV mới trong danh sách;
+    
+  else (Không)
+    :Hiển thị toast lỗi;
+    |User|
+    :Chọn file khác hoặc hủy;
+  endif
+  
+else (Không)
+endif
+
+|User|
+if (Muốn xem CV?) then (Có)
+  :Nhấn icon "View" trên resume;
+  
+  |System|
+  :Mở preview CV trong modal/tab mới;
+  
+  |User|
+  :Xem nội dung CV;
+  :Đóng preview;
+  
+else (Không)
+endif
+
+|User|
+if (Muốn xóa CV?) then (Có)
+  :Nhấn icon "Delete" trên resume;
+  
+  |System|
+  :Hiển thị dialog xác nhận xóa;
+  
+  |User|
+  if (Xác nhận xóa?) then (Có)
+    |System|
+    :Gọi API DELETE /api/resume?id=xxx;
+    
+    if (Xóa thành công?) then (Có)
+      :Xóa resume khỏi database;
+      :Hiển thị toast "Resume deleted successfully";
+      :Reload danh sách resume;
+      
+      |User|
+      :Xem danh sách đã cập nhật;
+      
+    else (Không)
+      :Hiển thị toast lỗi "Not Found Any Item";
+    endif
+    
+  else (Không)
+    :Đóng dialog;
+  endif
+  
+else (Không)
+endif
+
+|User|
+:Kết thúc phiên quản lý CV;
+stop
+
+legend right
+  |= Ký hiệu |= Mô tả |
+  | Hình oval | Bắt đầu/Kết thúc |
+  | Hình chữ nhật | Hoạt động |
+  | Hình thoi | Điều kiện |
+  | Swimlane | Phân chia Actor |
+endlegend
+
+@enduml

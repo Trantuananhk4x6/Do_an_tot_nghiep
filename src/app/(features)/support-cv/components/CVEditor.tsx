@@ -10,7 +10,15 @@ import ProjectsSection from '@/app/(features)/support-cv/components/editor/Proje
 import CertificationsSection from '@/app/(features)/support-cv/components/editor/CertificationsSection';
 import LanguagesSection from '@/app/(features)/support-cv/components/editor/LanguagesSection';
 import AwardsSection from '@/app/(features)/support-cv/components/editor/AwardsSection';
+import PublicationsSection from '@/app/(features)/support-cv/components/editor/PublicationsSection';
+import VolunteerSection from '@/app/(features)/support-cv/components/editor/VolunteerSection';
+import ReferencesSection from '@/app/(features)/support-cv/components/editor/ReferencesSection';
 import TemplateSelectorPanel from '@/app/(features)/support-cv/components/TemplateSelectorPanel';
+import { 
+  User, Briefcase, GraduationCap, Zap, Rocket, Award, 
+  Globe, Medal, BookOpen, Heart, Phone, Plus, 
+  ArrowLeft, Eye, Save, Edit3, CheckCircle, Loader2
+} from 'lucide-react';
 
 interface CVEditorProps {
   cvData: CVData;
@@ -26,7 +34,7 @@ interface CVEditorProps {
 interface SectionConfig {
   id: string;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   required: boolean;
   hasData?: (data: CVData) => boolean;
 }
@@ -48,76 +56,76 @@ export default function CVEditor({
     { 
       id: 'personal', 
       label: 'Personal Info', 
-      icon: '👤',
+      icon: <User className="w-5 h-5 lg:w-6 lg:h-6" />,
       required: true 
     },
     { 
       id: 'experience', 
       label: 'Experience', 
-      icon: '💼',
+      icon: <Briefcase className="w-5 h-5 lg:w-6 lg:h-6" />,
       required: false,
       hasData: (data) => data.experiences && data.experiences.length > 0
     },
     { 
       id: 'education', 
       label: 'Education', 
-      icon: '🎓',
+      icon: <GraduationCap className="w-5 h-5 lg:w-6 lg:h-6" />,
       required: false,
       hasData: (data) => data.education && data.education.length > 0
     },
     { 
       id: 'skills', 
       label: 'Skills', 
-      icon: '⚡',
+      icon: <Zap className="w-5 h-5 lg:w-6 lg:h-6" />,
       required: false,
       hasData: (data) => data.skills && data.skills.length > 0
     },
     { 
       id: 'projects', 
       label: 'Projects', 
-      icon: '🚀',
+      icon: <Rocket className="w-5 h-5 lg:w-6 lg:h-6" />,
       required: false,
       hasData: (data) => data.projects && data.projects.length > 0
     },
     { 
       id: 'certifications', 
       label: 'Certifications', 
-      icon: '🏆',
+      icon: <Award className="w-5 h-5 lg:w-6 lg:h-6" />,
       required: false,
       hasData: (data) => data.certifications && data.certifications.length > 0
     },
     { 
       id: 'languages', 
       label: 'Languages', 
-      icon: '🌍',
+      icon: <Globe className="w-5 h-5 lg:w-6 lg:h-6" />,
       required: false,
       hasData: (data) => data.languages && data.languages.length > 0
     },
     { 
       id: 'awards', 
       label: 'Awards', 
-      icon: '🥇',
+      icon: <Medal className="w-5 h-5 lg:w-6 lg:h-6" />,
       required: false,
       hasData: (data) => data.awards && data.awards.length > 0
     },
     { 
       id: 'publications', 
       label: 'Publications', 
-      icon: '📚',
+      icon: <BookOpen className="w-5 h-5 lg:w-6 lg:h-6" />,
       required: false,
       hasData: (data) => data.publications && data.publications.length > 0
     },
     { 
       id: 'volunteer', 
       label: 'Volunteer', 
-      icon: '🤝',
+      icon: <Heart className="w-5 h-5 lg:w-6 lg:h-6" />,
       required: false,
       hasData: (data) => data.volunteer && data.volunteer.length > 0
     },
     { 
       id: 'references', 
       label: 'References', 
-      icon: '📞',
+      icon: <Phone className="w-5 h-5 lg:w-6 lg:h-6" />,
       required: false,
       hasData: (data) => data.references && data.references.length > 0
     }
@@ -142,29 +150,29 @@ export default function CVEditor({
   }, [cvData, allSections]);
 
   return (
-    <div className="grid grid-cols-12 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
       {/* Left Sidebar - Enhanced Navigation */}
-      <div className="col-span-4">
-        <div className="relative glass-effect border border-purple-500/30 rounded-2xl p-6 sticky top-4 max-h-[calc(100vh-2rem)] overflow-hidden">
+      <div className="lg:col-span-3">
+        <div className="relative glass-effect border border-purple-500/30 rounded-xl lg:rounded-2xl p-4 lg:p-6 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] overflow-hidden">
           {/* Animated background gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 opacity-50" />
           <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/20 to-blue-600/20 blur-xl opacity-50" />
           
           <div className="relative z-10 h-full flex flex-col">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-purple-500/30">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                <span className="text-2xl">✏️</span>
+            <div className="flex items-center gap-2 lg:gap-3 mb-4 lg:mb-6 pb-3 lg:pb-4 border-b border-purple-500/30">
+              <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                <Edit3 className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">
+                <h3 className="text-sm lg:text-lg font-bold text-white">
                   Sections
                 </h3>
-                <p className="text-xs text-gray-400">Edit your CV</p>
+                <p className="text-[10px] lg:text-xs text-gray-400">Edit your CV</p>
               </div>
             </div>
           
           {/* Active Sections */}
-          <div className="space-y-2 mb-4 flex-1 overflow-y-auto custom-scrollbar pr-2">
+          <div className="space-y-1.5 lg:space-y-2 mb-3 lg:mb-4 flex-1 lg:overflow-y-auto lg:custom-scrollbar lg:pr-2 overflow-x-auto flex lg:flex-col flex-row gap-2 lg:gap-0 pb-2 lg:pb-0">
             {visibleSections.map((section, index) => {
               const isActive = activeSection === section.id;
               const dataCount = section.hasData ? (
@@ -185,10 +193,10 @@ export default function CVEditor({
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
                   style={{ animationDelay: `${index * 0.05}s` }}
-                  className={`relative group w-full text-left px-4 py-3.5 rounded-xl transition-all duration-300 flex items-center gap-3 overflow-hidden ${
+                  className={`relative group flex-shrink-0 lg:flex-shrink lg:w-full text-left px-3 lg:px-4 py-2.5 lg:py-3.5 rounded-lg lg:rounded-xl transition-all duration-300 flex items-center gap-2 lg:gap-3 overflow-hidden ${
                     isActive
-                      ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg scale-105'
-                      : 'hover:bg-white/5 text-gray-300 hover:scale-102 hover:border-purple-500/50 border border-transparent'
+                      ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg lg:scale-105'
+                      : 'hover:bg-white/5 text-gray-300 lg:hover:scale-102 lg:hover:border-purple-500/50 border border-transparent'
                   }`}
                 >
                   {/* Animated background for active */}
@@ -201,12 +209,12 @@ export default function CVEditor({
                     </>
                   )}
                   
-                  <span className={`text-2xl transition-all duration-300 relative z-10 ${
-                    isActive ? 'scale-110 animate-bounce-slow' : 'group-hover:scale-110'
+                  <span className={`transition-all duration-300 relative z-10 ${
+                    isActive ? 'lg:scale-110' : 'lg:group-hover:scale-110'
                   }`}>
                     {section.icon}
                   </span>
-                  <div className="flex-1 min-w-0 relative z-10">
+                  <div className="flex-1 min-w-0 relative z-10 hidden lg:block">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold truncate">{section.label}</span>
                       {section.required && (
@@ -220,7 +228,7 @@ export default function CVEditor({
                     )}
                   </div>
                   {isActive && (
-                    <div className="relative z-10 flex items-center gap-1">
+                    <div className="relative z-10 items-center gap-1 hidden lg:flex">
                       <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                       <span className="text-xs text-white/80">Editing</span>
                     </div>
@@ -230,16 +238,16 @@ export default function CVEditor({
             })}
           </div>
 
-          {/* Add Section Button */}
+          {/* Add Section Button - Hidden on mobile */}
           {availableSections.length > 0 && (
-            <div className="pt-4 border-t border-purple-500/30">
+            <div className="pt-3 lg:pt-4 border-t border-purple-500/30 hidden lg:block">
               <details className="group">
-                <summary className="cursor-pointer px-4 py-3 rounded-xl hover:bg-purple-500/20 text-gray-300 hover:text-white transition-all flex items-center gap-3 text-sm font-medium border border-purple-500/30 hover:border-purple-500/50">
-                  <span className="text-xl group-open:rotate-90 transition-transform duration-300">➕</span>
+                <summary className="cursor-pointer px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg lg:rounded-xl hover:bg-purple-500/20 text-gray-300 hover:text-white transition-all flex items-center gap-2 lg:gap-3 text-xs lg:text-sm font-medium border border-purple-500/30 hover:border-purple-500/50">
+                  <Plus className="w-4 h-4 lg:w-5 lg:h-5 group-open:rotate-90 transition-transform duration-300" />
                   <span className="flex-1">Add New Section</span>
-                  <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-xs">{availableSections.length}</span>
+                  <span className="px-1.5 lg:px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-[10px] lg:text-xs">{availableSections.length}</span>
                 </summary>
-                <div className="mt-2 space-y-1 pl-2 animate-fade-in">
+                <div className="mt-2 space-y-1 pl-2 animate-fade-in max-h-40 overflow-y-auto custom-scrollbar">
                   {availableSections.map((section, idx) => (
                     <button
                       key={section.id}
@@ -259,9 +267,9 @@ export default function CVEditor({
                         });
                         setActiveSection(section.id);
                       }}
-                      className="w-full text-left px-4 py-2.5 rounded-lg hover:bg-purple-500/20 text-gray-400 hover:text-white transition-all flex items-center gap-3 text-sm border border-transparent hover:border-purple-500/30 group"
+                      className="w-full text-left px-3 lg:px-4 py-2 lg:py-2.5 rounded-lg hover:bg-purple-500/20 text-gray-400 hover:text-white transition-all flex items-center gap-2 lg:gap-3 text-xs lg:text-sm border border-transparent hover:border-purple-500/30 group"
                     >
-                      <span className="text-lg group-hover:scale-110 transition-transform">{section.icon}</span>
+                      <span className="group-hover:scale-110 transition-transform">{section.icon}</span>
                       <span>{section.label}</span>
                     </button>
                   ))}
@@ -271,28 +279,28 @@ export default function CVEditor({
           )}
 
           {/* Quick Actions */}
-          <div className="mt-6 pt-4 border-t border-purple-500/30 space-y-3">
+          <div className="mt-4 lg:mt-6 pt-3 lg:pt-4 border-t border-purple-500/30 space-y-2 lg:space-y-3">
             {onBackToReview && (
               <button
                 onClick={onBackToReview}
-                className="w-full glass-effect border-2 border-yellow-500/50 text-yellow-300 py-3 rounded-xl text-sm font-semibold hover:bg-yellow-500/20 hover:border-yellow-500 transition-all flex items-center justify-center gap-2 group"
+                className="w-full glass-effect border-2 border-yellow-500/50 text-yellow-300 py-2.5 lg:py-3 rounded-lg lg:rounded-xl text-xs lg:text-sm font-semibold hover:bg-yellow-500/20 hover:border-yellow-500 transition-all flex items-center justify-center gap-2 group"
               >
-                <span className="group-hover:-translate-x-1 transition-transform text-lg">←</span>
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                 <span>Back to Review</span>
               </button>
             )}
             
             <button
               onClick={onPreview}
-              className="relative w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3.5 rounded-xl font-semibold hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group overflow-hidden"
+              className="relative w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 lg:py-3.5 rounded-lg lg:rounded-xl font-semibold hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group overflow-hidden text-sm lg:text-base"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-              <span className="group-hover:scale-110 transition-transform text-xl relative z-10">👁️</span>
+              <Eye className="w-5 h-5 group-hover:scale-110 transition-transform relative z-10" />
               <span className="relative z-10">Preview CV</span>
             </button>
             
-            <div className="flex items-center justify-center gap-2 glass-effect border border-purple-500/30 py-2.5 rounded-xl text-sm text-purple-300">
-              <span className="animate-pulse">💾</span>
+            <div className="hidden lg:flex items-center justify-center gap-2 glass-effect border border-purple-500/30 py-2 lg:py-2.5 rounded-lg lg:rounded-xl text-xs lg:text-sm text-purple-300">
+              <Save className="w-4 h-4 animate-pulse" />
               <span className="font-medium">Auto-saved</span>
             </div>
           </div>
@@ -301,32 +309,32 @@ export default function CVEditor({
     </div>
 
       {/* Main Content Area - Enhanced */}
-      <div className="col-span-4">
-        <div className="relative glass-effect border border-purple-500/30 rounded-2xl overflow-hidden">
+      <div className="lg:col-span-6">
+        <div className="relative glass-effect border border-purple-500/30 rounded-xl lg:rounded-2xl overflow-hidden">
           {/* Animated border glow */}
           <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/30 to-blue-600/30 blur opacity-50 animate-pulse" />
           {/* Section Header */}
-          <div className="relative bg-gradient-to-r from-purple-500/30 to-blue-500/30 border-b border-purple-500/30 px-6 py-5">
+          <div className="relative bg-gradient-to-r from-purple-500/30 to-blue-500/30 border-b border-purple-500/30 px-4 lg:px-6 py-4 lg:py-5">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg">
-                  <span className="text-2xl">
+              <div className="flex items-center gap-2 lg:gap-3">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg flex-shrink-0">
+                  <span className="text-xl lg:text-2xl">
                     {visibleSections.find(s => s.id === activeSection)?.icon}
                   </span>
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold bg-gradient-to-r from-purple-300 via-pink-300 to-blue-300 bg-clip-text text-transparent">
+                  <h2 className="text-base lg:text-lg font-bold bg-gradient-to-r from-purple-300 via-pink-300 to-blue-300 bg-clip-text text-transparent">
                     {visibleSections.find(s => s.id === activeSection)?.label}
                   </h2>
-                  <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
+                  <p className="text-[10px] lg:text-xs text-gray-400 mt-0.5 flex items-center gap-1 lg:gap-1.5">
                     {visibleSections.find(s => s.id === activeSection)?.required ? (
                       <>
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                        <span className="w-1 h-1 lg:w-1.5 lg:h-1.5 rounded-full bg-red-400 animate-pulse" />
                         <span>Required</span>
                       </>
                     ) : (
                       <>
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                        <span className="w-1 h-1 lg:w-1.5 lg:h-1.5 rounded-full bg-green-400 animate-pulse" />
                         <span>Optional</span>
                       </>
                     )}
@@ -334,16 +342,36 @@ export default function CVEditor({
                 </div>
               </div>
               
-              {/* Progress Indicator */}
-              <div className="flex items-center gap-2">
+              {/* Progress Indicator - Hidden on small screens */}
+              <div className="hidden sm:flex items-center gap-2">
                 <div className="text-right">
-                  <div className="text-xs text-gray-400 uppercase tracking-wider">Progress</div>
-                  <div className="text-lg font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                  <div className="text-[10px] lg:text-xs text-gray-400 uppercase tracking-wider">Progress</div>
+                  <div className="text-base lg:text-lg font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
                     {Math.floor((visibleSections.indexOf(visibleSections.find(s => s.id === activeSection)!) + 1) / visibleSections.length * 100)}%
                   </div>
                 </div>
-                <div className="w-14 h-14 relative">
-                  <svg className="w-14 h-14 transform -rotate-90">
+                <div className="w-12 h-12 lg:w-14 lg:h-14 relative">
+                  <svg className="w-12 h-12 lg:w-14 lg:h-14 transform -rotate-90">
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="20"
+                      stroke="rgba(255,255,255,0.1)"
+                      strokeWidth="3"
+                      fill="none"
+                      className="lg:hidden"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="20"
+                      stroke="url(#gradient)"
+                      strokeWidth="3"
+                      fill="none"
+                      strokeDasharray={`${(visibleSections.indexOf(visibleSections.find(s => s.id === activeSection)!) + 1) / visibleSections.length * 126} 126`}
+                      strokeLinecap="round"
+                      className="transition-all duration-500 lg:hidden"
+                    />
                     <circle
                       cx="28"
                       cy="28"
@@ -351,6 +379,7 @@ export default function CVEditor({
                       stroke="rgba(255,255,255,0.1)"
                       strokeWidth="4"
                       fill="none"
+                      className="hidden lg:block"
                     />
                     <circle
                       cx="28"
@@ -361,7 +390,7 @@ export default function CVEditor({
                       fill="none"
                       strokeDasharray={`${(visibleSections.indexOf(visibleSections.find(s => s.id === activeSection)!) + 1) / visibleSections.length * 151} 151`}
                       strokeLinecap="round"
-                      className="transition-all duration-500"
+                      className="transition-all duration-500 hidden lg:block"
                     />
                     <defs>
                       <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -371,7 +400,7 @@ export default function CVEditor({
                     </defs>
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xs font-bold text-white">
+                    <span className="text-[10px] lg:text-xs font-bold text-white">
                       {visibleSections.indexOf(visibleSections.find(s => s.id === activeSection)!) + 1}/{visibleSections.length}
                     </span>
                   </div>
@@ -381,7 +410,7 @@ export default function CVEditor({
           </div>
           
           {/* Section Content with Better Scrolling */}
-          <div className="relative p-6 max-h-[calc(100vh-280px)] overflow-y-auto custom-scrollbar">
+          <div className="relative p-4 lg:p-6 max-h-[60vh] lg:max-h-[calc(100vh-280px)] overflow-y-auto custom-scrollbar">
             {activeSection === 'personal' && (
             <PersonalInfoSection
               data={cvData.personalInfo}
@@ -437,13 +466,34 @@ export default function CVEditor({
               onChange={(awards) => onUpdate({ ...cvData, awards })}
             />
           )}
+
+          {activeSection === 'publications' && (
+            <PublicationsSection
+              data={cvData.publications || []}
+              onChange={(publications) => onUpdate({ ...cvData, publications })}
+            />
+          )}
+
+          {activeSection === 'volunteer' && (
+            <VolunteerSection
+              data={cvData.volunteer || []}
+              onChange={(volunteer) => onUpdate({ ...cvData, volunteer })}
+            />
+          )}
+
+          {activeSection === 'references' && (
+            <ReferencesSection
+              data={cvData.references || []}
+              onChange={(references) => onUpdate({ ...cvData, references })}
+            />
+          )}
           </div>
         </div>
       </div>
 
       {/* Right Sidebar - Template Selector with AI Recommendation */}
-      <div className="col-span-4">
-        <div className="relative sticky top-4 max-h-[calc(100vh-2rem)] glass-effect border border-purple-500/30 rounded-2xl overflow-hidden">
+      <div className="lg:col-span-3">
+        <div className="relative lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] glass-effect border border-purple-500/30 rounded-xl lg:rounded-2xl overflow-hidden">
           {/* Animated background gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 opacity-50" />
           <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/20 to-blue-600/20 blur-xl opacity-50" />

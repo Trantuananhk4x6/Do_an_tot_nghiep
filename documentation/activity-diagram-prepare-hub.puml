@@ -1,0 +1,106 @@
+@startuml activity-diagram-prepare-hub
+title Activity Diagram - Prepare Hub (Chuẩn bị phỏng vấn)
+skinparam backgroundColor #FEFEFE
+skinparam ActivityBackgroundColor #E8F4FD
+skinparam ActivityBorderColor #3498DB
+skinparam ActivityStartColor #27AE60
+skinparam ActivityEndColor #E74C3C
+skinparam ActivityDiamondBackgroundColor #F39C12
+skinparam ActivityDiamondBorderColor #E67E22
+skinparam SwimlaneBorderColor #2C3E50
+skinparam SwimlaneTitleBackgroundColor #34495E
+skinparam SwimlaneTitleFontColor white
+
+|User|
+start
+:Chọn "Prepare Hub" trên menu;
+
+|System|
+:Hiển thị giao diện Prepare Hub;
+:Load danh sách Interview Sets đã tạo;
+
+if (Có Interview Sets?) then (Có)
+  :Hiển thị danh sách Interview Sets;
+else (Không có)
+  :Hiển thị thông báo "Chưa có Interview Set";
+endif
+
+|User|
+if (Muốn tạo mới?) then (Có)
+  :Nhấn "Prepare Interview";
+  
+  |System|
+  :Hiển thị Dialog tạo Interview Set;
+  :Load danh sách CV của người dùng;
+  
+  if (Có CV?) then (Có)
+    :Hiển thị dropdown chọn CV;
+  else (Không có)
+    :Hiển thị thông báo và link đến Upload CV;
+    stop
+  endif
+  
+  |User|
+  :Chọn CV muốn sử dụng;
+  :Nhập Company Name;
+  :Nhập Position;
+  :Nhập Job Description;
+  :Chọn ngôn ngữ phỏng vấn;
+  :Nhấn "Save";
+  
+  |System|
+  :Gửi thông tin đến AI Backend;
+  :Hiển thị loading;
+  
+  if (Tạo thành công?) then (Thành công)
+    :AI sinh câu hỏi và câu trả lời mẫu;
+    :Lưu Interview Set vào database;
+    :Hiển thị thông báo thành công;
+    :Cập nhật danh sách Interview Sets;
+  else (Lỗi)
+    :Hiển thị thông báo lỗi;
+    :Cho phép thử lại;
+  endif
+  
+else (Không)
+  :Xem danh sách có sẵn;
+endif
+
+|User|
+:Chọn một Interview Set;
+
+if (Hành động?) then (Xem chi tiết)
+  |System|
+  :Hiển thị danh sách câu hỏi và câu trả lời;
+  
+  |User|
+  :Xem và học các câu hỏi;
+  
+else if (Hành động?) then (Xóa)
+  |User|
+  :Xác nhận xóa;
+  
+  |System|
+  :Xóa Interview Set;
+  :Cập nhật danh sách;
+  
+else (Start Mock Interview)
+  |User|
+  :Nhấn "Start Mock Interview";
+  
+  |System|
+  :Chuyển đến trang Mock Interview;
+  :Load Interview Set đã chọn;
+endif
+
+stop
+
+legend right
+  |= Ký hiệu |= Mô tả |
+  | Hình oval | Bắt đầu/Kết thúc |
+  | Hình chữ nhật | Hoạt động |
+  | Hình thoi | Điều kiện |
+  | Swimlane | Phân chia Actor |
+endlegend
+
+@enduml

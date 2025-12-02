@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { CVTemplate } from '../types/cv.types';
 import { TemplateInfo } from '../templates/templateData';
+import { Trophy, Check } from 'lucide-react';
 
 interface TemplatePreviewCardProps {
   template: TemplateInfo;
@@ -35,7 +36,7 @@ export default function TemplatePreviewCard({
       {/* Top Pick Badge */}
       {isTopPick && (
         <div className="absolute top-2 right-2 z-20 bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1 animate-pulse">
-          <span>🏆</span>
+          <Trophy className="w-3 h-3" />
           <span>AI Top Pick</span>
         </div>
       )}
@@ -43,7 +44,7 @@ export default function TemplatePreviewCard({
       {/* Selected Badge */}
       {isSelected && (
         <div className="absolute top-2 left-2 z-20 bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
-          <span>✓</span>
+          <Check className="w-3 h-3" />
           <span>Selected</span>
         </div>
       )}

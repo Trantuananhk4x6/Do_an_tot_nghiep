@@ -1,0 +1,135 @@
+@startuml sequence-diagram-prepare-hub
+title Sequence Diagram - Prepare Hub (Chuẩn bị phỏng vấn)
+skinparam backgroundColor #FEFEFE
+skinparam ParticipantBackgroundColor #E8F4FD
+skinparam ParticipantBorderColor #3498DB
+skinparam SequenceLifeLineBorderColor #95A5A6
+skinparam SequenceMessageAlign center
+
+actor "Người dùng" as User
+participant "Giao diện\nPrepare Hub" as UI
+participant "API\nPrepare Hub" as API
+participant "API\nResume" as ResumeAPI
+participant "AI Backend" as AI
+database "Database" as DB
+
+autonumber
+
+== Bước 1: Xem danh sách Interview Sets ==
+
+User -> UI: Chọn "Prepare Hub"
+activate UI
+UI -> API: GET /api/prepare-hub
+activate API
+API -> DB: Lấy Interview Sets của user
+DB --> API: Danh sách Interview Sets
+API --> UI: Interview Sets[]
+deactivate API
+
+UI --> User: Hiển thị danh sách Interview Sets
+
+== Bước 2: Tạo Interview Set mới ==
+
+User -> UI: Nhấn "Prepare Interview"
+UI -> ResumeAPI: GET /api/resume
+activate ResumeAPI
+ResumeAPI -> DB: Lấy danh sách CV của user
+DB --> ResumeAPI: Resumes[]
+ResumeAPI --> UI: Danh sách CV
+deactivate ResumeAPI
+
+UI --> User: Hiển thị Dialog với dropdown CV
+
+User -> UI: Chọn CV
+User -> UI: Nhập Company Name
+User -> UI: Nhập Position
+User -> UI: Nhập Job Description
+User -> UI: Chọn ngôn ngữ (VD: English)
+User -> UI: Nhấn "Save"
+
+UI -> API: POST /api/prepare-hub
+activate API
+note right of API
+  FormData:
+  - resumeId
+  - companyName
+  - position
+  - jobDescription
+  - language
+end note
+
+API -> DB: Lấy nội dung CV
+DB --> API: CV content
+
+API -> AI: Sinh câu hỏi phỏng vấn
+note right of AI
+  Input:
+  - CV content
+  - Job Description
+  - Position
+  - Company Name
+  
+  Output:
+  - 10-15 câu hỏi
+  - Câu trả lời mẫu cho mỗi câu
+end note
+
+AI --> API: Questions & Sample Answers
+
+API -> DB: Lưu Interview Set
+DB --> API: Success
+
+API --> UI: Success response
+deactivate API
+
+UI --> User: Thông báo "Questions generated successfully"
+UI -> UI: Refresh danh sách
+
+== Bước 3: Xem chi tiết Interview Set ==
+
+User -> UI: Click vào Interview Set
+UI --> User: Mở rộng hiển thị Q&A
+note right of User
+  **Q1:** Tell me about yourself
+  **A:** I am a Frontend Developer 
+  with 3 years of experience...
+  
+  **Q2:** Why do you want to work here?
+  **A:** I'm impressed by...
+end note
+
+== Bước 4: Xóa Interview Set ==
+
+User -> UI: Nhấn "Delete" trên Interview Set
+UI --> User: Xác nhận xóa
+User -> UI: Confirm
+
+UI -> API: DELETE /api/prepare-hub?Id={id}
+activate API
+API -> DB: Xóa Interview Set
+DB --> API: Success
+API --> UI: Success
+deactivate API
+
+UI --> User: Thông báo "Deleted successfully"
+UI -> UI: Cập nhật danh sách
+
+== Bước 5: Bắt đầu Mock Interview ==
+
+User -> UI: Nhấn "Start Mock Interview"
+UI -> UI: Lưu Interview Set ID
+UI --> User: Redirect đến /mock-interview
+
+deactivate UI
+
+legend right
+  |= Thành phần |= Mô tả |
+  | Người dùng | Actor chính |
+  | Giao diện Prepare Hub | Frontend React Component |
+  | API Prepare Hub | Backend xử lý Interview Sets |
+  | API Resume | Backend xử lý CV |
+  | AI Backend | AI sinh câu hỏi |
+  | Database | PostgreSQL lưu trữ dữ liệu |
+endlegend
+
+@enduml

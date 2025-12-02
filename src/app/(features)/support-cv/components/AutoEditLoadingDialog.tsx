@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Bot, FileText, Lightbulb, Sparkles, Target, CheckCircle, Clock } from 'lucide-react';
 
 interface AutoEditLoadingDialogProps {
   isOpen: boolean;
@@ -49,7 +50,7 @@ export default function AutoEditLoadingDialog({
             
             {/* Main Icon */}
             <div className="relative w-20 h-20 bg-gradient-to-br from-purple-600 via-blue-600 to-pink-600 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/50 animate-pulse-glow">
-              <span className="text-4xl animate-bounce-slow">🤖</span>
+              <Bot className="w-10 h-10 text-white animate-bounce-slow" />
             </div>
             
             {/* Status Indicator */}
@@ -63,8 +64,9 @@ export default function AutoEditLoadingDialog({
         <h3 className="text-3xl font-bold text-center gradient-text mb-2 animate-text-shimmer">
           AI Auto-Editing Your CV
         </h3>
-        <p className="text-gray-300 text-center text-sm mb-6 animate-fade-in-up">
-          ✨ Applying <span className="text-purple-400 font-semibold">STAR method</span> and optimizations...
+        <p className="text-gray-300 text-center text-sm mb-6 animate-fade-in-up flex items-center justify-center gap-2">
+          <Sparkles className="w-4 h-4 text-purple-400" />
+          Applying <span className="text-purple-400 font-semibold">STAR method</span> and optimizations...
         </p>
 
         {/* Enhanced Progress Bar with Wave Effect */}
@@ -102,27 +104,27 @@ export default function AutoEditLoadingDialog({
         {/* Enhanced Steps Checklist */}
         <div className="space-y-2 mb-6">
           <StepItem 
-            icon="📝" 
+            icon={<FileText className="w-5 h-5" />}
             label="Analyzing CV content" 
             status={progress > 5 ? 'complete' : progress > 0 ? 'active' : 'pending'} 
           />
           <StepItem 
-            icon="💡" 
+            icon={<Lightbulb className="w-5 h-5" />}
             label="Generating improvements" 
             status={progress > 35 ? 'complete' : progress > 10 ? 'active' : 'pending'} 
           />
           <StepItem 
-            icon="✨" 
+            icon={<Sparkles className="w-5 h-5" />}
             label="Applying STAR method" 
             status={progress > 65 ? 'complete' : progress > 35 ? 'active' : 'pending'} 
           />
           <StepItem 
-            icon="🎯" 
+            icon={<Target className="w-5 h-5" />}
             label="Adding metrics & action verbs" 
             status={progress > 90 ? 'complete' : progress > 65 ? 'active' : 'pending'} 
           />
           <StepItem 
-            icon="✅" 
+            icon={<CheckCircle className="w-5 h-5" />}
             label="Finalizing changes" 
             status={progress >= 100 ? 'complete' : progress > 90 ? 'active' : 'pending'} 
           />
@@ -133,7 +135,7 @@ export default function AutoEditLoadingDialog({
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-500/10 to-transparent animate-shimmer-slow" />
           <div className="relative flex items-center gap-3">
             <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center animate-pulse">
-              <span className="text-lg">⏱️</span>
+              <Clock className="w-5 h-5 text-purple-400" />
             </div>
             <div>
               <p className="text-xs font-semibold text-purple-300">Processing Time</p>
@@ -147,7 +149,7 @@ export default function AutoEditLoadingDialog({
 }
 
 interface StepItemProps {
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   status: 'pending' | 'active' | 'complete';
 }
@@ -172,13 +174,13 @@ function StepItem({ icon, label, status }: StepItemProps) {
       <div className={`
         relative flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-300
         ${status === 'complete' 
-          ? 'bg-green-500/30 scale-110' 
+          ? 'bg-green-500/30 scale-110 text-green-400' 
           : status === 'active' 
-          ? 'bg-purple-500/30 animate-bounce-subtle' 
-          : 'bg-gray-700/30'
+          ? 'bg-purple-500/30 animate-bounce-subtle text-purple-400' 
+          : 'bg-gray-700/30 text-gray-500'
         }
       `}>
-        <span className={`text-2xl ${status === 'active' ? 'animate-bounce-slow' : ''}`}>
+        <span className={status === 'active' ? 'animate-bounce-slow' : ''}>
           {icon}
         </span>
       </div>

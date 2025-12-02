@@ -1,0 +1,118 @@
+@startuml sequence-diagram-find-job
+title Sequence Diagram - Find Job (Tìm việc làm)
+skinparam backgroundColor #FEFEFE
+skinparam ParticipantBackgroundColor #E8F4FD
+skinparam ParticipantBorderColor #3498DB
+skinparam SequenceLifeLineBorderColor #95A5A6
+skinparam SequenceMessageAlign center
+
+actor "Người dùng" as User
+participant "Giao diện\nFind Job" as UI
+participant "CV Analyzer\nService" as CVService
+participant "Job Platforms\nService" as PlatformService
+participant "Market Insights\nService" as MarketService
+participant "AI Backend" as AI
+
+autonumber
+
+== Bước 1: Upload và phân tích CV ==
+
+User -> UI: Chọn "Find Job"
+activate UI
+UI --> User: Hiển thị giao diện Upload CV
+
+User -> UI: Upload file CV
+UI -> CVService: analyzeCVForJobSearch(cvText)
+activate CVService
+CVService -> AI: Phân tích CV
+AI --> CVService: Kết quả phân tích
+note right of CVService
+  Kết quả:
+  - mainField: "Frontend Developer"
+  - skills: ["React", "TypeScript", ...]
+  - experience: "2 years"
+  - detectedLocation: "Ho Chi Minh"
+end note
+CVService --> UI: CVAnalysisForJob
+deactivate CVService
+
+== Bước 2: Chọn ngành nghề ==
+
+UI --> User: Hiển thị ngành nghề gợi ý
+User -> UI: Chọn ngành nghề (VD: Frontend Developer)
+
+== Bước 3: Chọn cấp bậc ==
+
+UI --> User: Hiển thị các cấp bậc
+User -> UI: Chọn cấp bậc (VD: Junior)
+
+== Bước 4: Nhập Job Preferences ==
+
+UI --> User: Hiển thị form preferences
+User -> UI: Nhập thông tin:
+note right of User
+  - Work type: Remote/Hybrid
+  - Salary: 15-25M VND
+  - Location: Ho Chi Minh
+end note
+
+== Bước 5: Xem Market Insights (Tùy chọn) ==
+
+alt Người dùng muốn xem Market Insights
+    User -> UI: Nhấn "View Market Insights"
+    UI -> MarketService: getFieldMarketInsights(field)
+    activate MarketService
+    MarketService --> UI: Thông tin thị trường
+    deactivate MarketService
+    UI --> User: Hiển thị xu hướng lương, nhu cầu tuyển dụng
+end
+
+== Bước 6: Tạo link tìm việc ==
+
+UI -> UI: Tạo từ khóa: "Frontend Developer Junior"
+UI -> UI: Chuẩn hóa địa điểm
+
+UI -> PlatformService: getPlatformsByCountry(country)
+activate PlatformService
+PlatformService --> UI: Danh sách nền tảng
+note right of PlatformService
+  Vietnam:
+  - VietnamWorks
+  - TopCV
+  - ITviec
+  - CareerBuilder
+  
+  Global:
+  - LinkedIn
+  - Indeed
+  - Glassdoor
+end note
+deactivate PlatformService
+
+UI -> UI: Tạo URL với keyword và location
+note right of UI
+  VD: https://vietnamworks.com/
+  ?keyword=Frontend+Developer+Junior
+  &location=Ho+Chi+Minh
+end note
+
+UI --> User: Hiển thị danh sách link tìm việc
+
+== Bước 7: Truy cập trang tuyển dụng ==
+
+User -> UI: Nhấn vào link (VD: ITviec)
+UI --> User: Mở tab mới với trang tuyển dụng
+
+deactivate UI
+
+legend right
+  |= Thành phần |= Mô tả |
+  | Người dùng | Actor chính |
+  | Giao diện Find Job | Frontend React Component |
+  | CV Analyzer Service | Service phân tích CV |
+  | Job Platforms Service | Service quản lý nền tảng |
+  | Market Insights Service | Service thông tin thị trường |
+  | AI Backend | AI xử lý phân tích |
+endlegend
+
+@enduml

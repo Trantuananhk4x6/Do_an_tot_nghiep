@@ -1,6 +1,20 @@
 'use client';
 
 import React from 'react';
+import { 
+  Camera, 
+  User, 
+  Briefcase, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Linkedin, 
+  Globe, 
+  FileText,
+  X,
+  Lightbulb,
+  Github
+} from 'lucide-react';
 import { PersonalInfo } from '@/app/(features)/support-cv/types/cv.types';
 
 interface PersonalInfoSectionProps {
@@ -35,7 +49,7 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5" />
         <div className="relative z-10">
           <label className="block text-sm font-semibold text-purple-300 mb-4 flex items-center gap-2">
-            <span className="text-lg">📸</span>
+            <Camera className="w-5 h-5" />
             Profile Photo <span className="text-xs text-gray-400 font-normal">(Optional)</span>
           </label>
           <div className="flex items-center gap-6">
@@ -51,7 +65,7 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
                   className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110"
                   title="Remove photo"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             ) : (
@@ -67,8 +81,9 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
                   onChange={handleImageUpload}
                   className="hidden"
                 />
-                <div className="px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl hover:from-purple-600 hover:to-blue-600 transition-all inline-block font-semibold shadow-lg hover:shadow-xl hover:scale-105">
-                  📸 {data.profileImage ? 'Change Photo' : 'Upload Photo'}
+                <div className="px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl hover:from-purple-600 hover:to-blue-600 transition-all inline-flex items-center gap-2 font-semibold shadow-lg hover:shadow-xl hover:scale-105">
+                  <Camera className="w-4 h-4" />
+                  {data.profileImage ? 'Change Photo' : 'Upload Photo'}
                 </div>
               </label>
               <p className="text-xs text-gray-400 mt-3">
@@ -83,7 +98,7 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
       <div className="relative glass-effect border border-purple-500/30 rounded-xl p-6 group hover:border-purple-500/50 transition-all">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
         <label className="relative z-10 block text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
-          <span>👤</span> Full Name <span className="text-red-400 ml-1">*</span>
+          <User className="w-4 h-4" /> Full Name <span className="text-red-400 ml-1">*</span>
         </label>
         <input
           type="text"
@@ -98,7 +113,7 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
       <div className="relative glass-effect border border-purple-500/30 rounded-xl p-6 group hover:border-purple-500/50 transition-all">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
         <label className="relative z-10 block text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
-          <span>💼</span> Job Title <span className="text-red-400 ml-1">*</span>
+          <Briefcase className="w-4 h-4" /> Job Title <span className="text-red-400 ml-1">*</span>
         </label>
         <input
           type="text"
@@ -114,7 +129,7 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
         <div className="relative glass-effect border border-purple-500/30 rounded-xl p-6 group hover:border-purple-500/50 transition-all">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
           <label className="relative z-10 block text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
-            <span>📧</span> Email <span className="text-red-400 ml-1">*</span>
+            <Mail className="w-4 h-4" /> Email <span className="text-red-400 ml-1">*</span>
           </label>
           <input
             type="email"
@@ -127,7 +142,7 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
         <div className="relative glass-effect border border-purple-500/30 rounded-xl p-6 group hover:border-purple-500/50 transition-all">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
           <label className="relative z-10 block text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
-            <span>📱</span> Phone <span className="text-red-400 ml-1">*</span>
+            <Phone className="w-4 h-4" /> Phone <span className="text-red-400 ml-1">*</span>
           </label>
           <input
             type="tel"
@@ -143,7 +158,7 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
       <div className="relative glass-effect border border-purple-500/30 rounded-xl p-6 group hover:border-purple-500/50 transition-all">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
         <label className="relative z-10 block text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
-          <span>📍</span> Location <span className="text-xs text-gray-400 font-normal">(City, Country)</span>
+          <MapPin className="w-4 h-4" /> Location <span className="text-xs text-gray-400 font-normal">(City, Country)</span>
         </label>
         <input
           type="text"
@@ -154,12 +169,12 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
         />
       </div>
 
-      {/* LinkedIn & Website */}
+      {/* LinkedIn & GitHub */}
       <div className="grid grid-cols-2 gap-4">
         <div className="relative glass-effect border border-purple-500/30 rounded-xl p-6 group hover:border-purple-500/50 transition-all">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
           <label className="relative z-10 block text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
-            <span>🔗</span> LinkedIn <span className="text-xs text-gray-400 font-normal">(Optional)</span>
+            <Linkedin className="w-4 h-4" /> LinkedIn <span className="text-xs text-gray-400 font-normal">(Optional)</span>
           </label>
           <input
             type="url"
@@ -172,23 +187,38 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
         <div className="relative glass-effect border border-purple-500/30 rounded-xl p-6 group hover:border-purple-500/50 transition-all">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
           <label className="relative z-10 block text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
-            <span>🌐</span> Website <span className="text-xs text-gray-400 font-normal">(Optional)</span>
+            <Github className="w-4 h-4" /> GitHub <span className="text-xs text-gray-400 font-normal">(Optional)</span>
           </label>
           <input
             type="url"
-            value={data.website}
-            onChange={(e) => handleChange('website', e.target.value)}
-            placeholder="e.g., johndoe.com"
+            value={data.github || ''}
+            onChange={(e) => handleChange('github', e.target.value)}
+            placeholder="e.g., github.com/johndoe"
             className="relative z-10 w-full px-4 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:bg-white/10 outline-none transition-all"
           />
         </div>
+      </div>
+
+      {/* Website */}
+      <div className="relative glass-effect border border-purple-500/30 rounded-xl p-6 group hover:border-purple-500/50 transition-all">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <label className="relative z-10 block text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
+          <Globe className="w-4 h-4" /> Website <span className="text-xs text-gray-400 font-normal">(Optional)</span>
+        </label>
+        <input
+          type="url"
+          value={data.website}
+          onChange={(e) => handleChange('website', e.target.value)}
+          placeholder="e.g., johndoe.com"
+          className="relative z-10 w-full px-4 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:bg-white/10 outline-none transition-all"
+        />
       </div>
 
       {/* Summary */}
       <div className="relative glass-effect border border-purple-500/30 rounded-xl p-6 group hover:border-purple-500/50 transition-all">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
         <label className="relative z-10 block text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
-          <span>📝</span> Professional Summary
+          <FileText className="w-4 h-4" /> Professional Summary
         </label>
         <textarea
           value={data.summary}
@@ -197,8 +227,8 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
           rows={5}
           className="relative z-10 w-full px-4 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:bg-white/10 outline-none transition-all resize-none"
         />
-        <p className="relative z-10 text-xs text-gray-400 mt-2">
-          💡 Tip: Focus on what makes you unique and your career achievements
+        <p className="relative z-10 text-xs text-gray-400 mt-2 flex items-center gap-1">
+          <Lightbulb className="w-3 h-3" /> Tip: Focus on what makes you unique and your career achievements
         </p>
       </div>
     </div>

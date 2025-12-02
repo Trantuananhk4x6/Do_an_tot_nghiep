@@ -1,0 +1,117 @@
+@startuml sequence-diagram-quiz
+title Sequence Diagram - Quiz (Đánh giá kỹ năng)
+skinparam backgroundColor #FEFEFE
+skinparam ParticipantBackgroundColor #E8F4FD
+skinparam ParticipantBorderColor #3498DB
+skinparam SequenceLifeLineBorderColor #95A5A6
+skinparam SequenceMessageAlign center
+
+actor "Người dùng" as User
+participant "Giao diện\nQuiz" as UI
+participant "CV Analysis\nService" as CVService
+participant "Question\nService" as QService
+participant "Feedback\nService" as FService
+participant "AI Backend\n(Gemini)" as AI
+
+autonumber
+
+== Bước 1: Upload CV (Tùy chọn) ==
+
+User -> UI: Chọn "Quiz"
+activate UI
+UI --> User: Hiển thị bước Upload CV
+
+alt Có upload CV
+    User -> UI: Upload file CV
+    UI -> CVService: Phân tích CV
+    activate CVService
+    CVService -> CVService: Trích xuất text từ file
+    CVService -> AI: Phân tích kỹ năng và ngành nghề
+    AI --> CVService: Kết quả phân tích
+    CVService --> UI: Ngành nghề gợi ý + Match score
+    deactivate CVService
+else Bỏ qua CV
+    User -> UI: Nhấn "Bỏ qua"
+end
+
+== Bước 2-5: Chọn cấu hình Quiz ==
+
+UI --> User: Hiển thị danh sách ngành nghề
+User -> UI: Chọn ngành nghề (VD: Frontend Developer)
+
+UI --> User: Hiển thị cấp bậc
+User -> UI: Chọn cấp bậc (VD: Junior)
+
+UI --> User: Hiển thị độ khó
+User -> UI: Chọn độ khó (VD: Medium)
+
+UI --> User: Hiển thị tùy chọn số câu
+User -> UI: Chọn số câu hỏi (VD: 10 câu)
+
+== Bước 6: Tạo câu hỏi ==
+
+User -> UI: Nhấn "Bắt đầu Quiz"
+UI --> User: Hiển thị loading
+
+UI -> QService: Tạo câu hỏi
+activate QService
+QService -> AI: generateQuestionsWithAI()
+note right of AI
+  Params:
+  - Field: Frontend Developer
+  - Level: Junior
+  - Difficulty: Medium
+  - Count: 10
+  - CV Analysis (nếu có)
+end note
+AI --> QService: Danh sách câu hỏi (10 câu MCQ)
+QService --> UI: Câu hỏi đã format
+deactivate QService
+
+== Bước 7: Làm Quiz ==
+
+UI --> User: Hiển thị câu hỏi #1
+
+loop Cho mỗi câu hỏi
+    User -> UI: Chọn đáp án
+    UI -> UI: Ghi nhận đáp án
+    UI --> User: Hiển thị câu hỏi tiếp theo
+end
+
+== Bước 8: Tính điểm và Feedback ==
+
+UI -> UI: Tính điểm (đúng/tổng)
+UI -> FService: Tạo feedback chi tiết
+activate FService
+FService -> AI: generateComprehensiveFeedback()
+note right of AI
+  Params:
+  - Câu hỏi & đáp án đã chọn
+  - Điểm số
+  - Level & Field
+end note
+AI --> FService: Feedback chi tiết
+FService --> UI: Kết quả đánh giá
+deactivate FService
+
+UI --> User: Hiển thị kết quả
+note right of User
+  - Điểm số: 7/10 (70%)
+  - Phân tích từng câu
+  - Điểm mạnh/yếu
+  - Tài liệu học tập gợi ý
+end note
+
+deactivate UI
+
+legend right
+  |= Thành phần |= Mô tả |
+  | Người dùng | Actor chính |
+  | Giao diện Quiz | Frontend React Component |
+  | CV Analysis Service | Service phân tích CV |
+  | Question Service | Service tạo câu hỏi |
+  | Feedback Service | Service tạo feedback |
+  | AI Backend (Gemini) | Google Gemini API |
+endlegend
+
+@enduml

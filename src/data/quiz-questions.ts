@@ -2,28 +2,44 @@
 
 export type QuizLevel = 'low' | 'mid' | 'high';
 
-// Original categories (10)
+// Comprehensive categories covering all IT positions
 export type QuizCategory = 
-  // Programming & Development (8)
-  | 'javascript' | 'typescript' | 'react' | 'nodejs' | 'python' | 'java'
-  | 'frontend' | 'mobile-dev' | 'game-dev' | 'embedded'
-  // Infrastructure & Cloud (5)
-  | 'system-admin' | 'network' | 'cloud' | 'infrastructure' | 'devops' | 'sre'
-  // Cybersecurity (4)
-  | 'cybersecurity' | 'penetration-testing' | 'security-engineering' | 'forensics'
-  // Data & AI (6)
+  // Core Programming Languages (14)
+  | 'javascript' | 'typescript' | 'python' | 'java' | 'golang' | 'rust' 
+  | 'php' | 'ruby' | 'swift' | 'kotlin' | 'dart' | 'csharp' | 'c-cpp' | 'sql'
+  // Frontend Development (8)
+  | 'frontend' | 'react' | 'vue' | 'angular' | 'nextjs' | 'web' | 'web-design' | 'html-css'
+  // Backend Development (6)
+  | 'backend' | 'nodejs' | 'rails' | 'dotnet' | 'enterprise' | 'rest-api'
+  // Full Stack (2)
+  | 'fullstack' | 'programming'
+  // Mobile Development (7)
+  | 'mobile-dev' | 'mobile' | 'ios' | 'android' | 'flutter' | 'react-native' | 'cross-platform'
+  // Game & Specialized Development (9)
+  | 'game-dev' | 'unity' | 'unreal' | 'ar-vr' | '3d' | '3d-art' | 'embedded' | 'systems' | 'hardware'
+  // Blockchain & Web3 (3)
+  | 'blockchain' | 'web3' | 'smart-contracts'
+  // Infrastructure & Cloud (8)
+  | 'system-admin' | 'network' | 'networking' | 'cloud' | 'infrastructure' | 'devops' | 'sre' | 'iot'
+  // Cybersecurity (5)
+  | 'cybersecurity' | 'penetration-testing' | 'security-engineering' | 'forensics' | 'security'
+  // Data & AI (8)
   | 'database' | 'data-analysis' | 'data-science' | 'data-engineering' 
-  | 'machine-learning' | 'ai-engineering'
-  // Design & UX (3)
-  | 'ui-ux-design' | 'web-design' | 'product-design'
-  // Management (4)
-  | 'project-management' | 'product-management' | 'agile-scrum' | 'business-analysis'
+  | 'machine-learning' | 'ai-engineering' | 'big-data' | 'analytics'
+  // Design & UX (9)
+  | 'ui-ux-design' | 'product-design' | 'graphic-design' | 'motion-design' | 'visual-design'
+  | 'animation' | 'video' | 'visual-effects' | '3d-modeling'
+  // Management & Business (6)
+  | 'project-management' | 'product-management' | 'agile-scrum' | 'business-analysis' 
+  | 'solutions-architecture' | 'architecture' | 'requirements'
   // Testing & QA (3)
   | 'qa-testing' | 'automation-testing' | 'test-management'
-  // Support (2)
+  // Support & Operations (2)
   | 'it-support' | 'technical-support'
   // Research & Advanced (5)
   | 'algorithms' | 'system-design' | 'computer-vision' | 'nlp' | 'robotics'
+  // Software Engineering General (4)
+  | 'software-engineering' | 'scripting' | 'coding-fundamentals' | 'documentation'
   // Other (3)
   | 'technical-writing' | 'it-consulting' | 'it-audit';
 

@@ -29,7 +29,14 @@ export default function ProfilePage() {
   const { user } = useUser();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const fallbackName = user?.fullName || user?.primaryEmailAddress || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || '';
+  const fallbackName =
+    typeof user?.fullName === 'string'
+      ? user.fullName
+      : typeof user?.primaryEmailAddress === 'string'
+      ? user.primaryEmailAddress
+      : typeof user?.emailAddresses?.[0]?.emailAddress === 'string'
+      ? user.emailAddresses[0].emailAddress.split('@')[0]
+      : '';
   const [formData, setFormData] = useState({
     fullName: fallbackName,
     currentPosition: '',

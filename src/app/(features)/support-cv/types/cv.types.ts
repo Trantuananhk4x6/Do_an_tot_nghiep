@@ -171,8 +171,9 @@ export interface Volunteer {
   role: string;
   startDate: string;
   endDate?: string;
-  current: boolean;
-  description: string;
+  current?: boolean;
+  description?: string;
+  location?: string;
 }
 
 export interface Reference {

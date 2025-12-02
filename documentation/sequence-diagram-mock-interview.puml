@@ -1,0 +1,101 @@
+@startuml sequence-diagram-mock-interview
+title Sequence Diagram - Mock Interview
+skinparam backgroundColor #FEFEFE
+skinparam ParticipantBackgroundColor #E8F4FD
+skinparam ParticipantBorderColor #3498DB
+skinparam SequenceLifeLineBorderColor #95A5A6
+skinparam SequenceMessageAlign center
+
+actor "Người dùng" as User
+participant "Giao diện\nMock Interview" as UI
+participant "Speech Recognition\n& Synthesis" as Speech
+participant "D-ID Avatar\nService" as DID
+participant "API\nMock Interview" as API
+database "Database" as DB
+
+autonumber
+
+== Khởi tạo phỏng vấn ==
+
+User -> UI: Chọn "Mock Interview"
+activate UI
+UI -> API: GET /api/prepare-hub
+activate API
+API -> DB: Lấy danh sách Interview Sets
+DB --> API: Danh sách Interview Sets
+API --> UI: Danh sách Interview Sets
+deactivate API
+UI --> User: Hiển thị Modal chọn Interview Set
+
+User -> UI: Chọn Interview Set
+UI -> API: GET /api/prepare-hub/{id}
+activate API
+API -> DB: Lấy câu hỏi và voice info
+DB --> API: Dữ liệu Interview Set
+API --> UI: Câu hỏi + Voice config
+deactivate API
+
+User -> UI: Nhấn "Start Interview"
+UI -> UI: Khởi tạo Interview Session
+UI -> UI: Yêu cầu quyền Camera
+UI -> UI: Bắt đầu đếm thời gian
+
+== Vòng lặp câu hỏi ==
+
+loop Cho mỗi câu hỏi
+    UI -> Speech: Đọc câu hỏi (TTS)
+    activate Speech
+    Speech -> DID: Tạo video avatar nói
+    activate DID
+    DID --> UI: Video avatar
+    deactivate DID
+    Speech --> UI: Audio câu hỏi
+    deactivate Speech
+    UI --> User: Hiển thị avatar + Phát audio
+
+    User -> UI: Trả lời bằng giọng nói
+    UI -> Speech: Bắt đầu Speech Recognition
+    activate Speech
+    Speech --> UI: Transcription câu trả lời
+    deactivate Speech
+    UI -> UI: Lưu câu trả lời vào Session
+
+    alt Còn câu hỏi tiếp theo
+        UI -> Speech: Đọc câu chuyển tiếp
+        Speech --> UI: Audio chuyển tiếp
+    end
+end
+
+== Kết thúc và đánh giá ==
+
+UI -> Speech: Đọc lời kết thúc phỏng vấn
+Speech --> User: "Cảm ơn bạn đã tham gia..."
+
+UI -> API: POST /api/assess-interview
+activate API
+note right of API
+  Gửi:
+  - Interview Session
+  - Câu hỏi & trả lời
+  - Thời gian phỏng vấn
+end note
+API -> API: AI đánh giá phỏng vấn
+API --> UI: Kết quả đánh giá
+deactivate API
+
+UI -> UI: Lưu vào sessionStorage
+UI -> UI: Chuyển đến /assessment-report
+UI --> User: Hiển thị báo cáo đánh giá
+
+deactivate UI
+
+legend right
+  |= Thành phần |= Mô tả |
+  | Người dùng | Actor chính |
+  | Giao diện Mock Interview | Frontend React Component |
+  | Speech Recognition & Synthesis | Web Speech API + TTS |
+  | D-ID Avatar Service | Service tạo video avatar |
+  | API Mock Interview | Backend xử lý đánh giá |
+endlegend
+
+@enduml

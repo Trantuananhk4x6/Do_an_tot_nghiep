@@ -352,51 +352,53 @@ const Page = () => {
   return (
     <>
       <NeuralNetworkBg />
-      <div className="relative z-10 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-6 h-full p-6">
+      <div className="relative z-10 flex flex-col lg:flex-row gap-4 lg:gap-6 h-full p-3 sm:p-4 lg:p-6 overflow-y-auto lg:overflow-hidden">
       {/* Left Panel - Video & Transcript */}
-      <div className="flex flex-col space-y-4">
+      <div className="flex flex-col space-y-3 sm:space-y-4 lg:w-1/2">
         {/* Header */}
-        <div className="glass-effect rounded-2xl p-4 border border-white/10">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold gradient-text">Live Interview</h1>
-            <div className="space-x-2 flex items-center">
+        <div className="glass-effect rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/10">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+            <h1 className="text-xl sm:text-2xl font-bold gradient-text">Live Interview</h1>
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
               {isSharing && (
-                <div className="ml-4 text-lg font-bold text-purple-400 animate-pulse-glow">
+                <div className="text-base sm:text-lg font-bold text-purple-400 animate-pulse-glow">
                   {formatTime(time)}
                 </div>
               )}
-              {!isSharing ? (
+              <div className="flex gap-2">
+                {!isSharing ? (
+                  <Button
+                    id="start"
+                    onClick={startTranscription}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl shadow-neon hover:shadow-neon-hover transition-all duration-300 text-sm sm:text-base"
+                  >
+                    Start
+                  </Button>
+                ) : (
+                  <Button
+                    id="stop"
+                    onClick={stopTranscription}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl shadow-neon hover:shadow-neon-hover transition-all duration-300 text-sm sm:text-base"
+                  >
+                    Stop
+                  </Button>
+                )}
                 <Button
-                  id="start"
-                  onClick={startTranscription}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-xl shadow-neon hover:shadow-neon-hover transition-all duration-300"
+                  id="clear"
+                  onClick={clearTranscription}
+                  className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl transition-all duration-300 text-sm sm:text-base"
                 >
-                  Start
+                  Delete
                 </Button>
-              ) : (
-                <Button
-                  id="stop"
-                  onClick={stopTranscription}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-xl shadow-neon hover:shadow-neon-hover transition-all duration-300"
-                >
-                  Stop
-                </Button>
-              )}
-              <Button
-                id="clear"
-                onClick={clearTranscription}
-                className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 hover:border-red-500/50 px-4 py-2 rounded-xl transition-all duration-300"
-              >
-                Delete
-              </Button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Mode Selector */}
-        <div className="glass-effect rounded-2xl p-4 border border-white/10">
-          <h3 className="text-sm font-medium text-gray-300 mb-3">AI Response Mode</h3>
-          <div className="flex gap-3">
+        <div className="glass-effect rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/10">
+          <h3 className="text-xs sm:text-sm font-medium text-gray-300 mb-2 sm:mb-3">AI Response Mode</h3>
+          <div className="flex gap-2 sm:gap-3">
             <button
               onClick={() => {
                 setMode("auto");
@@ -405,14 +407,14 @@ const Page = () => {
                 // Don't reset lastProcessedLength - allow processing of existing text
                 console.log("[Mode Switch] Switched to Auto mode");
               }}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+              className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl font-medium transition-all duration-300 text-xs sm:text-sm ${
                 mode === "auto"
                   ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/30 scale-105"
                   : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-300 border border-white/10"
               }`}
             >
-              <Zap className={`h-5 w-5 ${mode === "auto" ? "animate-pulse" : ""}`} />
-              <span>Auto Mode</span>
+              <Zap className={`h-4 w-4 sm:h-5 sm:w-5 ${mode === "auto" ? "animate-pulse" : ""}`} />
+              <span>Auto</span>
             </button>
             <button
               onClick={() => {
@@ -420,17 +422,17 @@ const Page = () => {
                 setSelectedText("");
                 console.log("[Mode Switch] Switched to Manual mode");
               }}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+              className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl font-medium transition-all duration-300 text-xs sm:text-sm ${
                 mode === "manual"
                   ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/30 scale-105"
                   : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-300 border border-white/10"
               }`}
             >
-              <Hand className="h-5 w-5" />
-              <span>Manual Mode</span>
+              <Hand className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span>Manual</span>
             </button>
           </div>
-          <p className="text-xs text-gray-500 mt-3 text-center">
+          <p className="text-[10px] sm:text-xs text-gray-500 mt-2 sm:mt-3 text-center">
             {mode === "auto" 
               ? "🤖 Questions with '?' → Instant AI response (0.2s) | Others → Wait 0.5s"
               : "✋ Select text manually and click 'Ask AI' button"}
@@ -438,31 +440,31 @@ const Page = () => {
         </div>
 
         {/* Video Container */}
-        <div className="glass-effect rounded-2xl p-4 border border-white/10">
+        <div className="glass-effect rounded-xl sm:rounded-2xl p-2 sm:p-4 border border-white/10">
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
-            className="w-full rounded-xl border border-purple-500/30 bg-black shadow-neon"
+            className="w-full rounded-lg sm:rounded-xl border border-purple-500/30 bg-black shadow-neon aspect-video"
           ></video>
         </div>
 
         {/* Transcript Section */}
-        <div className="glass-effect flex-1 overflow-auto rounded-2xl p-4 border border-white/10">
-          <h2 className="text-base font-medium gradient-text mb-3 flex items-center gap-2">
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="glass-effect flex-1 overflow-auto rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/10">
+          <h2 className="text-sm sm:text-base font-medium gradient-text mb-2 sm:mb-3 flex items-center gap-2">
+            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             Transcript from your interview
           </h2>
-          <div id="transcript" ref={transcriptContainerRef} onMouseUp={handleTextSelection} className="overflow-auto max-h-[28rem]">
-            <div className={`bg-white/5 backdrop-blur-sm p-4 rounded-xl border min-h-[200px] transition-all duration-300 ${
+          <div id="transcript" ref={transcriptContainerRef} onMouseUp={handleTextSelection} className="overflow-auto max-h-48 sm:max-h-64 lg:max-h-[28rem]">
+            <div className={`bg-white/5 backdrop-blur-sm p-3 sm:p-4 rounded-lg sm:rounded-xl border min-h-[120px] sm:min-h-[200px] transition-all duration-300 ${
               mode === "manual" && selectedText 
                 ? "border-purple-500/50 shadow-lg shadow-purple-500/20" 
                 : "border-white/10"
             }`}>
-              <div className="text-gray-300 leading-relaxed" style={{ userSelect: mode === "manual" ? "text" : "none" }}>
+              <div className="text-gray-300 leading-relaxed text-sm sm:text-base" style={{ userSelect: mode === "manual" ? "text" : "none" }}>
                 {transcript}
               </div>
             </div>
@@ -470,7 +472,7 @@ const Page = () => {
           {mode === "manual" && selectedText && (
             <Button 
               onClick={askAi} 
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl mt-3 shadow-neon hover:shadow-neon-hover transition-all duration-300 w-full animate-fade-in"
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg sm:rounded-xl mt-2 sm:mt-3 shadow-neon hover:shadow-neon-hover transition-all duration-300 w-full animate-fade-in text-sm sm:text-base"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -495,9 +497,10 @@ const Page = () => {
       </div>
 
       {/* Right Panel - AI Assistant */}
-      <div className="glass-effect rounded-2xl p-6 border border-white/10 overflow-auto">
-        <h2 className="text-base font-bold gradient-text mb-4 flex items-center gap-2">
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="glass-effect rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/10 overflow-auto lg:w-1/2 min-h-[300px] lg:min-h-0"
+           style={{ maxHeight: 'calc(100vh - 100px)' }}>
+        <h2 className="text-sm sm:text-base font-bold gradient-text mb-3 sm:mb-4 flex items-center gap-2">
+          <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
           </svg>
           Interview with AI
@@ -512,11 +515,11 @@ const Page = () => {
           )}
         </h2>
         {error && (
-          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+          <div className="mb-3 sm:mb-4 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs sm:text-sm">
             <strong>Error:</strong> {error.message}
           </div>
         )}
-        <div className="mt-4 space-y-4">
+        <div className="mt-3 sm:mt-4 space-y-3 sm:space-y-4">
           {messages.length === 0 ? (
             <div className="text-center py-12">
               <div className="inline-block p-4 rounded-2xl bg-purple-500/10 mb-4">
