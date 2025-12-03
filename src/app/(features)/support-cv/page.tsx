@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { CVBuilderState, CVTemplate, CVData } from '@/app/(features)/support-cv/types/cv.types';
+import { CVBuilderProvider } from '@/app/(features)/support-cv/contexts/CVBuilderContext';
 import CVUploader from '@/app/(features)/support-cv/components/CVUploader';
 import CVReviewPanel from '@/app/(features)/support-cv/components/CVReviewPanel';
 import CVAutoEditComparison from '@/app/(features)/support-cv/components/CVAutoEditComparison';
@@ -237,6 +238,7 @@ export default function SupportCVPage() {
   };
 
   return (
+    <CVBuilderProvider>
     <div className="relative min-h-screen">
       <Animated3DBackground />
       
@@ -603,5 +605,6 @@ export default function SupportCVPage() {
       {/* Queue Status Indicator */}
       <QueueStatus />
     </div>
+    </CVBuilderProvider>
   );
 }
