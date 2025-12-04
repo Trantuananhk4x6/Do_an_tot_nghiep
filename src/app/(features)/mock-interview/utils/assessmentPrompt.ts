@@ -1,10 +1,165 @@
 import { InterviewSession, InterviewerProfile } from "../types/assessment";
 
+// Get interviewer-specific scoring criteria
+function getInterviewerSpecificCriteria(interviewer: InterviewerProfile): string {
+  const title = interviewer.title?.toLowerCase() || "";
+  const focusAreas = interviewer.focusAreas || [];
+  
+  // HR/Behavioral focus
+  if (title.includes("hr") || interviewer.expertise === "behavioral-assessment") {
+    return `
+### INTERVIEWER TYPE: HR/Behavioral Assessment
+Since this interview was conducted by an HR professional (${interviewer.name}), focus scoring on:
+
+**Primary Evaluation Criteria (weighted higher):**
+- Behavioral responses using STAR method (Situation, Task, Action, Result)
+- Soft skills: communication, teamwork, adaptability, conflict resolution
+- Cultural fit and company values alignment
+- Career motivation and growth mindset
+- Interpersonal skills and emotional intelligence
+
+**Secondary Criteria:**
+- General professionalism
+- Enthusiasm and engagement
+- Self-awareness
+
+**Scoring Adjustments:**
+- Professionalism weight: 25% (instead of 15%)
+- Communication weight: 25% (instead of 20%)
+- Technical Skills weight: 15% (instead of 25%)
+- Other categories adjusted accordingly
+`;
+  }
+
+  // Technical Lead focus
+  if (title.includes("technical lead") || title.includes("tech lead")) {
+    return `
+### INTERVIEWER TYPE: Technical Leadership Assessment
+Since this interview was conducted by a Technical Lead (${interviewer.name}), focus scoring on:
+
+**Primary Evaluation Criteria (weighted higher):**
+- System design and architecture decisions
+- Code quality awareness and best practices
+- Technical decision-making with trade-off analysis
+- Mentoring and knowledge sharing abilities
+- Technical debt management understanding
+
+**Secondary Criteria:**
+- Leadership in technical contexts
+- Collaboration with team members
+- Problem-solving depth
+
+**Scoring Adjustments:**
+- Technical Skills weight: 35% (instead of 25%)
+- Problem-Solving weight: 25% (instead of 25%)
+- Experience weight: 20% (instead of 15%)
+- Communication and Professionalism: 10% each
+`;
+  }
+
+  // Engineering Manager focus
+  if (title.includes("manager") && (title.includes("engineering") || title.includes("software"))) {
+    return `
+### INTERVIEWER TYPE: Engineering Management Assessment
+Since this interview was conducted by an Engineering Manager (${interviewer.name}), focus scoring on:
+
+**Primary Evaluation Criteria (weighted higher):**
+- Team leadership and people management
+- Project planning and execution abilities
+- Performance management and feedback skills
+- Cross-functional collaboration
+- Strategic thinking and prioritization
+
+**Secondary Criteria:**
+- Technical knowledge sufficient for leadership
+- Conflict resolution skills
+- Hiring and team building experience
+
+**Scoring Adjustments:**
+- Professionalism weight: 25% (instead of 15%)
+- Communication weight: 25% (instead of 20%)
+- Problem-Solving weight: 20% (instead of 25%)
+- Technical Skills weight: 15% (instead of 25%)
+- Experience weight: 15%
+`;
+  }
+
+  // Product Manager focus
+  if (title.includes("product")) {
+    return `
+### INTERVIEWER TYPE: Product Management Assessment
+Since this interview was conducted by a Product Manager (${interviewer.name}), focus scoring on:
+
+**Primary Evaluation Criteria (weighted higher):**
+- Product sense and user empathy
+- Prioritization and roadmap thinking
+- Cross-functional collaboration with engineering
+- Data-driven decision making
+- Stakeholder management
+
+**Secondary Criteria:**
+- Technical understanding (enough to work with engineers)
+- Customer problem-solving approaches
+- Strategic thinking
+
+**Scoring Adjustments:**
+- Communication weight: 30% (instead of 20%)
+- Problem-Solving weight: 25% (instead of 25%)
+- Professionalism weight: 20% (instead of 15%)
+- Technical Skills weight: 15% (instead of 25%)
+- Experience weight: 10%
+`;
+  }
+
+  // Data Scientist focus
+  if (title.includes("data") && (title.includes("scientist") || title.includes("analyst"))) {
+    return `
+### INTERVIEWER TYPE: Data Science Assessment
+Since this interview was conducted by a Data Scientist (${interviewer.name}), focus scoring on:
+
+**Primary Evaluation Criteria (weighted higher):**
+- Statistical analysis and methodology
+- Machine learning knowledge
+- Data pipeline understanding
+- Experimental design (A/B testing)
+- Data storytelling and visualization
+
+**Secondary Criteria:**
+- Programming skills (Python, SQL, R)
+- Analytical thinking
+- Communication of technical findings
+
+**Scoring Adjustments:**
+- Technical Skills weight: 30% (instead of 25%)
+- Problem-Solving weight: 30% (instead of 25%)
+- Communication weight: 20% (instead of 20%)
+- Experience weight: 10% (instead of 15%)
+- Professionalism weight: 10% (instead of 15%)
+`;
+  }
+
+  // Default - Technical focus
+  return `
+### INTERVIEWER TYPE: Technical Assessment
+Focus Areas: ${focusAreas.join(", ") || "General Technical Skills"}
+
+**Standard Evaluation Criteria:**
+- Technical Skills: 25%
+- Problem-Solving: 25%
+- Communication: 20%
+- Experience: 15%
+- Professionalism: 15%
+`;
+}
+
 /**
  * Build AI prompt for interview assessment
  */
 export function buildAssessmentPrompt(session: InterviewSession): string {
   const { interviewer, transcript, duration, questionsAsked, language = 'en' } = session;
+  
+  // Get interviewer-specific criteria
+  const interviewerCriteria = getInterviewerSpecificCriteria(interviewer);
   
   // Language detection for output
   const languageInstruction = language === 'vi' 
@@ -56,6 +211,8 @@ ${!hasAnswer ? '\n⚠️ WARNING: Candidate provided NO valid answer (empty or t
 
   return `You are an expert technical interviewer conducting a comprehensive performance assessment.
 ${languageInstruction}
+
+${interviewerCriteria}
 
 ## Interview Context
 

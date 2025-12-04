@@ -97,6 +97,11 @@ const MockInterviewPage = () => {
   const audioManager = useRef(new AudioManager());
   const speechSynthesis = useRef(SpeechSynthesisManager.getInstance());
   
+  // ✅ NEW: Loading states for better UX
+  const [isLoadingInterview, setIsLoadingInterview] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
+  const [isGeneratingAssessment, setIsGeneratingAssessment] = useState(false);
+  
   // ✅ NEW: Interview session tracking for AI assessment
   const [interviewSession, setInterviewSession] = useState<InterviewSession | null>(null);
   const interviewStartTime = useRef<number>(0);
@@ -565,7 +570,15 @@ const MockInterviewPage = () => {
   const handleInterviewSetup = useCallback(
     async (voice: Voice, interviewId: string) => {
       try {
+        // ✅ Show loading screen
+        setIsLoadingInterview(true);
+        setLoadingMessage("Preparing your interview...");
+        
         console.log('⚙️ Setting up interview with ID:', interviewId);
+        console.log('👤 Selected Interviewer:', voice.name, '-', voice.title);
+        console.log('🎯 Focus Areas:', voice.focusAreas);
+        
+        setLoadingMessage(`Setting up interview with ${voice.name}...`);
         
         // Fetch interview set to get language
         const interviewSetResponse = await axios.get(`/api/prepare-hub?Id=${interviewId}`);
@@ -576,16 +589,60 @@ const MockInterviewPage = () => {
         const language = interviewSet?.language || 'en';
         console.log('🌐 Interview language:', language);
         setInterviewLanguage(language);
+        setSelectedVoice(voice);
         
-        // Fetch questions
+        // ✅ NEW: Generate questions based on interviewer type
+        // Different interviewers ask different types of questions!
+        setLoadingMessage(`${voice.name} is preparing questions for you...`);
+        console.log('🤖 Generating interviewer-specific questions...');
+        
+        try {
+          const interviewerResponse = await axios.post('/api/interview-set/generate-for-interviewer', {
+            interviewSetId: interviewId,
+            interviewer: {
+              id: voice.id,
+              name: voice.name,
+              title: voice.title,
+              expertise: voice.expertise,
+              yearsOfExperience: voice.yearsOfExperience,
+              interviewStyle: voice.interviewStyle,
+              focusAreas: voice.focusAreas,
+              questionTypes: voice.questionTypes,
+              personality: voice.personality
+            }
+          });
+          
+          if (interviewerResponse.data && interviewerResponse.data.length > 0) {
+            console.log('✅ Generated interviewer-specific questions:', interviewerResponse.data.length);
+            console.log('📝 Question types:', interviewerResponse.data.map((q: any) => q.category));
+            
+            // ✅ FIX: Tắt loading TRƯỚC khi AI bắt đầu nói
+            setIsLoadingInterview(false);
+            setLoadingMessage("");
+            
+            await handleStart(interviewerResponse.data, language);
+            return;
+          }
+        } catch (interviewerError) {
+          console.warn('⚠️ Could not generate interviewer-specific questions, falling back to default:', interviewerError);
+        }
+        
+        // Fallback: Fetch default questions if interviewer-specific generation fails
+        setLoadingMessage("Loading interview questions...");
+        console.log('📥 Fetching default questions as fallback...');
         const response = await axios.get(`/api/interview-set?id=${interviewId}`);
         console.log('📥 Received questions from API:', response.data);
         
-        setSelectedVoice(voice);
+        // ✅ FIX: Tắt loading TRƯỚC khi AI bắt đầu nói
+        setIsLoadingInterview(false);
+        setLoadingMessage("");
+        
         // ✅ Truyền language trực tiếp vào handleStart để tránh race condition
         await handleStart(response.data, language);
       } catch (error) {
         console.error("❌ Error fetching interview questions:", error);
+        setIsLoadingInterview(false);
+        setLoadingMessage("");
       }
     },
     [handleStart] // ✅ Thêm handleStart vào dependency
@@ -594,6 +651,9 @@ const MockInterviewPage = () => {
     if (!window.confirm('Are you sure you want to leave the interview?')) {
       return;
     }
+    
+    // ✅ Show loading screen for assessment generation
+    setIsGeneratingAssessment(true);
     
     try {
       console.log('🚀 Leaving interview - generating assessment...');
@@ -611,6 +671,7 @@ const MockInterviewPage = () => {
       // Validate interview session data
       if (!interviewSession || !interviewSession.transcript || interviewSession.transcript.length === 0) {
         console.warn('⚠️ No interview data to assess');
+        setIsGeneratingAssessment(false);
         alert('No interview data available for assessment. Please start and complete an interview first.');
         handleEnd();
         return;
@@ -666,10 +727,12 @@ const MockInterviewPage = () => {
         
         // Still save the session data even if assessment failed
         sessionStorage.setItem('interviewSession', JSON.stringify(completeSession));
+        setIsGeneratingAssessment(false);
         return;
       }
       
       // Clean up and navigate
+      setIsGeneratingAssessment(false);
       handleEnd();
       setElapsedTime(0);
       router.push('/assessment-report');
@@ -701,9 +764,12 @@ const MockInterviewPage = () => {
       
       // Still navigate even on error (unless it's rate limit)
       if (!isRateLimit) {
+        setIsGeneratingAssessment(false);
         handleEnd();
         setElapsedTime(0);
         router.push('/assessment-report');
+      } else {
+        setIsGeneratingAssessment(false);
       }
     }
   }, [handleEnd, router, interviewSession, isListening, stopListening]);
@@ -729,6 +795,129 @@ const MockInterviewPage = () => {
   return (
     <>
       <NeuralNetworkBg />
+      
+      {/* ✅ Loading Screen for Starting Interview */}
+      {isLoadingInterview && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center"
+          >
+            <div className="relative mb-8">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/30 to-pink-600/30 blur-3xl animate-pulse" />
+              <motion.div 
+                className="relative h-24 w-24 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center mx-auto shadow-2xl"
+                animate={{ 
+                  y: [0, -15, 0],
+                }}
+                transition={{ 
+                  duration: 0.8,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <svg className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+              </motion.div>
+            </div>
+            <motion.h2 
+              className="text-2xl font-bold text-white mb-4"
+              animate={{ opacity: [0.7, 1, 0.7] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              {loadingMessage || "Preparing your interview..."}
+            </motion.h2>
+            <div className="flex items-center justify-center gap-2">
+              <motion.div 
+                className="w-3 h-3 rounded-full bg-purple-500"
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity, delay: 0 }}
+              />
+              <motion.div 
+                className="w-3 h-3 rounded-full bg-pink-500"
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity, delay: 0.15 }}
+              />
+              <motion.div 
+                className="w-3 h-3 rounded-full bg-purple-500"
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity, delay: 0.3 }}
+              />
+            </div>
+            <p className="text-gray-400 text-sm mt-4">This may take a few seconds...</p>
+          </motion.div>
+        </div>
+      )}
+      
+      {/* ✅ Loading Screen for Assessment Generation */}
+      {isGeneratingAssessment && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center max-w-md px-6"
+          >
+            <div className="relative mb-8">
+              <div className="absolute inset-0 bg-gradient-to-r from-green-600/30 to-blue-600/30 blur-3xl animate-pulse" />
+              <motion.div 
+                className="relative h-24 w-24 rounded-2xl bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center mx-auto shadow-2xl"
+                animate={{ 
+                  y: [0, -15, 0],
+                }}
+                transition={{ 
+                  duration: 0.8,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <svg className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </motion.div>
+            </div>
+            <motion.h2 
+              className="text-2xl font-bold text-white mb-4"
+              animate={{ opacity: [0.7, 1, 0.7] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              Generating Your Assessment...
+            </motion.h2>
+            <p className="text-gray-300 mb-6">
+              Our AI is analyzing your interview performance and preparing detailed feedback.
+            </p>
+            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+              <div className="flex items-center gap-3 mb-3">
+                <motion.div 
+                  className="w-2 h-2 rounded-full bg-green-500"
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity }}
+                />
+                <span className="text-sm text-gray-400">Analyzing responses...</span>
+              </div>
+              <div className="flex items-center gap-3 mb-3">
+                <motion.div 
+                  className="w-2 h-2 rounded-full bg-blue-500"
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity, delay: 0.15 }}
+                />
+                <span className="text-sm text-gray-400">Evaluating skills...</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <motion.div 
+                  className="w-2 h-2 rounded-full bg-purple-500"
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity, delay: 0.3 }}
+                />
+                <span className="text-sm text-gray-400">Preparing recommendations...</span>
+              </div>
+            </div>
+            <p className="text-gray-500 text-xs mt-4">This may take up to 30 seconds...</p>
+          </motion.div>
+        </div>
+      )}
+      
       <div className="relative z-10 h-screen bg-background flex flex-col overflow-hidden">
         {/* Animated Stars Background */}
         <AnimatedStars />

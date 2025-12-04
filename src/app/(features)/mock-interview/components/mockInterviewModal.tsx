@@ -1,9 +1,67 @@
 import React, { useState, useEffect } from "react";
-import { X, Check, Building2, Briefcase, Clock, ChevronLeft, FileText } from "lucide-react";
+import { X, Check, Building2, Briefcase, Clock, ChevronLeft, FileText, Target, Sparkles } from "lucide-react";
 import axios from "axios";
 import { cn } from "@/lib/utils";
 import WarningPopup from "./warningPopup";
 import Image from "next/image";
+
+// Interviewer style badges by role type
+const INTERVIEWER_STYLES: Record<string, { badge: string; color: string; description: string }> = {
+  "hr": { 
+    badge: "Behavioral Focus", 
+    color: "from-pink-500/30 to-rose-500/30 border-pink-500/50 text-pink-300",
+    description: "Focuses on soft skills, cultural fit, and behavioral questions"
+  },
+  "technical lead": { 
+    badge: "Technical Deep-Dive", 
+    color: "from-blue-500/30 to-cyan-500/30 border-blue-500/50 text-blue-300",
+    description: "Focuses on system design, code quality, and technical decisions"
+  },
+  "senior": { 
+    badge: "Technical Expert", 
+    color: "from-indigo-500/30 to-purple-500/30 border-indigo-500/50 text-indigo-300",
+    description: "Focuses on technical depth and problem-solving"
+  },
+  "manager": { 
+    badge: "Leadership Focus", 
+    color: "from-amber-500/30 to-orange-500/30 border-amber-500/50 text-amber-300",
+    description: "Focuses on leadership, team management, and strategic thinking"
+  },
+  "product": { 
+    badge: "Product Thinking", 
+    color: "from-green-500/30 to-emerald-500/30 border-green-500/50 text-green-300",
+    description: "Focuses on product sense, prioritization, and stakeholder management"
+  },
+  "data": { 
+    badge: "Analytical Focus", 
+    color: "from-violet-500/30 to-purple-500/30 border-violet-500/50 text-violet-300",
+    description: "Focuses on data analysis, ML, and statistical thinking"
+  },
+  "devops": { 
+    badge: "Operations Focus", 
+    color: "from-teal-500/30 to-cyan-500/30 border-teal-500/50 text-teal-300",
+    description: "Focuses on CI/CD, infrastructure, and system reliability"
+  },
+  "ux": { 
+    badge: "Design Thinking", 
+    color: "from-fuchsia-500/30 to-pink-500/30 border-fuchsia-500/50 text-fuchsia-300",
+    description: "Focuses on user research, design process, and usability"
+  },
+};
+
+function getInterviewerStyle(title: string): { badge: string; color: string; description: string } {
+  const lowerTitle = title.toLowerCase();
+  for (const [key, value] of Object.entries(INTERVIEWER_STYLES)) {
+    if (lowerTitle.includes(key)) {
+      return value;
+    }
+  }
+  return { 
+    badge: "General Interview", 
+    color: "from-gray-500/30 to-slate-500/30 border-gray-500/50 text-gray-300",
+    description: "Standard interview covering various topics"
+  };
+}
 
 interface Voice {
   id: string;
@@ -212,47 +270,94 @@ const MockInterviewModal: React.FC<MockInterviewModalProps> = ({
               </div>
             ) : (
               <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-300">Select Voice</h3>
+                <h3 className="text-sm font-medium text-gray-300">Select Your Interviewer</h3>
+                <p className="text-xs text-gray-500 mb-2">Each interviewer has different focus areas and question styles</p>
                 <div className="grid grid-cols-2 gap-4">
-                  {voices.map((voice) => (
-                    <div
-                      key={voice.name}
-                      onClick={() => setSelectedVoice(voice)}
-                      className={cn(
-                        "rounded-xl cursor-pointer transition-all p-6 flex flex-col items-center relative border",
-                        "hover:scale-105 transform duration-300 ease-in-out",
-                        selectedVoice?.name === voice.name
-                          ? "ring-2 ring-purple-500 bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-500/50 shadow-lg shadow-purple-500/20"
-                          : "hover:bg-white/5 border-white/10 hover:border-white/20"
-                      )}
-                    >
-                      <div className="relative w-24 h-24 rounded-full overflow-hidden mb-4 ring-4 ring-purple-500/30 shadow-lg">
-                        <Image
-                          src={voice.avatarUrl}
-                          alt={voice.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <h4 className="text-lg font-semibold text-white mb-1">{voice.name}</h4>
-                      <div className="flex flex-col items-center gap-2">
-                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-500/30 to-pink-500/30 text-purple-300 border border-purple-500/50">
-                          {voice.title}
-                        </span>
-                        <div className="text-xs text-gray-400 text-center">
-                          {voice.yearsOfExperience}+ years exp
+                  {voices.map((voice) => {
+                    const style = getInterviewerStyle(voice.title);
+                    return (
+                      <div
+                        key={voice.name}
+                        onClick={() => setSelectedVoice(voice)}
+                        className={cn(
+                          "rounded-xl cursor-pointer transition-all p-4 flex flex-col items-center relative border",
+                          "hover:scale-[1.02] transform duration-300 ease-in-out",
+                          selectedVoice?.name === voice.name
+                            ? "ring-2 ring-purple-500 bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-500/50 shadow-lg shadow-purple-500/20"
+                            : "hover:bg-white/5 border-white/10 hover:border-white/20"
+                        )}
+                      >
+                        <div className="relative w-20 h-20 rounded-full overflow-hidden mb-3 ring-4 ring-purple-500/30 shadow-lg">
+                          <Image
+                            src={voice.avatarUrl}
+                            alt={voice.name}
+                            fill
+                            className="object-cover"
+                          />
                         </div>
-                      </div>
-                      {selectedVoice?.name === voice.name && (
-                        <div className="absolute top-3 right-3">
-                          <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-full p-1.5 shadow-lg">
-                            <Check className="h-4 w-4 text-white" />
+                        <h4 className="text-base font-semibold text-white mb-1">{voice.name}</h4>
+                        <div className="flex flex-col items-center gap-1.5 w-full">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gradient-to-r from-purple-500/30 to-pink-500/30 text-purple-300 border border-purple-500/50">
+                            {voice.title}
+                          </span>
+                          {/* Interview Style Badge */}
+                          <span className={cn(
+                            "px-2 py-0.5 rounded-full text-[10px] font-medium bg-gradient-to-r border flex items-center gap-1",
+                            style.color
+                          )}>
+                            <Sparkles className="h-2.5 w-2.5" />
+                            {style.badge}
+                          </span>
+                          <div className="text-[10px] text-gray-400 text-center">
+                            {voice.yearsOfExperience}+ years exp
                           </div>
+                          {/* Focus Areas */}
+                          {voice.focusAreas && voice.focusAreas.length > 0 && (
+                            <div className="mt-1 flex flex-wrap justify-center gap-1">
+                              {voice.focusAreas.slice(0, 2).map((area, idx) => (
+                                <span key={idx} className="px-1.5 py-0.5 rounded text-[9px] bg-white/5 text-gray-400 border border-white/10">
+                                  {area}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        {selectedVoice?.name === voice.name && (
+                          <div className="absolute top-2 right-2">
+                            <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-full p-1 shadow-lg">
+                              <Check className="h-3 w-3 text-white" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
+                {/* Selected interviewer details */}
+                {selectedVoice && (
+                  <div className="mt-4 p-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/30">
+                    <div className="flex items-start gap-2">
+                      <Target className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs text-purple-300 font-medium mb-1">
+                          {selectedVoice.name} will focus on:
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {getInterviewerStyle(selectedVoice.title).description}
+                        </p>
+                        {selectedVoice.focusAreas && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {selectedVoice.focusAreas.map((area, idx) => (
+                              <span key={idx} className="px-2 py-0.5 rounded-full text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                {area}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )
           )}
