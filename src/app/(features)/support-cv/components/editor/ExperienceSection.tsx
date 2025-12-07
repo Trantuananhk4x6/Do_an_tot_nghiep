@@ -1,15 +1,16 @@
 'use client';
 
 import React from 'react';
-import { Experience } from '@/app/(features)/support-cv/types/cv.types';
-import { Briefcase, Plus, Trash2 } from 'lucide-react';
+import { Experience, AIAppliedChange } from '@/app/(features)/support-cv/types/cv.types';
+import { Briefcase, Plus, Trash2, Sparkles } from 'lucide-react';
 
 interface ExperienceSectionProps {
   data: Experience[];
   onChange: (data: Experience[]) => void;
+  aiAppliedChanges?: AIAppliedChange[];
 }
 
-export default function ExperienceSection({ data, onChange }: ExperienceSectionProps) {
+export default function ExperienceSection({ data, onChange, aiAppliedChanges = [] }: ExperienceSectionProps) {
   const addExperience = () => {
     const newExp: Experience = {
       id: Date.now().toString(),
@@ -33,6 +34,26 @@ export default function ExperienceSection({ data, onChange }: ExperienceSectionP
 
   const removeExperience = (index: number) => {
     onChange(data.filter((_, i) => i !== index));
+  };
+
+  // Helper function to check if a field was AI-modified
+  const isAIModified = (itemId: string, fieldName: string): AIAppliedChange | undefined => {
+    return aiAppliedChanges.find(change => 
+      (change.section.toLowerCase() === 'experience' || change.section.toLowerCase() === 'experiences') && 
+      change.itemId === itemId && 
+      change.field.toLowerCase() === fieldName.toLowerCase()
+    );
+  };
+
+  // Generate input class with AI highlight
+  const getInputClass = (itemId: string, fieldName: string) => {
+    const aiChange = isAIModified(itemId, fieldName);
+    const baseClass = "px-4 py-2 bg-white/5 border rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all";
+    
+    if (aiChange) {
+      return `${baseClass} border-amber-500/70 ring-1 ring-amber-500/50 bg-amber-500/10`;
+    }
+    return `${baseClass} border-white/10`;
   };
 
   const addAchievement = (index: number) => {
@@ -76,37 +97,57 @@ export default function ExperienceSection({ data, onChange }: ExperienceSectionP
             <div className="space-y-4">
               {/* Position & Company */}
               <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  value={exp.position}
-                  onChange={(e) => updateExperience(index, { position: e.target.value })}
-                  placeholder="Job Title"
-                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                />
-                <input
-                  type="text"
-                  value={exp.company}
-                  onChange={(e) => updateExperience(index, { company: e.target.value })}
-                  placeholder="Company Name"
-                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                />
+                <div className="relative">
+                  {isAIModified(exp.id, 'position') && (
+                    <Sparkles className="absolute -top-2 -right-2 w-4 h-4 text-amber-400 z-10" />
+                  )}
+                  <input
+                    type="text"
+                    value={exp.position}
+                    onChange={(e) => updateExperience(index, { position: e.target.value })}
+                    placeholder="Job Title"
+                    className={getInputClass(exp.id, 'position')}
+                  />
+                </div>
+                <div className="relative">
+                  {isAIModified(exp.id, 'company') && (
+                    <Sparkles className="absolute -top-2 -right-2 w-4 h-4 text-amber-400 z-10" />
+                  )}
+                  <input
+                    type="text"
+                    value={exp.company}
+                    onChange={(e) => updateExperience(index, { company: e.target.value })}
+                    placeholder="Company Name"
+                    className={getInputClass(exp.id, 'company')}
+                  />
+                </div>
               </div>
 
               {/* Dates */}
               <div className="grid grid-cols-3 gap-4">
-                <input
-                  type="month"
-                  value={exp.startDate}
-                  onChange={(e) => updateExperience(index, { startDate: e.target.value })}
-                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                />
-                <input
-                  type="month"
-                  value={exp.endDate}
-                  onChange={(e) => updateExperience(index, { endDate: e.target.value })}
-                  disabled={exp.current}
-                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50"
-                />
+                <div className="relative">
+                  {isAIModified(exp.id, 'startDate') && (
+                    <Sparkles className="absolute -top-2 -right-2 w-4 h-4 text-amber-400 z-10" />
+                  )}
+                  <input
+                    type="month"
+                    value={exp.startDate}
+                    onChange={(e) => updateExperience(index, { startDate: e.target.value })}
+                    className={getInputClass(exp.id, 'startDate')}
+                  />
+                </div>
+                <div className="relative">
+                  {isAIModified(exp.id, 'endDate') && (
+                    <Sparkles className="absolute -top-2 -right-2 w-4 h-4 text-amber-400 z-10" />
+                  )}
+                  <input
+                    type="month"
+                    value={exp.endDate}
+                    onChange={(e) => updateExperience(index, { endDate: e.target.value })}
+                    disabled={exp.current}
+                    className={`${getInputClass(exp.id, 'endDate')} disabled:opacity-50`}
+                  />
+                </div>
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -119,14 +160,17 @@ export default function ExperienceSection({ data, onChange }: ExperienceSectionP
               </div>
 
               {/* Achievements */}
-              <div>
+              <div className="relative">
+                {isAIModified(exp.id, 'achievements') && (
+                  <Sparkles className="absolute -top-2 right-24 w-4 h-4 text-amber-400 z-10" />
+                )}
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-gray-300">
                     Achievements (Use STAR Method)
                   </label>
                   <button
                     onClick={() => addAchievement(index)}
-                    className="text-sm text-purple-600 hover:text-purple-700"
+                    className="text-sm text-purple-400 hover:text-purple-300"
                   >
                     + Add Achievement
                   </button>
@@ -138,7 +182,7 @@ export default function ExperienceSection({ data, onChange }: ExperienceSectionP
                     onChange={(e) => updateAchievement(index, achIndex, e.target.value)}
                     placeholder="• Achieved [Result] by [Action], resulting in [Metric]..."
                     rows={2}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-2 resize-none"
+                    className={`w-full px-4 py-3 bg-white/5 border rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-2 resize-none ${isAIModified(exp.id, 'achievements') ? 'border-amber-500/70 ring-1 ring-amber-500/50 bg-amber-500/10' : 'border-white/10'}`}
                   />
                 ))}
               </div>

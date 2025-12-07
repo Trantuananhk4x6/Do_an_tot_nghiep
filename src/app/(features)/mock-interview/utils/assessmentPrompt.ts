@@ -1,7 +1,7 @@
 import { InterviewSession, InterviewerProfile } from "../types/assessment";
 
 // Get interviewer-specific scoring criteria
-function getInterviewerSpecificCriteria(interviewer: InterviewerProfile): string {
+function getInterviewerSpecificCriteria(interviewer: Partial<InterviewerProfile>): string {
   const title = interviewer.title?.toLowerCase() || "";
   const focusAreas = interviewer.focusAreas || [];
   
@@ -159,7 +159,7 @@ export function buildAssessmentPrompt(session: InterviewSession): string {
   const { interviewer, transcript, duration, questionsAsked, language = 'en' } = session;
   
   // Get interviewer-specific criteria
-  const interviewerCriteria = getInterviewerSpecificCriteria(interviewer);
+  const interviewerCriteria = getInterviewerSpecificCriteria(interviewer as Partial<InterviewerProfile>);
   
   // Language detection for output
   const languageInstruction = language === 'vi' 

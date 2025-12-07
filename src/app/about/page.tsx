@@ -48,7 +48,7 @@ export default function AboutPage() {
               <div className="space-y-6">
                 <div>
                   <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    Trần Tuấn Anh
+                    Tony Tran & Duc Tai Pham
                   </h2>
                   <p className="text-purple-400 text-lg font-semibold">Founder & Creator • Born 2002</p>
                 </div>

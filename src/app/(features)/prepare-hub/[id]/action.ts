@@ -184,7 +184,24 @@ Generate EXACTLY 1 question and answer in this JSON format (no markdown, no code
 }`,
       maxTokens: 1000,
     });
+//YÊU CẦU:
 
+// Tạo 1 câu hỏi MỚI khác với các câu hỏi đã có
+
+// Câu hỏi phải liên quan đến kinh nghiệm thực tế trong CV của ứng viên
+
+// Câu hỏi phải được tùy chỉnh cho vai trò "${interviewSet.position}" tại "${interviewSet.companyName}"
+
+// Bao gồm một trong các yếu tố: độ sâu kỹ thuật, hiểu hành vi, hoặc mức độ phù hợp với công ty
+
+// Cung cấp câu trả lời chi tiết, có tham chiếu đến CV
+
+// Xuất ra CHÍNH XÁC 1 câu hỏi và câu trả lời theo định dạng JSON sau (không markdown, không code block):
+
+// {
+// "question": "Một câu hỏi cụ thể dựa trên CV, vị trí và công ty",
+// "answer": "Câu trả lời chi tiết, có ví dụ cụ thể từ CV và sử dụng STAR nếu là câu hỏi hành vi"
+// }
     // Parse the result
     let cleanedText = result.text.trim();
     if (cleanedText.includes("```json")) {

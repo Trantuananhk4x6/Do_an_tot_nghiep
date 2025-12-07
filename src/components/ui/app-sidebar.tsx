@@ -13,6 +13,7 @@ import {
   Users,
   GraduationCap,
   HelpCircle,
+  Sparkles,
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,17 +30,12 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import Loading from "./loading";
 
-// Menu items.
-const items = [
+// Preparation items - Cyan/Blue neon theme
+const preparationItems = [
   {
-    title: "Live Interview",
-    url: "/live-interview",
-    icon: LaptopMinimalCheck,
-  },
-  {
-    title: "Mock Interview",
-    url: "/mock-interview",
-    icon: LaptopMinimal,
+    title: "User Document",
+    url: "/resume",
+    icon: FileText,
   },
   {
     title: "Preparation Hub",
@@ -47,24 +43,14 @@ const items = [
     icon: CircleUser,
   },
   {
-    title: "User Document",
-    url: "/resume",
-    icon: FileText,
+    title: "Mock Interview",
+    url: "/mock-interview",
+    icon: LaptopMinimal,
   },
   {
-    title: "Support CV",
-    url: "/support-cv",
-    icon: FileEdit,
-  },
-  {
-    title: "Find Job",
-    url: "/find-job",
-    icon: Briefcase,
-  },
-  {
-    title: "Consulting & Network",
-    url: "/consulting",
-    icon: GraduationCap,
+    title: "Live Interview",
+    url: "/live-interview",
+    icon: LaptopMinimalCheck,
   },
   {
     title: "Quiz",
@@ -72,9 +58,29 @@ const items = [
     icon: FileQuestion,
   },
   {
+    title: "Support CV",
+    url: "/support-cv",
+    icon: FileEdit,
+  },
+];
+
+// Career/Guidance items - Purple/Pink neon theme
+const careerItems = [
+  {
+    title: "Find Job",
+    url: "/find-job",
+    icon: Briefcase,
+  },
+  {
     title: "Summarize",
     url: "/summarize",
     icon: BookOpen,
+  },
+  {
+    title: "Consulting & Network",
+    url: "/consulting",
+    icon: GraduationCap,
+    isTrial: true,
   },
 ];
 
@@ -82,19 +88,136 @@ export function AppSidebar() {
   const { user, isLoaded } = useUser();
   const pathname = usePathname();
 
+  // Render menu item with neon effect
+  const renderMenuItem = (item: any, theme: 'cyan' | 'purple') => {
+    const isActive = pathname === item.url;
+    const isCyan = theme === 'cyan';
+    
+    return (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton asChild isActive={isActive}>
+          <a
+            href={item.url}
+            className={`group flex items-center gap-3 rounded-2xl px-4 py-3.5 transition-all duration-300 relative overflow-hidden ${
+              isActive
+                ? isCyan
+                  ? "bg-gradient-to-r from-cyan-600/30 via-blue-600/25 to-teal-600/30 border border-cyan-500/40 shadow-lg shadow-cyan-500/20"
+                  : "bg-gradient-to-r from-purple-600/30 via-fuchsia-600/25 to-pink-600/30 border border-purple-500/40 shadow-lg shadow-purple-500/20"
+                : isCyan
+                  ? "hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-blue-500/10 border border-transparent hover:border-cyan-500/20"
+                  : "hover:bg-gradient-to-r hover:from-purple-500/10 hover:to-pink-500/10 border border-transparent hover:border-purple-500/20"
+            }`}
+          >
+            {/* Active indicator with gentle pulse */}
+            {isActive && (
+              <>
+                <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-10 rounded-r-full shadow-lg ${
+                  isCyan 
+                    ? "bg-gradient-to-b from-cyan-400 via-blue-500 to-teal-400 shadow-cyan-500/50" 
+                    : "bg-gradient-to-b from-purple-400 via-fuchsia-500 to-pink-400 shadow-purple-500/50"
+                }`}></div>
+                {/* Gentle breathing glow animation */}
+                <div className={`absolute inset-0 animate-neon-breathe ${
+                  isCyan 
+                    ? "bg-gradient-to-r from-cyan-600/20 to-blue-600/20" 
+                    : "bg-gradient-to-r from-purple-600/20 to-pink-600/20"
+                }`}></div>
+              </>
+            )}
+            
+            {/* Icon with neon glow */}
+            <div
+              className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all duration-300 ${
+                isActive
+                  ? isCyan
+                    ? "bg-gradient-to-br from-cyan-500 via-blue-500 to-teal-500 text-white shadow-xl shadow-cyan-500/50 scale-105"
+                    : "bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 text-white shadow-xl shadow-purple-500/50 scale-105"
+                  : isCyan
+                    ? "bg-white/5 text-gray-400 group-hover:bg-gradient-to-br group-hover:from-cyan-600/20 group-hover:to-blue-600/20 group-hover:text-cyan-300 group-hover:scale-105"
+                    : "bg-white/5 text-gray-400 group-hover:bg-gradient-to-br group-hover:from-purple-600/20 group-hover:to-pink-600/20 group-hover:text-purple-300 group-hover:scale-105"
+              }`}
+            >
+              <item.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110 relative z-10" />
+              {/* Icon glow effect */}
+              {isActive && (
+                <div className={`absolute inset-0 rounded-xl blur-md opacity-50 animate-neon-glow ${
+                  isCyan 
+                    ? "bg-gradient-to-br from-cyan-400 to-blue-400" 
+                    : "bg-gradient-to-br from-purple-400 to-pink-400"
+                }`}></div>
+              )}
+            </div>
+            
+            {/* Text with optional Trial badge */}
+            <div className="flex items-center gap-2 flex-1">
+              <span
+                className={`text-sm font-semibold transition-all duration-300 ${
+                  isActive
+                    ? "text-white"
+                    : isCyan
+                      ? "text-gray-400 group-hover:text-cyan-200"
+                      : "text-gray-400 group-hover:text-purple-200"
+                }`}
+              >
+                {item.title}
+              </span>
+              
+              {/* Trial Badge for Consulting & Network */}
+              {item.isTrial && (
+                <span className="relative inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 text-amber-400 animate-neon-breathe-slow">
+                  <Sparkles className="h-3 w-3" />
+                  Trial
+                  <span className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-400/10 to-orange-400/10 blur-sm"></span>
+                </span>
+              )}
+            </div>
+            
+            {/* Hover shimmer effect */}
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700 bg-gradient-to-r from-transparent via-white to-transparent -translate-x-full group-hover:translate-x-full transform`} style={{ transition: 'transform 1s ease, opacity 0.7s ease' }}></div>
+          </a>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
+
   return (
     <Sidebar className="border-r border-white/5 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 backdrop-blur-2xl">
+      {/* Custom CSS for gentle neon animations */}
+      <style jsx global>{`
+        @keyframes neon-breathe {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.6; }
+        }
+        @keyframes neon-breathe-slow {
+          0%, 100% { opacity: 0.7; }
+          50% { opacity: 1; }
+        }
+        @keyframes neon-glow {
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        .animate-neon-breathe {
+          animation: neon-breathe 3s ease-in-out infinite;
+        }
+        .animate-neon-breathe-slow {
+          animation: neon-breathe-slow 4s ease-in-out infinite;
+        }
+        .animate-neon-glow {
+          animation: neon-glow 3s ease-in-out infinite;
+        }
+      `}</style>
+      
       <SidebarContent>
         <SidebarGroup>
-          <SidebarHeader className="p-6 pb-6">
+          <SidebarHeader className="p-6 pb-4">
             {/* Modern Logo with enhanced styling */}
             <Link href="/" className="block">
               <div className="flex items-center gap-3 group cursor-pointer hover:scale-105 transition-transform duration-300">
                 <div className="relative">
                   {/* Enhanced glow effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 rounded-2xl blur-xl opacity-60 group-hover:opacity-100 group-hover:blur-2xl transition-all duration-500"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 via-blue-500 to-purple-500 rounded-2xl blur-xl opacity-60 group-hover:opacity-100 group-hover:blur-2xl transition-all duration-500"></div>
                   {/* Icon container with shimmer */}
-                  <div className="relative h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-600 via-fuchsia-600 to-pink-600 flex items-center justify-center shadow-2xl shadow-purple-500/50 group-hover:shadow-purple-500/80 transition-all duration-300">
+                  <div className="relative h-12 w-12 rounded-2xl bg-gradient-to-br from-cyan-600 via-blue-600 to-purple-600 flex items-center justify-center shadow-2xl shadow-blue-500/50 group-hover:shadow-blue-500/80 transition-all duration-300">
                     <svg
                       className="w-7 h-7 text-white group-hover:scale-110 transition-transform duration-300"
                       fill="none"
@@ -111,7 +234,7 @@ export function AppSidebar() {
                   </div>
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 via-fuchsia-400 to-pink-400 bg-clip-text text-transparent group-hover:from-purple-300 group-hover:to-pink-300 transition-all duration-300">
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent group-hover:from-cyan-300 group-hover:to-purple-300 transition-all duration-300">
                     AI Interview
                   </h1>
                 </div>
@@ -120,68 +243,35 @@ export function AppSidebar() {
           </SidebarHeader>
           
           <SidebarGroupContent className="px-4">
-            <SidebarMenu className="space-y-2">
-              {items.map((item) => {
-                const isActive = pathname === item.url;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <a
-                        href={item.url}
-                        className={`group flex items-center gap-3 rounded-2xl px-4 py-3.5 transition-all duration-300 relative overflow-hidden ${
-                          isActive
-                            ? "bg-gradient-to-r from-purple-600/30 via-fuchsia-600/25 to-pink-600/30 border border-purple-500/40 shadow-lg shadow-purple-500/20"
-                            : "hover:bg-gradient-to-r hover:from-white/5 hover:to-white/10 border border-transparent hover:border-white/10"
-                        }`}
-                      >
-                        {/* Enhanced active indicator with pulse */}
-                        {isActive && (
-                          <>
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-purple-400 via-fuchsia-500 to-pink-400 rounded-r-full shadow-lg shadow-purple-500/50"></div>
-                            {/* Animated glow */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 animate-pulse"></div>
-                          </>
-                        )}
-                        
-                        {/* Enhanced icon with better styling */}
-                        <div
-                          className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all duration-300 ${
-                            isActive
-                              ? "bg-gradient-to-br from-purple-500 via-fuchsia-500 to-pink-500 text-white shadow-xl shadow-purple-500/50 scale-105"
-                              : "bg-white/5 text-gray-400 group-hover:bg-gradient-to-br group-hover:from-purple-600/20 group-hover:to-pink-600/20 group-hover:text-purple-300 group-hover:scale-105"
-                          }`}
-                        >
-                          <item.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
-                          {/* Icon glow effect */}
-                          {isActive && (
-                            <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-400 rounded-xl blur-md opacity-50"></div>
-                          )}
-                        </div>
-                        
-                        {/* Enhanced text with better typography */}
-                        <span
-                          className={`text-sm font-semibold transition-all duration-300 ${
-                            isActive
-                              ? "text-white"
-                              : "text-gray-400 group-hover:text-gray-200"
-                          }`}
-                        >
-                          {item.title}
-                        </span>
-                        
-                        {/* Enhanced hover effect */}
-                        {!isActive && (
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-purple-600/5 via-fuchsia-600/5 to-pink-600/5 rounded-2xl"></div>
-                        )}
-                        
-                        {/* Shimmer effect on hover */}
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700 bg-gradient-to-r from-transparent via-white to-transparent -translate-x-full group-hover:translate-x-full transform duration-1000"></div>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
+            {/* Preparation Section - Cyan/Blue Theme */}
+            <div className="mb-6">
+              <div className="flex items-center gap-2 px-4 mb-3">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent"></div>
+                <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 animate-neon-breathe-slow flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-neon-glow"></span>
+                  Preparation
+                </span>
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent"></div>
+              </div>
+              <SidebarMenu className="space-y-1.5">
+                {preparationItems.map((item) => renderMenuItem(item, 'cyan'))}
+              </SidebarMenu>
+            </div>
+            
+            {/* Career/Guidance Section - Purple/Pink Theme */}
+            <div>
+              <div className="flex items-center gap-2 px-4 mb-3">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
+                <span className="text-xs font-bold uppercase tracking-wider text-purple-400 animate-neon-breathe-slow flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-neon-glow"></span>
+                  Career/Guidance
+                </span>
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
+              </div>
+              <SidebarMenu className="space-y-1.5">
+                {careerItems.map((item) => renderMenuItem(item, 'purple'))}
+              </SidebarMenu>
+            </div>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

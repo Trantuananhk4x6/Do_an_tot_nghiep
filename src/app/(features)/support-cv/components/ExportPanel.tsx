@@ -63,11 +63,14 @@ export default function ExportPanel({ cvData, template, onBackToPreview }: Expor
       let blob: Blob;
       
       if (selectedFormat === 'pdf' && cvPreviewRef.current) {
+        // Wait a moment for the hidden CV to fully render
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
         // Use HTML-to-PDF for beautiful export matching preview design
-        blob = await exportCV(cvData, template, 'pdf', cvPreviewRef.current);
+        blob = await exportCV(cvData, template, 'pdf', cvPreviewRef.current, sectionOrder);
       } else {
-        // Fallback to manual render for DOCX or if element not available
-        blob = await exportCV(cvData, template, selectedFormat);
+        // For DOCX, pass sectionOrder to maintain section order and visibility
+        blob = await exportCV(cvData, template, selectedFormat, undefined, sectionOrder);
       }
       
       const filename = `${cvData.personalInfo.fullName.replace(/\s+/g, '_')}_CV.${selectedFormat}`;
@@ -247,8 +250,16 @@ export default function ExportPanel({ cvData, template, onBackToPreview }: Expor
       {/* Hidden CV Preview for HTML-to-PDF Export */}
       <div 
         ref={cvPreviewRef}
-        className="fixed -left-[9999px] top-0 w-[210mm] bg-white"
-        style={{ minHeight: '297mm' }}
+        className="cv-export-container"
+        style={{ 
+          position: 'absolute',
+          left: '-9999px', 
+          top: '0', 
+          width: '210mm', 
+          minHeight: '297mm',
+          background: 'white',
+          zIndex: -1
+        }}
       >
         <CVTemplateRenderer
           cvData={cvData}

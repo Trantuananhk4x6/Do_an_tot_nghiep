@@ -1,15 +1,16 @@
 'use client';
 
 import React from 'react';
-import { Project } from '@/app/(features)/support-cv/types/cv.types';
-import { Rocket, Plus, Trash2, Lightbulb } from 'lucide-react';
+import { Project, AIAppliedChange } from '@/app/(features)/support-cv/types/cv.types';
+import { Rocket, Plus, Trash2, Lightbulb, Sparkles } from 'lucide-react';
 
 interface ProjectsSectionProps {
   data: Project[];
   onChange: (data: Project[]) => void;
+  aiAppliedChanges?: AIAppliedChange[];
 }
 
-export default function ProjectsSection({ data, onChange }: ProjectsSectionProps) {
+export default function ProjectsSection({ data, onChange, aiAppliedChanges = [] }: ProjectsSectionProps) {
   const addProject = () => {
     const newProject: Project = {
       id: Date.now().toString(),
@@ -45,6 +46,26 @@ export default function ProjectsSection({ data, onChange }: ProjectsSectionProps
     const updated = [...data];
     updated[projectIndex].technologies.splice(techIndex, 1);
     onChange(updated);
+  };
+
+  // Helper function to check if a field was AI-modified
+  const isAIModified = (itemId: string, fieldName: string): AIAppliedChange | undefined => {
+    return aiAppliedChanges.find(change => 
+      change.section.toLowerCase() === 'projects' && 
+      change.itemId === itemId && 
+      change.field.toLowerCase() === fieldName.toLowerCase()
+    );
+  };
+
+  // Generate input class with AI highlight
+  const getInputClass = (itemId: string, fieldName: string, extraClass = '') => {
+    const aiChange = isAIModified(itemId, fieldName);
+    const baseClass = `w-full px-4 py-3 bg-white/5 border rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${extraClass}`;
+    
+    if (aiChange) {
+      return `${baseClass} border-amber-500/70 ring-1 ring-amber-500/50 bg-amber-500/10`;
+    }
+    return `${baseClass} border-white/10`;
   };
 
   const addAchievement = (index: number) => {
@@ -90,43 +111,52 @@ export default function ProjectsSection({ data, onChange }: ProjectsSectionProps
             <div className="space-y-4">
               {/* Project Name & Link */}
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Project Name *
                   </label>
+                  {isAIModified(project.id, 'name') && (
+                    <Sparkles className="absolute top-0 right-0 w-4 h-4 text-amber-400 z-10" />
+                  )}
                   <input
                     type="text"
                     value={project.name}
                     onChange={(e) => updateProject(index, { name: e.target.value })}
                     placeholder="e.g., Restaurant Management System"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    className={getInputClass(project.id, 'name')}
                   />
                 </div>
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Project URL (Optional)
                   </label>
+                  {isAIModified(project.id, 'link') && (
+                    <Sparkles className="absolute top-0 right-0 w-4 h-4 text-amber-400 z-10" />
+                  )}
                   <input
                     type="url"
                     value={project.link || ''}
                     onChange={(e) => updateProject(index, { link: e.target.value })}
                     placeholder="GitHub, Demo, etc."
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    className={getInputClass(project.id, 'link')}
                   />
                 </div>
               </div>
 
               {/* Description */}
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Project Description *
                 </label>
+                {isAIModified(project.id, 'description') && (
+                  <Sparkles className="absolute top-0 right-0 w-4 h-4 text-amber-400 z-10" />
+                )}
                 <textarea
                   value={project.description}
                   onChange={(e) => updateProject(index, { description: e.target.value })}
                   placeholder="Describe your project, its purpose, and what you built..."
                   rows={4}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none transition-all"
+                  className={getInputClass(project.id, 'description', 'resize-none')}
                 />
                 <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
                   <Lightbulb className="w-3 h-3" />
@@ -136,32 +166,41 @@ export default function ProjectsSection({ data, onChange }: ProjectsSectionProps
 
               {/* Dates */}
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
+                  {isAIModified(project.id, 'startDate') && (
+                    <Sparkles className="absolute top-0 right-0 w-4 h-4 text-amber-400 z-10" />
+                  )}
                   <input
                     type="month"
                     value={project.startDate || ''}
                     onChange={(e) => updateProject(index, { startDate: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    className={getInputClass(project.id, 'startDate')}
                   />
                 </div>
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-300 mb-2">End Date (optional)</label>
+                  {isAIModified(project.id, 'endDate') && (
+                    <Sparkles className="absolute top-0 right-0 w-4 h-4 text-amber-400 z-10" />
+                  )}
                   <input
                     type="month"
                     value={project.endDate || ''}
                     onChange={(e) => updateProject(index, { endDate: e.target.value })}
                     placeholder="Leave empty if ongoing"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    className={getInputClass(project.id, 'endDate')}
                   />
                 </div>
               </div>
 
               {/* Technologies */}
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Technologies Used *
                 </label>
+                {isAIModified(project.id, 'technologies') && (
+                  <Sparkles className="absolute top-0 right-0 w-4 h-4 text-amber-400 z-10" />
+                )}
                 <div className="flex flex-wrap gap-2 mb-2">
                   {project.technologies.map((tech, techIndex) => (
                     <span

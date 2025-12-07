@@ -1,15 +1,16 @@
 'use client';
 
 import React from 'react';
-import { Skill } from '@/app/(features)/support-cv/types/cv.types';
-import { Zap, Plus, Trash2 } from 'lucide-react';
+import { Skill, AIAppliedChange } from '@/app/(features)/support-cv/types/cv.types';
+import { Zap, Plus, Trash2, Sparkles } from 'lucide-react';
 
 interface SkillsSectionProps {
   data: Skill[];
   onChange: (data: Skill[]) => void;
+  aiAppliedChanges?: AIAppliedChange[];
 }
 
-export default function SkillsSection({ data, onChange }: SkillsSectionProps) {
+export default function SkillsSection({ data, onChange, aiAppliedChanges = [] }: SkillsSectionProps) {
   const categories = ['Programming', 'Frameworks', 'Tools', 'Databases', 'Soft Skills', 'Other'];
 
   const addSkill = () => {
@@ -32,6 +33,19 @@ export default function SkillsSection({ data, onChange }: SkillsSectionProps) {
     onChange(data.filter((_, i) => i !== index));
   };
 
+  // Helper function to check if a skill was AI-modified
+  const isAIModified = (itemId: string): AIAppliedChange | undefined => {
+    return aiAppliedChanges.find(change => 
+      change.section.toLowerCase() === 'skills' && 
+      change.itemId === itemId
+    );
+  };
+
+  // Check if any skills section was AI-modified
+  const hasAnyAIChanges = aiAppliedChanges.some(change => 
+    change.section.toLowerCase() === 'skills'
+  );
+
   return (
     <div className="w-full overflow-hidden">
       <div className="flex items-center justify-between mb-6">
@@ -49,8 +63,17 @@ export default function SkillsSection({ data, onChange }: SkillsSectionProps) {
       </div>
 
       <div className="space-y-3">
+        {hasAnyAIChanges && (
+          <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-lg mb-4">
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span className="text-xs text-amber-300">AI has enhanced your skills section</span>
+          </div>
+        )}
         {data.map((skill, index) => (
-          <div key={skill.id} className="glass-effect border border-white/10 rounded-lg p-3 lg:p-4 hover:border-purple-500/50 transition-all">
+          <div key={skill.id} className={`glass-effect border rounded-lg p-3 lg:p-4 transition-all ${isAIModified(skill.id) ? 'border-amber-500/50 ring-1 ring-amber-500/30 bg-amber-500/5' : 'border-white/10 hover:border-purple-500/50'}`}>
+            {isAIModified(skill.id) && (
+              <Sparkles className="absolute -top-2 -right-2 w-4 h-4 text-amber-400" />
+            )}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               {/* Category Select */}
               <select

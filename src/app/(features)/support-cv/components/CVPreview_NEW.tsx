@@ -55,7 +55,7 @@ export default function CVPreview({ cvData, template, onBackToEdit, onExport, on
   // Sync sectionOrder to context whenever it changes
   useEffect(() => {
     actions.setSectionOrder(sectionOrder);
-  }, [sectionOrder, actions]);
+  }, [sectionOrder, actions.setSectionOrder]);
 
   const handleDragStart = (index: number) => {
     setDraggedIndex(index);

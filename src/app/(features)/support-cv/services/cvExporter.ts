@@ -18,11 +18,19 @@ import {
   convertInchesToTwip
 } from 'docx';
 
+// Type for section order
+interface SectionOrderItem {
+  id: string;
+  label: string;
+  visible: boolean;
+}
+
 export async function exportCV(
   cvData: CVData,
   template: CVTemplate,
   format: ExportFormat,
-  htmlElement?: HTMLElement
+  htmlElement?: HTMLElement,
+  sectionOrder?: SectionOrderItem[]
 ): Promise<Blob> {
   console.log(`[Export Service] Exporting CV as ${format} with ${template} template`);
 
@@ -34,7 +42,7 @@ export async function exportCV(
     // Fallback to manual rendering (less accurate)
     return await exportToPDF(cvData, template);
   } else {
-    return await exportToDOCX(cvData, template);
+    return await exportToDOCX(cvData, template, sectionOrder);
   }
 }
 
@@ -44,25 +52,115 @@ async function exportFromHTML(element: HTMLElement): Promise<Blob> {
   // Clone the element to avoid modifying the original
   const clone = element.cloneNode(true) as HTMLElement;
   
-  // Create a temporary container
-  const container = document.createElement('div');
-  container.style.position = 'fixed';
-  container.style.left = '-9999px';
-  container.style.top = '0';
-  container.style.width = '210mm'; // A4 width
-  container.style.background = 'white';
-  container.appendChild(clone);
-  document.body.appendChild(container);
+  // Remove visibility hidden from the clone and its children
+  clone.style.visibility = 'visible';
+  clone.style.position = 'static';
+  clone.style.left = '0';
+  clone.style.opacity = '1';
+  
+  // Make all child elements visible
+  const allElements = clone.querySelectorAll('*');
+  allElements.forEach((el) => {
+    const htmlEl = el as HTMLElement;
+    if (htmlEl.style) {
+      htmlEl.style.visibility = 'visible';
+    }
+  });
+  
+  // Create a temporary iframe for proper rendering
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.left = '0';
+  iframe.style.top = '0';
+  iframe.style.width = '210mm';
+  iframe.style.height = '297mm';
+  iframe.style.border = 'none';
+  iframe.style.opacity = '0';
+  iframe.style.pointerEvents = 'none';
+  iframe.style.zIndex = '-9999';
+  document.body.appendChild(iframe);
 
   try {
-    // Capture with high quality
-    const canvas = await html2canvas(clone, {
-      scale: 2, // High resolution
+    // Write content to iframe
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) {
+      throw new Error('Cannot access iframe document');
+    }
+
+    // Copy all stylesheets from parent document
+    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map(style => style.outerHTML)
+      .join('\n');
+
+    iframeDoc.open();
+    iframeDoc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          ${styles}
+          <style>
+            * { box-sizing: border-box; }
+            body { 
+              margin: 0; 
+              padding: 0; 
+              background: white !important;
+              font-family: 'Times New Roman', Times, serif;
+            }
+            .cv-container {
+              width: 210mm;
+              min-height: 297mm;
+              background: white !important;
+              padding: 0;
+              margin: 0;
+            }
+            /* Force all backgrounds to be visible */
+            [class*="bg-"] { background-color: inherit; }
+            /* Ensure text is visible */
+            [class*="text-"] { color: inherit; }
+          </style>
+        </head>
+        <body>
+          <div class="cv-container">
+            ${clone.outerHTML}
+          </div>
+        </body>
+      </html>
+    `);
+    iframeDoc.close();
+
+    // Wait for content to render
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const targetElement = iframeDoc.querySelector('.cv-container') as HTMLElement;
+    if (!targetElement) {
+      throw new Error('Cannot find target element in iframe');
+    }
+
+    const actualHeight = targetElement.scrollHeight || targetElement.offsetHeight || 1123;
+    
+    // Capture with html2canvas
+    const canvas = await html2canvas(targetElement, {
+      scale: 3, // Higher resolution for sharper PDF
       useCORS: true,
+      allowTaint: true,
       logging: false,
       backgroundColor: '#ffffff',
       width: 794, // A4 width in pixels at 96dpi (210mm)
-      windowWidth: 794
+      height: actualHeight,
+      windowWidth: 794,
+      windowHeight: actualHeight,
+      scrollX: 0,
+      scrollY: 0,
+      x: 0,
+      y: 0,
+      onclone: (clonedDoc) => {
+        // Ensure white background
+        const body = clonedDoc.body;
+        body.style.background = 'white';
+        body.style.margin = '0';
+        body.style.padding = '0';
+      }
     });
 
     // Create PDF
@@ -78,35 +176,29 @@ async function exportFromHTML(element: HTMLElement): Promise<Blob> {
     
     // If content fits on one page, just add the image
     if (imgHeight <= pageHeight) {
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      const imgData = canvas.toDataURL('image/jpeg', 0.95); // Use JPEG with high quality for better compression
+      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
     } else {
-      // For multi-page content, we need to slice the canvas
-      const totalPages = Math.ceil(imgHeight / pageHeight);
+      // For multi-page content
+      const pixelsPerPage = (pageHeight / imgWidth) * canvas.width;
+      const totalPages = Math.ceil(canvas.height / pixelsPerPage);
       
       for (let page = 0; page < totalPages; page++) {
-        // Create a new canvas for this page slice
         const pageCanvas = document.createElement('canvas');
         pageCanvas.width = canvas.width;
-        pageCanvas.height = Math.min(
-          canvas.height - page * (canvas.height / totalPages),
-          canvas.height / totalPages
-        );
+        const remainingHeight = canvas.height - (page * pixelsPerPage);
+        pageCanvas.height = Math.min(pixelsPerPage, remainingHeight);
         
         const ctx = pageCanvas.getContext('2d');
         if (ctx) {
-          // Calculate the source Y position on the original canvas
-          const sourceY = page * (pageHeight / imgWidth) * canvas.width;
-          const sourceHeight = Math.min(
-            (pageHeight / imgWidth) * canvas.width,
-            canvas.height - sourceY
-          );
+          const sourceY = page * pixelsPerPage;
+          const sourceHeight = pageCanvas.height;
           
-          // Fill with white background first
+          // Fill with white background
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
           
-          // Draw the portion of the original canvas for this page
+          // Draw the portion
           ctx.drawImage(
             canvas,
             0, sourceY, canvas.width, sourceHeight,
@@ -117,9 +209,9 @@ async function exportFromHTML(element: HTMLElement): Promise<Blob> {
             pdf.addPage();
           }
           
-          const pageImgData = pageCanvas.toDataURL('image/png');
+          const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.95);
           const sliceHeight = (sourceHeight * imgWidth) / canvas.width;
-          pdf.addImage(pageImgData, 'PNG', 0, 0, imgWidth, sliceHeight);
+          pdf.addImage(pageImgData, 'JPEG', 0, 0, imgWidth, sliceHeight, undefined, 'FAST');
         }
       }
     }
@@ -128,7 +220,7 @@ async function exportFromHTML(element: HTMLElement): Promise<Blob> {
     return pdf.output('blob');
   } finally {
     // Clean up
-    document.body.removeChild(container);
+    document.body.removeChild(iframe);
   }
 }
 
@@ -1232,7 +1324,7 @@ function renderProfessionalTemplate(doc: jsPDF, cvData: CVData) {
   }
 }
 
-async function exportToDOCX(cvData: CVData, template: CVTemplate): Promise<Blob> {
+async function exportToDOCX(cvData: CVData, template: CVTemplate, sectionOrder?: SectionOrderItem[]): Promise<Blob> {
   console.log('[Export Service] Creating DOCX document...');
 
   const children: Paragraph[] = [];
@@ -1327,536 +1419,484 @@ async function exportToDOCX(cvData: CVData, template: CVTemplate): Promise<Blob>
     })
   );
 
-  // ===== SUMMARY =====
-  if (cvData.personalInfo.summary) {
-    children.push(createSectionHeader('PROFESSIONAL SUMMARY'));
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: cvData.personalInfo.summary,
-            size: 22, // 11pt
-            font: 'Calibri'
-          })
-        ],
-        spacing: { after: 300 }
-      })
-    );
-  }
-
-  // ===== EXPERIENCE =====
-  if (cvData.experiences && cvData.experiences.length > 0) {
-    children.push(createSectionHeader('WORK EXPERIENCE'));
-    
-    cvData.experiences.forEach((exp, idx) => {
-      // Position & Date
+  // Helper functions to render each section
+  const renderSummary = () => {
+    if (cvData.personalInfo.summary) {
+      children.push(createSectionHeader('PROFESSIONAL SUMMARY'));
       children.push(
         new Paragraph({
           children: [
             new TextRun({
-              text: exp.position,
-              bold: true,
-              size: 24, // 12pt
-              font: 'Calibri'
-            }),
-            new TextRun({
-              text: `\t${exp.startDate} - ${exp.current ? 'Present' : exp.endDate}`,
-              size: 20,
-              font: 'Calibri',
-              color: '666666'
-            })
-          ],
-          tabStops: [{ type: 'right', position: convertInchesToTwip(6.5) }],
-          spacing: { before: idx > 0 ? 200 : 0 }
-        })
-      );
-
-      // Company & Location
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: exp.company,
-              italics: true,
-              size: 22,
-              font: 'Calibri'
-            }),
-            exp.location ? new TextRun({
-              text: ` | ${exp.location}`,
-              size: 20,
-              font: 'Calibri',
-              color: '666666'
-            }) : new TextRun({ text: '' })
-          ],
-          spacing: { after: 100 }
-        })
-      );
-
-      // Achievements
-      if (exp.achievements && exp.achievements.length > 0) {
-        exp.achievements.forEach(achievement => {
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `• ${achievement}`,
-                  size: 21,
-                  font: 'Calibri'
-                })
-              ],
-              indent: { left: convertInchesToTwip(0.25) },
-              spacing: { after: 60 }
-            })
-          );
-        });
-      }
-    });
-
-    children.push(new Paragraph({ spacing: { after: 200 } }));
-  }
-
-  // ===== EDUCATION =====
-  if (cvData.education && cvData.education.length > 0) {
-    children.push(createSectionHeader('EDUCATION'));
-    
-    cvData.education.forEach((edu, idx) => {
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: `${edu.degree}${edu.field ? ' in ' + edu.field : ''}`,
-              bold: true,
-              size: 24,
-              font: 'Calibri'
-            }),
-            new TextRun({
-              text: `\t${edu.startDate} - ${edu.endDate}`,
-              size: 20,
-              font: 'Calibri',
-              color: '666666'
-            })
-          ],
-          tabStops: [{ type: 'right', position: convertInchesToTwip(6.5) }],
-          spacing: { before: idx > 0 ? 150 : 0 }
-        })
-      );
-
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: edu.school,
-              italics: true,
-              size: 22,
-              font: 'Calibri'
-            }),
-            edu.gpa ? new TextRun({
-              text: ` | GPA: ${edu.gpa}`,
-              size: 20,
-              font: 'Calibri'
-            }) : new TextRun({ text: '' })
-          ],
-          spacing: { after: 100 }
-        })
-      );
-    });
-
-    children.push(new Paragraph({ spacing: { after: 200 } }));
-  }
-
-  // ===== SKILLS =====
-  if (cvData.skills && cvData.skills.length > 0) {
-    children.push(createSectionHeader('SKILLS'));
-
-    // Group by category
-    const skillsByCategory: Record<string, string[]> = {};
-    cvData.skills.forEach(skill => {
-      const cat = skill.category || 'General';
-      if (!skillsByCategory[cat]) skillsByCategory[cat] = [];
-      skillsByCategory[cat].push(skill.name);
-    });
-
-    Object.entries(skillsByCategory).forEach(([category, skills]) => {
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: `${category}: `,
-              bold: true,
-              size: 22,
-              font: 'Calibri'
-            }),
-            new TextRun({
-              text: skills.join(', '),
-              size: 22,
+              text: cvData.personalInfo.summary,
+              size: 22, // 11pt
               font: 'Calibri'
             })
           ],
-          spacing: { after: 80 }
+          spacing: { after: 300 }
         })
       );
-    });
+    }
+  };
 
-    children.push(new Paragraph({ spacing: { after: 200 } }));
-  }
-
-  // ===== PROJECTS =====
-  if (cvData.projects && cvData.projects.length > 0) {
-    children.push(createSectionHeader('PROJECTS'));
-    
-    cvData.projects.forEach((project, idx) => {
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: project.name,
-              bold: true,
-              size: 24,
-              font: 'Calibri'
-            }),
-            project.startDate ? new TextRun({
-              text: `\t${project.startDate}${project.endDate ? ' - ' + project.endDate : ''}`,
-              size: 20,
-              font: 'Calibri',
-              color: '666666'
-            }) : new TextRun({ text: '' })
-          ],
-          tabStops: [{ type: 'right', position: convertInchesToTwip(6.5) }],
-          spacing: { before: idx > 0 ? 150 : 0 }
-        })
-      );
-
-      if (project.description) {
+  const renderExperience = () => {
+    if (cvData.experiences && cvData.experiences.length > 0) {
+      children.push(createSectionHeader('WORK EXPERIENCE'));
+      
+      cvData.experiences.forEach((exp, idx) => {
         children.push(
           new Paragraph({
             children: [
               new TextRun({
-                text: project.description,
-                size: 21,
-                font: 'Calibri'
-              })
-            ],
-            spacing: { after: 60 }
-          })
-        );
-      }
-
-      if (project.technologies && project.technologies.length > 0) {
-        const techText = Array.isArray(project.technologies) 
-          ? project.technologies.join(', ') 
-          : project.technologies;
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: 'Technologies: ',
+                text: exp.position,
                 bold: true,
-                size: 20,
+                size: 24,
                 font: 'Calibri'
               }),
               new TextRun({
-                text: techText,
+                text: `\t${exp.startDate} - ${exp.current ? 'Present' : exp.endDate}`,
                 size: 20,
                 font: 'Calibri',
-                color: '0066CC'
+                color: '666666'
               })
             ],
-            spacing: { after: 100 }
+            tabStops: [{ type: 'right', position: convertInchesToTwip(6.5) }],
+            spacing: { before: idx > 0 ? 200 : 0 }
           })
         );
-      }
-    });
 
-    children.push(new Paragraph({ spacing: { after: 200 } }));
-  }
-
-  // ===== AWARDS =====
-  if (cvData.awards && cvData.awards.length > 0) {
-    children.push(createSectionHeader('AWARDS & HONORS'));
-    
-    cvData.awards.forEach((award, idx) => {
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: award.title,
-              bold: true,
-              size: 24,
-              font: 'Calibri'
-            }),
-            award.date ? new TextRun({
-              text: `\t${award.date}`,
-              size: 20,
-              font: 'Calibri',
-              color: '666666'
-            }) : new TextRun({ text: '' })
-          ],
-          tabStops: [{ type: 'right', position: convertInchesToTwip(6.5) }],
-          spacing: { before: idx > 0 ? 150 : 0 }
-        })
-      );
-
-      if (award.issuer) {
         children.push(
           new Paragraph({
             children: [
               new TextRun({
-                text: award.issuer,
+                text: exp.company,
                 italics: true,
                 size: 22,
                 font: 'Calibri'
-              })
-            ]
-          })
-        );
-      }
-
-      if (award.description) {
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: award.description,
-                size: 21,
-                font: 'Calibri'
-              })
-            ],
-            spacing: { after: 100 }
-          })
-        );
-      }
-    });
-
-    children.push(new Paragraph({ spacing: { after: 200 } }));
-  }
-
-  // ===== CERTIFICATIONS =====
-  if (cvData.certifications && cvData.certifications.length > 0) {
-    children.push(createSectionHeader('CERTIFICATIONS'));
-    
-    cvData.certifications.forEach((cert, idx) => {
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: cert.name,
-              bold: true,
-              size: 24,
-              font: 'Calibri'
-            }),
-            cert.date ? new TextRun({
-              text: `\t${cert.date}`,
-              size: 20,
-              font: 'Calibri',
-              color: '666666'
-            }) : new TextRun({ text: '' })
-          ],
-          tabStops: [{ type: 'right', position: convertInchesToTwip(6.5) }],
-          spacing: { before: idx > 0 ? 100 : 0 }
-        })
-      );
-
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: cert.issuer,
-              italics: true,
-              size: 22,
-              font: 'Calibri'
-            }),
-            cert.credentialId ? new TextRun({
-              text: ` | ID: ${cert.credentialId}`,
-              size: 20,
-              font: 'Calibri',
-              color: '666666'
-            }) : new TextRun({ text: '' })
-          ],
-          spacing: { after: 80 }
-        })
-      );
-    });
-
-    children.push(new Paragraph({ spacing: { after: 200 } }));
-  }
-
-  // ===== LANGUAGES =====
-  if (cvData.languages && cvData.languages.length > 0) {
-    children.push(createSectionHeader('LANGUAGES'));
-    
-    const langText = cvData.languages
-      .map(lang => `${lang.name} (${lang.proficiency})`)
-      .join('  •  ');
-
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: langText,
-            size: 22,
-            font: 'Calibri'
-          })
-        ],
-        spacing: { after: 200 }
-      })
-    );
-  }
-
-  // ===== PUBLICATIONS =====
-  if (cvData.publications && cvData.publications.length > 0) {
-    children.push(createSectionHeader('PUBLICATIONS'));
-    
-    cvData.publications.forEach((pub, idx) => {
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: pub.title,
-              bold: true,
-              size: 24,
-              font: 'Calibri'
-            }),
-            pub.date ? new TextRun({
-              text: `\t${pub.date}`,
-              size: 20,
-              font: 'Calibri',
-              color: '666666'
-            }) : new TextRun({ text: '' })
-          ],
-          tabStops: [{ type: 'right', position: convertInchesToTwip(6.5) }],
-          spacing: { before: idx > 0 ? 150 : 0 }
-        })
-      );
-
-      if (pub.publisher) {
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: pub.publisher,
-                italics: true,
-                size: 22,
-                font: 'Calibri'
-              })
-            ]
-          })
-        );
-      }
-
-      if (pub.authors && pub.authors.length > 0) {
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: 'Authors: ',
-                bold: true,
+              }),
+              exp.location ? new TextRun({
+                text: ` | ${exp.location}`,
                 size: 20,
+                font: 'Calibri',
+                color: '666666'
+              }) : new TextRun({ text: '' })
+            ],
+            spacing: { after: 100 }
+          })
+        );
+
+        if (exp.achievements && exp.achievements.length > 0) {
+          exp.achievements.forEach(achievement => {
+            children.push(
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `• ${achievement}`,
+                    size: 21,
+                    font: 'Calibri'
+                  })
+                ],
+                indent: { left: convertInchesToTwip(0.25) },
+                spacing: { after: 60 }
+              })
+            );
+          });
+        }
+      });
+
+      children.push(new Paragraph({ spacing: { after: 200 } }));
+    }
+  };
+
+  const renderEducation = () => {
+    if (cvData.education && cvData.education.length > 0) {
+      children.push(createSectionHeader('EDUCATION'));
+      
+      cvData.education.forEach((edu, idx) => {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `${edu.degree}${edu.field ? ' in ' + edu.field : ''}`,
+                bold: true,
+                size: 24,
                 font: 'Calibri'
               }),
               new TextRun({
-                text: pub.authors.join(', '),
+                text: `\t${edu.startDate} - ${edu.endDate}`,
                 size: 20,
+                font: 'Calibri',
+                color: '666666'
+              })
+            ],
+            tabStops: [{ type: 'right', position: convertInchesToTwip(6.5) }],
+            spacing: { before: idx > 0 ? 150 : 0 }
+          })
+        );
+
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: edu.school,
+                italics: true,
+                size: 22,
+                font: 'Calibri'
+              }),
+              edu.gpa ? new TextRun({
+                text: ` | GPA: ${edu.gpa}`,
+                size: 20,
+                font: 'Calibri'
+              }) : new TextRun({ text: '' })
+            ],
+            spacing: { after: 100 }
+          })
+        );
+      });
+
+      children.push(new Paragraph({ spacing: { after: 200 } }));
+    }
+  };
+
+  const renderSkills = () => {
+    if (cvData.skills && cvData.skills.length > 0) {
+      children.push(createSectionHeader('SKILLS'));
+
+      const skillsByCategory: Record<string, string[]> = {};
+      cvData.skills.forEach(skill => {
+        const cat = skill.category || 'General';
+        if (!skillsByCategory[cat]) skillsByCategory[cat] = [];
+        skillsByCategory[cat].push(skill.name);
+      });
+
+      Object.entries(skillsByCategory).forEach(([category, skills]) => {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `${category}: `,
+                bold: true,
+                size: 22,
+                font: 'Calibri'
+              }),
+              new TextRun({
+                text: skills.join(', '),
+                size: 22,
                 font: 'Calibri'
               })
             ],
             spacing: { after: 80 }
           })
         );
-      }
-    });
+      });
 
-    children.push(new Paragraph({ spacing: { after: 200 } }));
-  }
+      children.push(new Paragraph({ spacing: { after: 200 } }));
+    }
+  };
 
-  // ===== VOLUNTEER =====
-  if (cvData.volunteer && cvData.volunteer.length > 0) {
-    children.push(createSectionHeader('VOLUNTEER EXPERIENCE'));
-    
-    cvData.volunteer.forEach((vol, idx) => {
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: vol.role || 'Volunteer',
-              bold: true,
-              size: 24,
-              font: 'Calibri'
-            }),
-            new TextRun({
-              text: `\t${vol.startDate}${vol.endDate ? ' - ' + vol.endDate : ' - Present'}`,
-              size: 20,
-              font: 'Calibri',
-              color: '666666'
+  const renderProjects = () => {
+    if (cvData.projects && cvData.projects.length > 0) {
+      children.push(createSectionHeader('PROJECTS'));
+      
+      cvData.projects.forEach((project, idx) => {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: project.name,
+                bold: true,
+                size: 24,
+                font: 'Calibri'
+              }),
+              project.startDate ? new TextRun({
+                text: `\t${project.startDate}${project.endDate ? ' - ' + project.endDate : ''}`,
+                size: 20,
+                font: 'Calibri',
+                color: '666666'
+              }) : new TextRun({ text: '' })
+            ],
+            tabStops: [{ type: 'right', position: convertInchesToTwip(6.5) }],
+            spacing: { before: idx > 0 ? 150 : 0 }
+          })
+        );
+
+        if (project.description) {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: project.description,
+                  size: 21,
+                  font: 'Calibri'
+                })
+              ],
+              spacing: { after: 60 }
             })
-          ],
-          tabStops: [{ type: 'right', position: convertInchesToTwip(6.5) }],
-          spacing: { before: idx > 0 ? 150 : 0 }
-        })
-      );
+          );
+        }
+
+        if (project.technologies && project.technologies.length > 0) {
+          const techText = Array.isArray(project.technologies) 
+            ? project.technologies.join(', ') 
+            : project.technologies;
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: 'Technologies: ',
+                  bold: true,
+                  size: 20,
+                  font: 'Calibri'
+                }),
+                new TextRun({
+                  text: techText,
+                  size: 20,
+                  font: 'Calibri',
+                  color: '0066CC'
+                })
+              ],
+              spacing: { after: 100 }
+            })
+          );
+        }
+      });
+
+      children.push(new Paragraph({ spacing: { after: 200 } }));
+    }
+  };
+
+  const renderAwards = () => {
+    if (cvData.awards && cvData.awards.length > 0) {
+      children.push(createSectionHeader('AWARDS & HONORS'));
+      
+      cvData.awards.forEach((award, idx) => {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: award.title,
+                bold: true,
+                size: 24,
+                font: 'Calibri'
+              }),
+              award.date ? new TextRun({
+                text: `\t${award.date}`,
+                size: 20,
+                font: 'Calibri',
+                color: '666666'
+              }) : new TextRun({ text: '' })
+            ],
+            tabStops: [{ type: 'right', position: convertInchesToTwip(6.5) }],
+            spacing: { before: idx > 0 ? 150 : 0 }
+          })
+        );
+
+        if (award.issuer) {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: award.issuer,
+                  italics: true,
+                  size: 22,
+                  font: 'Calibri'
+                })
+              ]
+            })
+          );
+        }
+
+        if (award.description) {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: award.description,
+                  size: 21,
+                  font: 'Calibri'
+                })
+              ],
+              spacing: { after: 100 }
+            })
+          );
+        }
+      });
+
+      children.push(new Paragraph({ spacing: { after: 200 } }));
+    }
+  };
+
+  const renderCertifications = () => {
+    if (cvData.certifications && cvData.certifications.length > 0) {
+      children.push(createSectionHeader('CERTIFICATIONS'));
+      
+      cvData.certifications.forEach((cert, idx) => {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: cert.name,
+                bold: true,
+                size: 24,
+                font: 'Calibri'
+              }),
+              cert.date ? new TextRun({
+                text: `\t${cert.date}`,
+                size: 20,
+                font: 'Calibri',
+                color: '666666'
+              }) : new TextRun({ text: '' })
+            ],
+            tabStops: [{ type: 'right', position: convertInchesToTwip(6.5) }],
+            spacing: { before: idx > 0 ? 100 : 0 }
+          })
+        );
+
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: cert.issuer,
+                italics: true,
+                size: 22,
+                font: 'Calibri'
+              }),
+              cert.credentialId ? new TextRun({
+                text: ` | ID: ${cert.credentialId}`,
+                size: 20,
+                font: 'Calibri',
+                color: '666666'
+              }) : new TextRun({ text: '' })
+            ],
+            spacing: { after: 80 }
+          })
+        );
+      });
+
+      children.push(new Paragraph({ spacing: { after: 200 } }));
+    }
+  };
+
+  const renderLanguages = () => {
+    if (cvData.languages && cvData.languages.length > 0) {
+      children.push(createSectionHeader('LANGUAGES'));
+      
+      const langText = cvData.languages
+        .map(lang => `${lang.name} (${lang.proficiency})`)
+        .join('  •  ');
 
       children.push(
         new Paragraph({
           children: [
             new TextRun({
-              text: vol.organization,
-              italics: true,
+              text: langText,
               size: 22,
               font: 'Calibri'
             })
-          ]
+          ],
+          spacing: { after: 200 }
         })
       );
+    }
+  };
 
-      if (vol.description) {
+  const renderPublications = () => {
+    if (cvData.publications && cvData.publications.length > 0) {
+      children.push(createSectionHeader('PUBLICATIONS'));
+      
+      cvData.publications.forEach((pub, idx) => {
         children.push(
           new Paragraph({
             children: [
               new TextRun({
-                text: vol.description,
-                size: 21,
+                text: pub.title,
+                bold: true,
+                size: 24,
                 font: 'Calibri'
-              })
+              }),
+              pub.date ? new TextRun({
+                text: `\t${pub.date}`,
+                size: 20,
+                font: 'Calibri',
+                color: '666666'
+              }) : new TextRun({ text: '' })
             ],
-            spacing: { after: 100 }
+            tabStops: [{ type: 'right', position: convertInchesToTwip(6.5) }],
+            spacing: { before: idx > 0 ? 150 : 0 }
           })
         );
-      }
-    });
 
-    children.push(new Paragraph({ spacing: { after: 200 } }));
-  }
-
-  // ===== REFERENCES =====
-  if (cvData.references && cvData.references.length > 0) {
-    children.push(createSectionHeader('REFERENCES'));
-    
-    cvData.references.forEach((ref, idx) => {
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: ref.name,
-              bold: true,
-              size: 24,
-              font: 'Calibri'
+        if (pub.publisher) {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: pub.publisher,
+                  italics: true,
+                  size: 22,
+                  font: 'Calibri'
+                })
+              ]
             })
-          ],
-          spacing: { before: idx > 0 ? 150 : 0 }
-        })
-      );
+          );
+        }
 
-      const refDetails = [
-        ref.title,
-        ref.company,
-        ref.relationship
-      ].filter(Boolean).join(' | ');
+        if (pub.authors && pub.authors.length > 0) {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: 'Authors: ',
+                  bold: true,
+                  size: 20,
+                  font: 'Calibri'
+                }),
+                new TextRun({
+                  text: pub.authors.join(', '),
+                  size: 20,
+                  font: 'Calibri'
+                })
+              ],
+              spacing: { after: 80 }
+            })
+          );
+        }
+      });
 
-      if (refDetails) {
+      children.push(new Paragraph({ spacing: { after: 200 } }));
+    }
+  };
+
+  const renderVolunteer = () => {
+    if (cvData.volunteer && cvData.volunteer.length > 0) {
+      children.push(createSectionHeader('VOLUNTEER EXPERIENCE'));
+      
+      cvData.volunteer.forEach((vol, idx) => {
         children.push(
           new Paragraph({
             children: [
               new TextRun({
-                text: refDetails,
+                text: vol.role || 'Volunteer',
+                bold: true,
+                size: 24,
+                font: 'Calibri'
+              }),
+              new TextRun({
+                text: `\t${vol.startDate}${vol.endDate ? ' - ' + vol.endDate : ' - Present'}`,
+                size: 20,
+                font: 'Calibri',
+                color: '666666'
+              })
+            ],
+            tabStops: [{ type: 'right', position: convertInchesToTwip(6.5) }],
+            spacing: { before: idx > 0 ? 150 : 0 }
+          })
+        );
+
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: vol.organization,
                 italics: true,
                 size: 22,
                 font: 'Calibri'
@@ -1864,29 +1904,126 @@ async function exportToDOCX(cvData: CVData, template: CVTemplate): Promise<Blob>
             ]
           })
         );
-      }
 
-      const contactInfo = [
-        ref.email,
-        ref.phone
-      ].filter(Boolean).join('  •  ');
+        if (vol.description) {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: vol.description,
+                  size: 21,
+                  font: 'Calibri'
+                })
+              ],
+              spacing: { after: 100 }
+            })
+          );
+        }
+      });
 
-      if (contactInfo) {
+      children.push(new Paragraph({ spacing: { after: 200 } }));
+    }
+  };
+
+  const renderReferences = () => {
+    if (cvData.references && cvData.references.length > 0) {
+      children.push(createSectionHeader('REFERENCES'));
+      
+      cvData.references.forEach((ref, idx) => {
         children.push(
           new Paragraph({
             children: [
               new TextRun({
-                text: contactInfo,
-                size: 20,
-                font: 'Calibri',
-                color: '0066CC'
+                text: ref.name,
+                bold: true,
+                size: 24,
+                font: 'Calibri'
               })
             ],
-            spacing: { after: 100 }
+            spacing: { before: idx > 0 ? 150 : 0 }
           })
         );
+
+        const refDetails = [
+          ref.title,
+          ref.company,
+          ref.relationship
+        ].filter(Boolean).join(' | ');
+
+        if (refDetails) {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: refDetails,
+                  italics: true,
+                  size: 22,
+                  font: 'Calibri'
+                })
+              ]
+            })
+          );
+        }
+
+        const contactInfo = [
+          ref.email,
+          ref.phone
+        ].filter(Boolean).join('  •  ');
+
+        if (contactInfo) {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: contactInfo,
+                  size: 20,
+                  font: 'Calibri',
+                  color: '0066CC'
+                })
+              ],
+              spacing: { after: 100 }
+            })
+          );
+        }
+      });
+    }
+  };
+
+  // Map section IDs to render functions
+  const sectionRenderers: Record<string, () => void> = {
+    'summary': renderSummary,
+    'experience': renderExperience,
+    'education': renderEducation,
+    'skills': renderSkills,
+    'projects': renderProjects,
+    'awards': renderAwards,
+    'certifications': renderCertifications,
+    'languages': renderLanguages,
+    'publications': renderPublications,
+    'volunteer': renderVolunteer,
+    'references': renderReferences
+  };
+
+  // Render sections based on sectionOrder if provided
+  if (sectionOrder && sectionOrder.length > 0) {
+    sectionOrder.forEach(section => {
+      if (section.visible && sectionRenderers[section.id]) {
+        sectionRenderers[section.id]();
       }
     });
+  } else {
+    // Default order if sectionOrder not provided
+    renderSummary();
+    renderExperience();
+    renderEducation();
+    renderSkills();
+    renderProjects();
+    renderAwards();
+    renderCertifications();
+    renderLanguages();
+    renderPublications();
+    renderVolunteer();
+    renderReferences();
   }
 
   // Create document

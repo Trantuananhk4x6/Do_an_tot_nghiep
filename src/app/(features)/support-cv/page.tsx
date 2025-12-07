@@ -55,6 +55,7 @@ export default function SupportCVPage() {
     selectedTemplate: 'ats-friendly', // Default template
     cvData: initialCVData,
     aiSuggestions: [],
+    aiAppliedChanges: [], // Track AI changes
     isGeneratingSuggestions: false,
     isExporting: false
   });
@@ -192,8 +193,37 @@ export default function SupportCVPage() {
       selectedIds
     );
     
-    // Update state with final CV and go back to edit
-    updateState({ cvData: finalCV, currentStep: 'edit' });
+    // Build applied changes for highlighting in editor
+    // Match changes with raw suggestions to get itemId
+    const appliedChanges = autoEditChanges
+      .filter(change => selectedIds.includes(change.id))
+      .map((change, index) => {
+        // Find matching raw suggestion by section and field
+        const matchingSuggestion = rawSuggestions.find((s: any) => 
+          s.section === change.section && 
+          s.field === change.field &&
+          s.improved === change.after
+        );
+        
+        return {
+          section: change.section,
+          field: change.field,
+          itemId: matchingSuggestion?.itemId || undefined, // Get itemId from raw suggestion
+          originalValue: change.before,
+          newValue: change.after,
+          reason: change.reason,
+          appliedAt: Date.now()
+        };
+      });
+    
+    console.log('[Support CV] Applied changes with itemIds:', appliedChanges);
+    
+    // Update state with final CV, applied changes, and go back to edit
+    updateState({ 
+      cvData: finalCV, 
+      currentStep: 'edit',
+      aiAppliedChanges: appliedChanges
+    });
     
     // Clear auto-edit state
     setOriginalCVBeforeEdit(null);
@@ -575,6 +605,7 @@ export default function SupportCVPage() {
           <CVEditor
             cvData={state.cvData}
             aiSuggestions={state.aiSuggestions}
+            aiAppliedChanges={state.aiAppliedChanges || []}
             selectedTemplate={state.selectedTemplate || 'ats-friendly'}
             onUpdate={handleCVDataUpdate}
             onTemplateChange={handleTemplateChange}

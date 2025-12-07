@@ -58,14 +58,8 @@ export default function CourseCard({ course, isMentor = false, onUpdate, onRegis
   };
 
   const handleStartMeeting = async () => {
-    if (!course.meetingLink) {
-      toast({
-        title: 'Info',
-        description: 'Meeting link will be generated closer to the scheduled time',
-      });
-      return;
-    }
-    window.open(course.meetingLink, '_blank');
+    // Navigate to internal meeting room instead of external link
+    window.location.href = `/consulting/meeting/${course.id}`;
   };
 
   return (
@@ -151,7 +145,7 @@ export default function CourseCard({ course, isMentor = false, onUpdate, onRegis
                 <Users className="mr-2 h-4 w-4" />
                 View Participants
               </Button>
-              {canStartMeeting && course.meetingLink && (
+              {course.status === 'scheduled' && (
                 <Button className="flex-1" onClick={handleStartMeeting}>
                   <Video className="mr-2 h-4 w-4" />
                   Start Meeting

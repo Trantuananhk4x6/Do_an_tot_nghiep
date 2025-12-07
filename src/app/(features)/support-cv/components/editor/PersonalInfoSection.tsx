@@ -13,18 +13,39 @@ import {
   FileText,
   X,
   Lightbulb,
-  Github
+  Github,
+  Sparkles
 } from 'lucide-react';
-import { PersonalInfo } from '@/app/(features)/support-cv/types/cv.types';
+import { PersonalInfo, AIAppliedChange } from '@/app/(features)/support-cv/types/cv.types';
 
 interface PersonalInfoSectionProps {
   data: PersonalInfo;
   onChange: (data: PersonalInfo) => void;
+  aiAppliedChanges?: AIAppliedChange[];
 }
 
-export default function PersonalInfoSection({ data, onChange }: PersonalInfoSectionProps) {
+export default function PersonalInfoSection({ data, onChange, aiAppliedChanges = [] }: PersonalInfoSectionProps) {
   const handleChange = (field: keyof PersonalInfo, value: string) => {
     onChange({ ...data, [field]: value });
+  };
+
+  // Helper function to check if a field was AI-modified
+  const isAIModified = (fieldName: string): AIAppliedChange | undefined => {
+    return aiAppliedChanges.find(change => 
+      (change.section.toLowerCase() === 'personalinfo' || change.section.toLowerCase() === 'summary') && 
+      change.field.toLowerCase() === fieldName.toLowerCase()
+    );
+  };
+
+  // Get input class with AI highlight
+  const getInputClass = (fieldName: string) => {
+    const aiChange = isAIModified(fieldName);
+    const baseClass = "relative z-10 w-full px-4 py-3.5 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:bg-white/10 outline-none transition-all";
+    
+    if (aiChange) {
+      return `${baseClass} border-amber-500/70 ring-1 ring-amber-500/50 bg-amber-500/10`;
+    }
+    return `${baseClass} border-white/20`;
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -217,15 +238,23 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
       {/* Summary */}
       <div className="relative glass-effect border border-purple-500/30 rounded-xl p-6 group hover:border-purple-500/50 transition-all">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+        {isAIModified('summary') && (
+          <Sparkles className="absolute top-4 right-4 w-5 h-5 text-amber-400 z-20 animate-pulse" />
+        )}
         <label className="relative z-10 block text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
           <FileText className="w-4 h-4" /> Professional Summary
+          {isAIModified('summary') && (
+            <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 text-xs rounded-full ml-2">
+              AI Enhanced
+            </span>
+          )}
         </label>
         <textarea
           value={data.summary}
           onChange={(e) => handleChange('summary', e.target.value)}
           placeholder="Write a compelling 2-3 sentence summary highlighting your key qualifications and career goals..."
           rows={5}
-          className="relative z-10 w-full px-4 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:bg-white/10 outline-none transition-all resize-none"
+          className={`${getInputClass('summary')} resize-none`}
         />
         <p className="relative z-10 text-xs text-gray-400 mt-2 flex items-center gap-1">
           <Lightbulb className="w-3 h-3" /> Tip: Focus on what makes you unique and your career achievements

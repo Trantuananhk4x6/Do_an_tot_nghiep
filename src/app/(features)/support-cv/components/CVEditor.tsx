@@ -17,12 +17,14 @@ import TemplateSelectorPanel from '@/app/(features)/support-cv/components/Templa
 import { 
   User, Briefcase, GraduationCap, Zap, Rocket, Award, 
   Globe, Medal, BookOpen, Heart, Phone, Plus, 
-  ArrowLeft, Eye, Save, Edit3, CheckCircle, Loader2
+  ArrowLeft, Eye, Save, Edit3, CheckCircle, Loader2, Sparkles
 } from 'lucide-react';
+import { AIAppliedChange } from '@/app/(features)/support-cv/types/cv.types';
 
 interface CVEditorProps {
   cvData: CVData;
   aiSuggestions: AISuggestion[];
+  aiAppliedChanges?: AIAppliedChange[];
   selectedTemplate: CVTemplate;
   onUpdate: (cvData: CVData) => void;
   onTemplateChange: (template: CVTemplate) => void;
@@ -42,6 +44,7 @@ interface SectionConfig {
 export default function CVEditor({
   cvData,
   aiSuggestions,
+  aiAppliedChanges = [],
   selectedTemplate,
   onUpdate,
   onTemplateChange,
@@ -50,6 +53,17 @@ export default function CVEditor({
   isGeneratingSuggestions
 }: CVEditorProps) {
   const [activeSection, setActiveSection] = useState<string>('personal');
+  const [showAIBadges, setShowAIBadges] = useState(true); // Toggle to show/hide AI badges
+
+  // Count AI changes per section
+  const aiChangesBySection = useMemo(() => {
+    const counts: Record<string, number> = {};
+    aiAppliedChanges.forEach(change => {
+      const section = change.section.toLowerCase();
+      counts[section] = (counts[section] || 0) + 1;
+    });
+    return counts;
+  }, [aiAppliedChanges]);
 
   // Define all possible sections with data check
   const allSections: SectionConfig[] = useMemo(() => [
@@ -150,6 +164,41 @@ export default function CVEditor({
   }, [cvData, allSections]);
 
   return (
+    <div className="space-y-4">
+      {/* AI Applied Changes Banner */}
+      {aiAppliedChanges.length > 0 && (
+        <div className="glass-effect border border-amber-500/30 rounded-xl p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-amber-300 flex items-center gap-2">
+                  AI Enhancements Applied
+                  <span className="px-2 py-0.5 bg-amber-500/20 rounded-full text-xs font-medium">
+                    {aiAppliedChanges.length} changes
+                  </span>
+                </h3>
+                <p className="text-xs text-amber-200/70">
+                  Fields enhanced by AI are marked with <Sparkles className="w-3 h-3 inline text-amber-400" /> in each section
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowAIBadges(!showAIBadges)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                showAIBadges 
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' 
+                  : 'bg-gray-700/50 text-gray-400 border border-gray-600'
+              }`}
+            >
+              {showAIBadges ? 'Hide Markers' : 'Show Markers'}
+            </button>
+          </div>
+        </div>
+      )}
+      
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
       {/* Left Sidebar - Enhanced Navigation */}
       <div className="lg:col-span-3">
@@ -188,6 +237,11 @@ export default function CVEditor({
                 section.id === 'references' ? cvData.references?.length : 0
               ) : 0;
               
+              // Check for AI changes in this section
+              const sectionKey = section.id.toLowerCase();
+              const aiChangesCount = aiChangesBySection[sectionKey] || 
+                                    aiChangesBySection[section.label.toLowerCase()] || 0;
+              
               return (
                 <button
                   key={section.id}
@@ -199,6 +253,16 @@ export default function CVEditor({
                       : 'hover:bg-white/5 text-gray-300 lg:hover:scale-102 lg:hover:border-purple-500/50 border border-transparent'
                   }`}
                 >
+                  {/* AI Enhanced badge */}
+                  {showAIBadges && aiChangesCount > 0 && (
+                    <div className="absolute -top-1 -right-1 z-20">
+                      <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-lg animate-pulse">
+                        <Sparkles className="w-2.5 h-2.5 text-white" />
+                        <span className="text-[9px] font-bold text-white">{aiChangesCount}</span>
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Animated background for active */}
                   {isActive && (
                     <>
@@ -221,11 +285,19 @@ export default function CVEditor({
                         <span className="text-xs px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/50">Required</span>
                       )}
                     </div>
-                    {dataCount > 0 && (
-                      <span className={`text-xs ${
-                        isActive ? 'text-white/80' : 'text-purple-400'
-                      }`}>{dataCount} {dataCount === 1 ? 'item' : 'items'}</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {dataCount > 0 && (
+                        <span className={`text-xs ${
+                          isActive ? 'text-white/80' : 'text-purple-400'
+                        }`}>{dataCount} {dataCount === 1 ? 'item' : 'items'}</span>
+                      )}
+                      {showAIBadges && aiChangesCount > 0 && (
+                        <span className="text-xs text-amber-400 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          AI edited
+                        </span>
+                      )}
+                    </div>
                   </div>
                   {isActive && (
                     <div className="relative z-10 items-center gap-1 hidden lg:flex">
@@ -409,12 +481,47 @@ export default function CVEditor({
             </div>
           </div>
           
+          {/* AI Changes for Current Section */}
+          {showAIBadges && (() => {
+            const sectionKey = activeSection.toLowerCase();
+            const sectionChanges = aiAppliedChanges.filter(change => 
+              change.section.toLowerCase() === sectionKey ||
+              change.section.toLowerCase() === visibleSections.find(s => s.id === activeSection)?.label.toLowerCase()
+            );
+            
+            if (sectionChanges.length === 0) return null;
+            
+            return (
+              <div className="relative mx-4 lg:mx-6 mt-4 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs font-semibold text-amber-300">
+                    AI Enhanced Fields ({sectionChanges.length})
+                  </span>
+                </div>
+                <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+                  {sectionChanges.map((change, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-xs">
+                      <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded font-medium whitespace-nowrap">
+                        {change.field}
+                      </span>
+                      <span className="text-gray-400 truncate flex-1" title={change.reason}>
+                        {change.reason}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+          
           {/* Section Content with Better Scrolling */}
           <div className="relative p-4 lg:p-6 max-h-[60vh] lg:max-h-[calc(100vh-280px)] overflow-y-auto custom-scrollbar">
             {activeSection === 'personal' && (
             <PersonalInfoSection
               data={cvData.personalInfo}
               onChange={(personalInfo) => onUpdate({ ...cvData, personalInfo })}
+              aiAppliedChanges={aiAppliedChanges}
             />
           )}
 
@@ -422,6 +529,7 @@ export default function CVEditor({
             <ExperienceSection
               data={cvData.experiences}
               onChange={(experiences) => onUpdate({ ...cvData, experiences })}
+              aiAppliedChanges={aiAppliedChanges}
             />
           )}
 
@@ -429,6 +537,7 @@ export default function CVEditor({
             <EducationSection
               data={cvData.education}
               onChange={(education) => onUpdate({ ...cvData, education })}
+              aiAppliedChanges={aiAppliedChanges}
             />
           )}
 
@@ -436,6 +545,7 @@ export default function CVEditor({
             <SkillsSection
               data={cvData.skills}
               onChange={(skills) => onUpdate({ ...cvData, skills })}
+              aiAppliedChanges={aiAppliedChanges}
             />
           )}
 
@@ -443,6 +553,7 @@ export default function CVEditor({
             <ProjectsSection
               data={cvData.projects}
               onChange={(projects) => onUpdate({ ...cvData, projects })}
+              aiAppliedChanges={aiAppliedChanges}
             />
           )}
 
@@ -507,6 +618,7 @@ export default function CVEditor({
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

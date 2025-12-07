@@ -23,6 +23,52 @@ interface InterviewerProfile {
   personality: string;
 }
 
+// | **Vị trí**                   | **Loại câu hỏi**                      | **Số lượng** | **Tỷ lệ** |
+// | ---------------------------- | ------------------------------------- | ------------ | --------- |
+// | **HR Manager**               | Hành vi (STAR)                        | 5            | 50%       |
+// |                              | Phù hợp văn hoá                       | 2            | 20%       |
+// |                              | Kỹ năng mềm                           | 2            | 20%       |
+// |                              | Động lực nghề nghiệp                  | 1            | 10%       |
+
+// | **Technical Lead**           | Chuyên môn chuyên sâu                 | 4            | 40%       |
+// |                              | Thiết kế hệ thống                     | 2            | 20%       |
+// |                              | Chất lượng code / Best Practices      | 2            | 20%       |
+// |                              | Giải quyết vấn đề                     | 1            | 10%       |
+// |                              | Hướng dẫn / Lãnh đạo kỹ thuật         | 1            | 10%       |
+
+// | **Engineering Manager**      | Lãnh đạo & Quản lý con người          | 3            | 30%       |
+// |                              | Chiến lược & Lập kế hoạch             | 2            | 20%       |
+// |                              | Hợp tác liên phòng ban                | 2            | 20%       |
+// |                              | Giám sát kỹ thuật                     | 2            | 20%       |
+// |                              | Giải quyết xung đột                   | 1            | 10%       |
+// | **Product Manager**          | Tư duy sản phẩm                       | 3            | 30%       |
+// |                              | Ưu tiên hóa                           | 2            | 20%       |
+// |                              | Quản lý stakeholders                  | 2            | 20%       |
+// |                              | Quyết định dựa trên dữ liệu           | 2            | 20%       |
+// |                              | Hợp tác kỹ thuật                      | 1            | 10%       |
+
+// | **Data Scientist**           | Thống kê                              | 3            | 30%       |
+// |                              | Machine Learning                      | 2            | 20%       |
+// |                              | SQL / Pipeline dữ liệu                | 2            | 20%       |
+// |                              | A/B Testing                           | 2            | 20%       |
+// |                              | Trình bày dữ liệu (Data Storytelling) | 1            | 10%       |
+
+// | **DevOps / SRE**             | CI/CD                                 | 3            | 30%       |
+// |                              | Hạ tầng đám mây                       | 2            | 20%       |
+// |                              | Khắc phục sự cố                       | 2            | 20%       |
+// |                              | Bảo mật                               | 2            | 20%       |
+// |                              | Hợp tác                               | 1            | 10%       |
+// | **UX Designer**              | Nghiên cứu người dùng                 | 3            | 30%       |
+// |                              | Quy trình thiết kế                    | 2            | 20%       |
+// |                              | Lên mẫu / Prototyping                 | 2            | 20%       |
+// |                              | Hợp tác                               | 2            | 20%       |
+// |                              | Review portfolio                      | 1            | 10%       |
+
+// | **Default (Kỹ thuật chung)** | Kỹ thuật                              | 4            | 40%       |
+// |                              | Giải quyết vấn đề                     | 3            | 30%       |
+// |                              | Hành vi                               | 2            | 20%       |
+// |                              | Động lực                              | 1            | 10%       |
+
 /**
  * Get interviewer-specific prompt based on their role
  */
@@ -38,10 +84,10 @@ You are ${interviewer.name}, an experienced ${interviewer.title} with ${intervie
 Your interview style is: ${interviewer.interviewStyle}
 Your personality: ${interviewer.personality}
 
-🎯 YOUR FOCUS AREAS (PRIORITIZE THESE):
+ YOUR FOCUS AREAS (PRIORITIZE THESE):
 ${focusAreas.map(area => `- ${area}`).join('\n')}
 
-📝 QUESTION TYPES YOU PREFER:
+ QUESTION TYPES YOU PREFER:
 ${questionTypes.map(type => `- ${type}`).join('\n')}
 
 AS AN HR PROFESSIONAL, YOU MUST:
@@ -67,10 +113,10 @@ You are ${interviewer.name}, a ${interviewer.title} with ${interviewer.yearsOfEx
 Your interview style is: ${interviewer.interviewStyle}
 Your personality: ${interviewer.personality}
 
-🎯 YOUR FOCUS AREAS (PRIORITIZE THESE):
+ YOUR FOCUS AREAS (PRIORITIZE THESE):
 ${focusAreas.map(area => `- ${area}`).join('\n')}
 
-📝 QUESTION TYPES YOU PREFER:
+ QUESTION TYPES YOU PREFER:
 ${questionTypes.map(type => `- ${type}`).join('\n')}
 
 AS A TECHNICAL LEAD, YOU MUST:
@@ -96,10 +142,10 @@ You are ${interviewer.name}, an ${interviewer.title} with ${interviewer.yearsOfE
 Your interview style is: ${interviewer.interviewStyle}
 Your personality: ${interviewer.personality}
 
-🎯 YOUR FOCUS AREAS (PRIORITIZE THESE):
+ YOUR FOCUS AREAS (PRIORITIZE THESE):
 ${focusAreas.map(area => `- ${area}`).join('\n')}
 
-📝 QUESTION TYPES YOU PREFER:
+ QUESTION TYPES YOU PREFER:
 ${questionTypes.map(type => `- ${type}`).join('\n')}
 
 AS AN ENGINEERING MANAGER, YOU MUST:
@@ -125,10 +171,10 @@ You are ${interviewer.name}, a ${interviewer.title} with ${interviewer.yearsOfEx
 Your interview style is: ${interviewer.interviewStyle}
 Your personality: ${interviewer.personality}
 
-🎯 YOUR FOCUS AREAS (PRIORITIZE THESE):
+ YOUR FOCUS AREAS (PRIORITIZE THESE):
 ${focusAreas.map(area => `- ${area}`).join('\n')}
 
-📝 QUESTION TYPES YOU PREFER:
+ QUESTION TYPES YOU PREFER:
 ${questionTypes.map(type => `- ${type}`).join('\n')}
 
 AS A PRODUCT MANAGER, YOU MUST:
@@ -154,10 +200,10 @@ You are ${interviewer.name}, a ${interviewer.title} with ${interviewer.yearsOfEx
 Your interview style is: ${interviewer.interviewStyle}
 Your personality: ${interviewer.personality}
 
-🎯 YOUR FOCUS AREAS (PRIORITIZE THESE):
+ YOUR FOCUS AREAS (PRIORITIZE THESE):
 ${focusAreas.map(area => `- ${area}`).join('\n')}
 
-📝 QUESTION TYPES YOU PREFER:
+ QUESTION TYPES YOU PREFER:
 ${questionTypes.map(type => `- ${type}`).join('\n')}
 
 AS A DATA SCIENTIST, YOU MUST:
@@ -183,10 +229,10 @@ You are ${interviewer.name}, a ${interviewer.title} with ${interviewer.yearsOfEx
 Your interview style is: ${interviewer.interviewStyle}
 Your personality: ${interviewer.personality}
 
-🎯 YOUR FOCUS AREAS (PRIORITIZE THESE):
+YOUR FOCUS AREAS (PRIORITIZE THESE):
 ${focusAreas.map(area => `- ${area}`).join('\n')}
 
-📝 QUESTION TYPES YOU PREFER:
+QUESTION TYPES YOU PREFER:
 ${questionTypes.map(type => `- ${type}`).join('\n')}
 
 AS A DEVOPS/SRE, YOU MUST:
@@ -212,10 +258,10 @@ You are ${interviewer.name}, a ${interviewer.title} with ${interviewer.yearsOfEx
 Your interview style is: ${interviewer.interviewStyle}
 Your personality: ${interviewer.personality}
 
-🎯 YOUR FOCUS AREAS (PRIORITIZE THESE):
+ YOUR FOCUS AREAS (PRIORITIZE THESE):
 ${focusAreas.map(area => `- ${area}`).join('\n')}
 
-📝 QUESTION TYPES YOU PREFER:
+ QUESTION TYPES YOU PREFER:
 ${questionTypes.map(type => `- ${type}`).join('\n')}
 
 AS A UX DESIGNER, YOU MUST:
@@ -240,10 +286,10 @@ You are ${interviewer.name}, a ${interviewer.title} with ${interviewer.yearsOfEx
 Your interview style is: ${interviewer.interviewStyle}
 Your personality: ${interviewer.personality}
 
-🎯 YOUR FOCUS AREAS:
+ YOUR FOCUS AREAS:
 ${focusAreas.map(area => `- ${area}`).join('\n')}
 
-📝 QUESTION TYPES:
+ QUESTION TYPES:
 ${questionTypes.map(type => `- ${type}`).join('\n')}
 
 STANDARD QUESTION DISTRIBUTION:
@@ -255,12 +301,12 @@ STANDARD QUESTION DISTRIBUTION:
 }
 
 /**
- * ✅ Helper function to save questions to database
+ * Helper function to save questions to database
  * This ensures AI-generated questions are stored for assessment reference
  */
 async function saveQuestionsToDatabase(questions: any[], interviewSetId: number): Promise<any[]> {
   try {
-    console.log("💾 Saving questions to database...");
+    
     
     // Insert new questions
     const insertedQuestions = await db.insert(QuestionAnswer).values(
@@ -271,7 +317,7 @@ async function saveQuestionsToDatabase(questions: any[], interviewSetId: number)
       }))
     ).returning();
     
-    console.log(`💾 Saved ${insertedQuestions.length} questions to database`);
+    
     
     // Return questions with database IDs
     return questions.map((q: any, idx: number) => ({
@@ -290,7 +336,7 @@ export async function POST(req: NextRequest) {
     const user = await currentUser();
     
     if (!user || !user.primaryEmailAddress?.emailAddress) {
-      console.log("User not authenticated");
+      
       return NextResponse.json({ error: "User not authenticated" }, { status: 401 });
     }
 
@@ -303,8 +349,8 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log("🎯 Generating questions for interviewer:", interviewer.name, interviewer.title);
-    console.log("📋 Interview Set ID:", interviewSetId);
+    
+    
 
     // Fetch the interview set
     const interviewSet = await db.query.InterviewSet.findFirst({
@@ -348,7 +394,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "AI service configuration error" }, { status: 500 });
     }
 
-    console.log("🤖 Starting AI generation with interviewer context...");
+    
 
     let result;
     let retries = 2;
@@ -406,16 +452,19 @@ Remember: You are ${interviewer.name}, ${interviewer.title}. Ask questions like 
           temperature: 0.8,
         });
         break;
-      } catch (aiError: any) {
+      }
+      //
+
+      catch (aiError: any) {
         retries--;
         console.error(`AI generation attempt failed (${2 - retries}/2):`, aiError.message);
         
         if (retries === 0) {
           // Fallback questions based on interviewer type
-          console.log("Using fallback questions due to AI failure");
+          
           const fallbackQuestions = generateFallbackQuestions(interviewer, interviewSet.position, interviewSet.companyName, language);
           
-          // ✅ Save fallback questions to database too
+          // Save fallback questions to database too
           const savedFallback = await saveQuestionsToDatabase(fallbackQuestions, parseInt(interviewSetId));
           return NextResponse.json(savedFallback, { status: 200 });
         }
@@ -441,7 +490,7 @@ Remember: You are ${interviewer.name}, ${interviewer.title}. Ask questions like 
       // Use fallback if parse fails
       const fallbackQuestions = generateFallbackQuestions(interviewer, interviewSet.position, interviewSet.companyName, language);
       
-      // ✅ Save fallback questions to database too
+      // Save fallback questions to database too
       const savedFallback = await saveQuestionsToDatabase(fallbackQuestions, parseInt(interviewSetId));
       return NextResponse.json(savedFallback, { status: 200 });
     }
@@ -464,9 +513,9 @@ Remember: You are ${interviewer.name}, ${interviewer.title}. Ask questions like 
         interviewerTitle: interviewer.title
       }));
 
-    console.log(`✅ Generated ${validQuestions.length} questions for ${interviewer.title}`);
+    
 
-    // ✅ Save AI-generated questions to database for future reference and assessment
+    // Save AI-generated questions to database for future reference and assessment
     const savedQuestions = await saveQuestionsToDatabase(validQuestions, parseInt(interviewSetId));
     return NextResponse.json(savedQuestions, { status: 200 });
 

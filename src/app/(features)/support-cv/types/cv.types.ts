@@ -219,6 +219,16 @@ export interface AISuggestion {
   metrics?: string[];
 }
 
+export interface AIAppliedChange {
+  section: string;
+  field: string;
+  itemId?: string;
+  originalValue: string;
+  newValue: string;
+  reason: string;
+  appliedAt: number; // timestamp
+}
+
 export interface CVBuilderState {
   // Added 'review' step to support AI review flow after upload
   // Added 'auto-edit-comparison' step to show before/after changes
@@ -226,6 +236,7 @@ export interface CVBuilderState {
   selectedTemplate: CVTemplate | null;
   cvData: CVData;
   aiSuggestions: AISuggestion[];
+  aiAppliedChanges?: AIAppliedChange[]; // Track AI changes that were applied
   isGeneratingSuggestions: boolean;
   isExporting: boolean;
 }

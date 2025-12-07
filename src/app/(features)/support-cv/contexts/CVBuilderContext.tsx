@@ -160,47 +160,59 @@ const CVBuilderContext = createContext<CVBuilderContextValue | undefined>(undefi
 export function CVBuilderProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cvBuilderReducer, initialState);
 
-  const actions = {
-    setStep: useCallback((step: CVStep) => {
-      dispatch({ type: 'SET_STEP', payload: step });
-    }, []),
+  const setStep = useCallback((step: CVStep) => {
+    dispatch({ type: 'SET_STEP', payload: step });
+  }, []);
 
-    setTemplate: useCallback((template: CVTemplate) => {
-      dispatch({ type: 'SET_TEMPLATE', payload: template });
-    }, []),
+  const setTemplate = useCallback((template: CVTemplate) => {
+    dispatch({ type: 'SET_TEMPLATE', payload: template });
+  }, []);
 
-    setCVData: useCallback((data: CVData) => {
-      dispatch({ type: 'SET_CV_DATA', payload: data });
-    }, []),
+  const setCVData = useCallback((data: CVData) => {
+    dispatch({ type: 'SET_CV_DATA', payload: data });
+  }, []);
 
-    setReviewData: useCallback((data: any) => {
-      dispatch({ type: 'SET_REVIEW_DATA', payload: data });
-    }, []),
+  const setReviewData = useCallback((data: any) => {
+    dispatch({ type: 'SET_REVIEW_DATA', payload: data });
+  }, []);
 
-    setAutoEditResult: useCallback((original: CVData, edited: CVData, changes: any[]) => {
-      dispatch({ type: 'SET_AUTO_EDIT_RESULT', payload: { original, edited, changes } });
-    }, []),
+  const setAutoEditResult = useCallback((original: CVData, edited: CVData, changes: any[]) => {
+    dispatch({ type: 'SET_AUTO_EDIT_RESULT', payload: { original, edited, changes } });
+  }, []);
 
-    applyChanges: useCallback((data: CVData) => {
-      dispatch({ type: 'APPLY_CHANGES', payload: data });
-    }, []),
+  const applyChanges = useCallback((data: CVData) => {
+    dispatch({ type: 'APPLY_CHANGES', payload: data });
+  }, []);
 
-    setSectionOrder: useCallback((order: SectionOrder[]) => {
-      dispatch({ type: 'SET_SECTION_ORDER', payload: order });
-    }, []),
+  const setSectionOrder = useCallback((order: SectionOrder[]) => {
+    dispatch({ type: 'SET_SECTION_ORDER', payload: order });
+  }, []);
 
-    setProcessing: useCallback((processing: boolean) => {
-      dispatch({ type: 'SET_PROCESSING', payload: processing });
-    }, []),
+  const setProcessing = useCallback((processing: boolean) => {
+    dispatch({ type: 'SET_PROCESSING', payload: processing });
+  }, []);
 
-    setError: useCallback((error: string | null) => {
-      dispatch({ type: 'SET_ERROR', payload: error });
-    }, []),
+  const setError = useCallback((error: string | null) => {
+    dispatch({ type: 'SET_ERROR', payload: error });
+  }, []);
 
-    reset: useCallback(() => {
-      dispatch({ type: 'RESET' });
-    }, [])
-  };
+  const reset = useCallback(() => {
+    dispatch({ type: 'RESET' });
+  }, []);
+
+  // Memoize actions object to prevent unnecessary re-renders
+  const actions = React.useMemo(() => ({
+    setStep,
+    setTemplate,
+    setCVData,
+    setReviewData,
+    setAutoEditResult,
+    applyChanges,
+    setSectionOrder,
+    setProcessing,
+    setError,
+    reset
+  }), [setStep, setTemplate, setCVData, setReviewData, setAutoEditResult, applyChanges, setSectionOrder, setProcessing, setError, reset]);
 
   return (
     <CVBuilderContext.Provider value={{ state, actions }}>

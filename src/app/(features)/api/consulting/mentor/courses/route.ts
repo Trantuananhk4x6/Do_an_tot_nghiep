@@ -139,12 +139,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate Google Meet link (simplified - in production, use Google Calendar API)
-    const meetingLink = `https://meet.google.com/${Math.random().toString(36).substring(7)}`;
-
     console.log('[CREATE COURSE] Inserting course into database...');
 
-    const course = await db
+    // First insert to get the course ID, then update with meeting link
+    const courseResult = await db
       .insert(MentorCourse)
       .values({
         mentorEmail: userEmail,
@@ -156,11 +154,21 @@ export async function POST(request: NextRequest) {
         scheduledDate: new Date(scheduledDate),
         duration,
         industry,
-        meetingLink,
+        meetingLink: '', // Will be updated after getting ID
         status: 'scheduled',
         portfolio,
         tags,
       } as any)
+      .returning();
+
+    // Update with internal meeting link using the course ID
+    const courseId = courseResult[0].id;
+    const meetingLink = `/consulting/meeting/${courseId}`;
+    
+    const course = await db
+      .update(MentorCourse)
+      .set({ meetingLink } as any)
+      .where(eq(MentorCourse.id, courseId))
       .returning();
 
     console.log('[CREATE COURSE] Course created successfully:', course[0]);
