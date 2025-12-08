@@ -55,7 +55,7 @@
     "llm-chunk": "^0.0.1",
     "lucide-react": "^0.469.0",
     "mammoth": "^1.10.0",
-    "next": "^15.2.3",
+    "next": "15.2.6",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^3.11.174",
     "puppeteer": "^24.0.0",
