@@ -604,12 +604,12 @@ export default function CVEditor({
 
       {/* Right Sidebar - Template Selector with AI Recommendation */}
       <div className="lg:col-span-3">
-        <div className="relative lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] glass-effect border border-purple-500/30 rounded-xl lg:rounded-2xl overflow-hidden">
+        <div className="relative lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] glass-effect border border-purple-500/30 rounded-xl lg:rounded-2xl overflow-y-auto">
           {/* Animated background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 opacity-50" />
-          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/20 to-blue-600/20 blur-xl opacity-50" />
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 opacity-50 pointer-events-none" />
+          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600/20 to-blue-600/20 blur-xl opacity-50 pointer-events-none" />
           
-          <div className="relative z-10 h-full">
+          <div className="relative z-10 h-full overflow-y-auto">
             <TemplateSelectorPanel
               selectedTemplate={selectedTemplate}
               onSelectTemplate={onTemplateChange}

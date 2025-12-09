@@ -118,6 +118,46 @@ Overall Score = (ATS + Impact + Clarity) / 3
 3. Return ONLY valid JSON (no markdown)
 `;
   }
+//   {
+//   "overallScore": 85,
+//   "atsScore": 90,
+//   "impactScore": 80,
+//   "clarityScore": 85,
+//   "strengths": [
+//     "Bố cục rõ ràng và mạch lạc",
+//     "Kỹ năng kỹ thuật mạnh",
+//     "Thành tựu có số liệu định lượng",
+//     "Có phần tóm tắt chuyên nghiệp",
+//     "Sử dụng động từ hành động tốt"
+//   ],
+//   "weaknesses": [
+//     "Một số thành tựu thiếu số liệu cụ thể",
+//     "Chưa có liên kết LinkedIn",
+//     "Không ghi GPA",
+//     "Không có chứng chỉ",
+//     "Một vài mô tả còn chung chung"
+//   ],
+//   "suggestions": [
+//     "Thêm số liệu cho tất cả thành tựu (ví dụ: 'Cải thiện hiệu suất 23%')",
+//     "Bổ sung LinkedIn và GitHub",
+//     "Thêm 2–3 chứng chỉ liên quan",
+//     "Áp dụng STAR: Situation, Task, Action, Result",
+//     "Thay các động từ yếu bằng động từ mạnh",
+//     "Thêm mục Dự án",
+//     "Bổ sung phần kỹ năng ngôn ngữ",
+//     "Tối ưu từ khóa cho ATS"
+//   ]
+// }
+// TIÊU CHÍ CHẤM ĐIỂM (SCORING CRITERIA):
+
+// ATS Score (0–100): Tiêu đề, font, từ khóa, không dùng hình ảnh, thông tin liên hệ, kỹ năng, thứ tự thời gian, định dạng
+
+// Impact Score (0–100): Số liệu đo lường, động từ hành động, STAR, hướng đến kết quả, tác động kinh doanh
+
+// Clarity Score (0–100): Bố cục, trình bày, tổ chức mục, ngữ pháp, độ dài phù hợp, giọng văn chuyên nghiệp
+
+// Công thức Overall Score:
+// → (ATS + Impact + Clarity) / 3
 
   private fallbackReview(cvData: CVData): CVReview {
     const hasExperience = cvData.experiences && cvData.experiences.length > 0;

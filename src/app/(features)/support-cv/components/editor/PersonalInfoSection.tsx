@@ -32,20 +32,33 @@ export default function PersonalInfoSection({ data, onChange, aiAppliedChanges =
   // Helper function to check if a field was AI-modified
   const isAIModified = (fieldName: string): AIAppliedChange | undefined => {
     return aiAppliedChanges.find(change => 
-      (change.section.toLowerCase() === 'personalinfo' || change.section.toLowerCase() === 'summary') && 
+      (change.section.toLowerCase() === 'personalinfo' || 
+       change.section.toLowerCase() === 'summary' ||
+       change.itemId === fieldName) && 
       change.field.toLowerCase() === fieldName.toLowerCase()
     );
   };
 
-  // Get input class with AI highlight
+  // Get input class with AI highlight - more visible yellow highlight
   const getInputClass = (fieldName: string) => {
     const aiChange = isAIModified(fieldName);
-    const baseClass = "relative z-10 w-full px-4 py-3.5 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:bg-white/10 outline-none transition-all";
+    const baseClass = "relative z-10 w-full px-4 py-3.5 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500/30 focus:bg-white/10 outline-none transition-all";
     
     if (aiChange) {
-      return `${baseClass} border-amber-500/70 ring-1 ring-amber-500/50 bg-amber-500/10`;
+      return `${baseClass} bg-amber-500/20 border-2 border-amber-400/70 ring-2 ring-amber-400/30`;
     }
-    return `${baseClass} border-white/20`;
+    return `${baseClass} bg-white/5 border border-white/20 focus:border-purple-500`;
+  };
+
+  // Wrapper class for input containers with AI enhancement
+  const getContainerClass = (fieldName: string) => {
+    const aiChange = isAIModified(fieldName);
+    const baseClass = "relative glass-effect rounded-xl p-6 group transition-all";
+    
+    if (aiChange) {
+      return `${baseClass} border-2 border-amber-400/50 bg-gradient-to-br from-amber-500/10 to-orange-500/5`;
+    }
+    return `${baseClass} border border-purple-500/30 hover:border-purple-500/50`;
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -186,57 +199,77 @@ export default function PersonalInfoSection({ data, onChange, aiAppliedChanges =
           value={data.location}
           onChange={(e) => handleChange('location', e.target.value)}
           placeholder="e.g., San Francisco, CA"
-          className="relative z-10 w-full px-4 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:bg-white/10 outline-none transition-all"
+          className={getInputClass('location')}
         />
       </div>
 
       {/* LinkedIn & GitHub */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="relative glass-effect border border-purple-500/30 rounded-xl p-6 group hover:border-purple-500/50 transition-all">
+        <div className={getContainerClass('linkedin')}>
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          {isAIModified('linkedin') && (
+            <Sparkles className="absolute top-4 right-4 w-4 h-4 text-amber-400 z-20 animate-pulse" />
+          )}
           <label className="relative z-10 block text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
             <Linkedin className="w-4 h-4" /> LinkedIn <span className="text-xs text-gray-400 font-normal">(Optional)</span>
+            {isAIModified('linkedin') && (
+              <span className="px-1.5 py-0.5 bg-amber-500/30 text-amber-300 text-[10px] rounded-full font-medium">AI</span>
+            )}
           </label>
           <input
             type="url"
             value={data.linkedin}
             onChange={(e) => handleChange('linkedin', e.target.value)}
             placeholder="e.g., linkedin.com/in/johndoe"
-            className="relative z-10 w-full px-4 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:bg-white/10 outline-none transition-all"
+            className={getInputClass('linkedin')}
           />
         </div>
-        <div className="relative glass-effect border border-purple-500/30 rounded-xl p-6 group hover:border-purple-500/50 transition-all">
+        <div className={getContainerClass('github')}>
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          {isAIModified('github') && (
+            <Sparkles className="absolute top-4 right-4 w-4 h-4 text-amber-400 z-20 animate-pulse" />
+          )}
           <label className="relative z-10 block text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
             <Github className="w-4 h-4" /> GitHub <span className="text-xs text-gray-400 font-normal">(Optional)</span>
+            {isAIModified('github') && (
+              <span className="px-1.5 py-0.5 bg-amber-500/30 text-amber-300 text-[10px] rounded-full font-medium">AI</span>
+            )}
           </label>
           <input
             type="url"
             value={data.github || ''}
             onChange={(e) => handleChange('github', e.target.value)}
             placeholder="e.g., github.com/johndoe"
-            className="relative z-10 w-full px-4 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:bg-white/10 outline-none transition-all"
+            className={getInputClass('github')}
           />
         </div>
       </div>
 
       {/* Website */}
-      <div className="relative glass-effect border border-purple-500/30 rounded-xl p-6 group hover:border-purple-500/50 transition-all">
+      <div className={getContainerClass('website')}>
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+        {isAIModified('website') && (
+          <Sparkles className="absolute top-4 right-4 w-5 h-5 text-amber-400 z-20 animate-pulse" />
+        )}
         <label className="relative z-10 block text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
           <Globe className="w-4 h-4" /> Website <span className="text-xs text-gray-400 font-normal">(Optional)</span>
+          {isAIModified('website') && (
+            <span className="px-2 py-0.5 bg-amber-500/30 text-amber-300 text-xs rounded-full font-medium ml-2">
+              AI Enhanced
+            </span>
+          )}
         </label>
         <input
           type="url"
           value={data.website}
           onChange={(e) => handleChange('website', e.target.value)}
           placeholder="e.g., johndoe.com"
-          className="relative z-10 w-full px-4 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:bg-white/10 outline-none transition-all"
+          className={getInputClass('website')}
         />
       </div>
 
       {/* Summary */}
-      <div className="relative glass-effect border border-purple-500/30 rounded-xl p-6 group hover:border-purple-500/50 transition-all">
+      <div className={`${getContainerClass('summary')} ${isAIModified('summary') ? 'shadow-lg shadow-amber-500/20' : ''}`}>
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
         {isAIModified('summary') && (
           <Sparkles className="absolute top-4 right-4 w-5 h-5 text-amber-400 z-20 animate-pulse" />
@@ -244,7 +277,8 @@ export default function PersonalInfoSection({ data, onChange, aiAppliedChanges =
         <label className="relative z-10 block text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
           <FileText className="w-4 h-4" /> Professional Summary
           {isAIModified('summary') && (
-            <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 text-xs rounded-full ml-2">
+            <span className="px-2 py-1 bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-200 text-xs rounded-full font-semibold ml-2 flex items-center gap-1 border border-amber-400/50">
+              <Sparkles className="w-3 h-3" />
               AI Enhanced
             </span>
           )}

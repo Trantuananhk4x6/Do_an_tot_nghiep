@@ -90,7 +90,7 @@ export const regenerateAnswer = async (
 
     // Generate new answer
     const result = await generateText({
-      model: google("gemini-2.5-flash") as any,
+      model: google("gemini-2.5-flash-lite") as any,
       messages: [
         {
           role: "user",

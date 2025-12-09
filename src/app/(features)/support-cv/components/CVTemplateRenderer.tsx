@@ -706,27 +706,41 @@ export default function CVTemplateRenderer({ cvData, template, sectionOrder }: C
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow-2xl mx-auto ${styles.fontFamily}`} style={{ maxWidth: '210mm', minHeight: '297mm' }}>
+    <div 
+      className={`bg-white mx-auto ${styles.fontFamily} cv-template-container`} 
+      style={{ 
+        width: '210mm', 
+        minHeight: '297mm', 
+        maxWidth: '210mm',
+        boxSizing: 'border-box',
+        pageBreakAfter: 'auto',
+        pageBreakInside: 'avoid'
+      }}
+    >
       {/* Header - Template-specific design */}
       {renderHeader()}
 
       {/* Body - Sections with template-aware styling */}
-      <div className={`p-8 space-y-8 ${
+      <div className={`p-8 space-y-6 ${
         styles.layout === 'creative' ? 'bg-gradient-to-b from-white to-purple-50/30' :
         styles.layout === 'tech' ? 'bg-slate-50/50' :
         ''
-      }`}>
+      }`} style={{ pageBreakInside: 'auto' }}>
         {sectionOrder.map((section) => {
           if (!section.visible) return null;
           const content = renderSection(section.id);
           if (!content) return null;
           
           return (
-            <div key={section.id} className={`${
-              styles.layout === 'creative' ? 'p-4 rounded-xl bg-white/60 shadow-sm' :
-              styles.layout === 'timeline' ? 'border-l-2 border-orange-200 pl-4' :
-              ''
-            }`}>
+            <div 
+              key={section.id} 
+              className={`break-inside-avoid ${
+                styles.layout === 'creative' ? 'p-4 rounded-xl bg-white/60 shadow-sm' :
+                styles.layout === 'timeline' ? 'border-l-2 border-orange-200 pl-4' :
+                ''
+              }`}
+              style={{ pageBreakInside: 'avoid' }}
+            >
               {content}
             </div>
           );

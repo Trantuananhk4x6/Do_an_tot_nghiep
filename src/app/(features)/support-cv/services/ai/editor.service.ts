@@ -151,6 +151,27 @@ class CVEditorService {
     const missingLinkedIn = !cvData.personalInfo.linkedin;
     const missingWebsite = !cvData.personalInfo.website;
     const hasProjects = (cvData.projects?.length || 0) > 0;
+
+    // Build detailed CV content for AI to analyze
+    const experiencesDetails = cvData.experiences?.map((exp, i) => 
+      `[${i}] ${exp.position} at ${exp.company} (${exp.startDate} - ${exp.current ? 'Present' : exp.endDate})
+      Description: ${exp.description || '[EMPTY]'}
+      Achievements: ${exp.achievements?.join('; ') || '[EMPTY]'}`
+    ).join('\n') || '[No experiences]';
+
+    const educationDetails = cvData.education?.map((edu, i) =>
+      `[${i}] ${edu.degree} in ${edu.field} at ${edu.school} (${edu.startDate} - ${edu.endDate})
+      GPA: ${edu.gpa || '[EMPTY]'}, Achievements: ${edu.achievements?.join('; ') || '[EMPTY]'}`
+    ).join('\n') || '[No education]';
+
+    const projectsDetails = cvData.projects?.map((proj, i) =>
+      `[${i}] ${proj.name}${proj.link ? ` (${proj.link})` : ''}
+      Description: ${proj.description || '[EMPTY]'}
+      Technologies: ${proj.technologies?.join(', ') || '[EMPTY]'}
+      Achievements: ${proj.achievements?.join('; ') || '[EMPTY]'}`
+    ).join('\n') || '[No projects]';
+
+    const skillsDetails = cvData.skills?.map(s => `${s.name} (${s.category})`).join(', ') || '[No skills]';
     
     return `You are an expert CV editor. Your task: Review the existing CV content and suggest ONLY realistic improvements based on what's already there.
 
@@ -158,10 +179,17 @@ class CVEditorService {
 Name: ${cvData.personalInfo.fullName} | Title: ${cvData.personalInfo.title}
 Summary: ${cvData.personalInfo.summary || '[EMPTY]'}
 LinkedIn: ${cvData.personalInfo.linkedin || '[MISSING]'} | GitHub: ${cvData.personalInfo.github || '[MISSING]'} | Website: ${cvData.personalInfo.website || '[MISSING]'}
-Experiences: ${cvData.experiences?.length || 0} entries
-Education: ${cvData.education?.length || 0} entries
-Projects: ${cvData.projects?.length || 0} entries
-Skills: ${cvData.skills?.length || 0} skills
+
+**EXPERIENCES:**
+${experiencesDetails}
+
+**EDUCATION:**
+${educationDetails}
+
+**PROJECTS:**
+${projectsDetails}
+
+**SKILLS:** ${skillsDetails}
 
 **REVIEW SCORES:** 
 Overall: ${review.overallScore}/100 | ATS: ${review.atsScore}/100 | Impact: ${review.impactScore}/100
@@ -183,7 +211,14 @@ ${review.weaknesses.slice(0, 3).join('\n')}
 7. ❌ **DO NOT Fabricate** - NEVER invent companies, projects, or achievements not in the original CV
 8. ❌ **DO NOT Add Experience Years** - Unless already stated, don't add "5+ years" or time durations
 9. ❌ **DO NOT Create New Sections** - Only improve what exists
-10. ✅ **Suggest Placeholders** - If CV is missing critical info (e.g., no projects for tech role), add placeholder entry like "Project Name" with note "[Add your project details]"
+10. ✅ **Replace Template Placeholders** - If you see "[Project Name]", "[brief description]", "[mention 2-3 key technologies]" or similar template text, REPLACE with actual content based on the project name and technologies listed
+11. ✅ **Education Improvements** - Add relevant coursework, academic achievements, or skills learned based on the degree and field
+12. ✅ **Project Learning** - For projects, suggest what skills/knowledge the candidate gained from building it
+
+**IMPORTANT FOR PROJECTS:**
+- If project description contains placeholder text like "[brief description of project's purpose]", rewrite it based on the project name and technologies
+- Add what the candidate LEARNED from each project (e.g., "Gained hands-on experience with...")
+- Focus on technical challenges solved and skills demonstrated
 
 **RESPONSE FORMAT:**
 {
@@ -302,7 +337,17 @@ Return ONLY valid JSON matching the format above.`;
   }
 
   private applyExperienceSuggestion(cvData: CVData, suggestion: any): void {
-    const experience = cvData.experiences?.find(e => e.id === suggestion.itemId);
+    // Try to find experience by ID first, then by index
+    let experience = cvData.experiences?.find(e => e.id === suggestion.itemId);
+    
+    // If not found by ID, try by index (AI might use "0", "1", etc.)
+    if (!experience && suggestion.itemId !== undefined) {
+      const itemIndex = parseInt(suggestion.itemId, 10);
+      if (!isNaN(itemIndex) && cvData.experiences?.[itemIndex]) {
+        experience = cvData.experiences[itemIndex];
+      }
+    }
+    
     if (!experience) return;
 
     if (suggestion.field === 'achievements') {
@@ -321,7 +366,17 @@ Return ONLY valid JSON matching the format above.`;
   }
 
   private applyEducationSuggestion(cvData: CVData, suggestion: any): void {
-    const education = cvData.education?.find(e => e.id === suggestion.itemId);
+    // Try to find education by ID first, then by index
+    let education = cvData.education?.find(e => e.id === suggestion.itemId);
+    
+    // If not found by ID, try by index
+    if (!education && suggestion.itemId !== undefined) {
+      const itemIndex = parseInt(suggestion.itemId, 10);
+      if (!isNaN(itemIndex) && cvData.education?.[itemIndex]) {
+        education = cvData.education[itemIndex];
+      }
+    }
+    
     if (!education) return;
 
     if (suggestion.field === 'achievements') {
@@ -338,7 +393,17 @@ Return ONLY valid JSON matching the format above.`;
   }
 
   private applyProjectSuggestion(cvData: CVData, suggestion: any): void {
-    const project = cvData.projects?.find(p => p.id === suggestion.itemId);
+    // Try to find project by ID first, then by index
+    let project = cvData.projects?.find(p => p.id === suggestion.itemId);
+    
+    // If not found by ID, try by index
+    if (!project && suggestion.itemId !== undefined) {
+      const itemIndex = parseInt(suggestion.itemId, 10);
+      if (!isNaN(itemIndex) && cvData.projects?.[itemIndex]) {
+        project = cvData.projects[itemIndex];
+      }
+    }
+    
     if (!project) return;
 
     if (suggestion.field === 'achievements') {
@@ -362,10 +427,30 @@ Return ONLY valid JSON matching the format above.`;
   }
 
   private applySkillsSuggestion(cvData: CVData, suggestion: any): void {
-    if (suggestion.type === 'add') {
+    // Try to find skill by ID first, then by index, then by name
+    let skill = cvData.skills?.find(s => s.id === suggestion.itemId);
+    
+    // If not found by ID, try by index
+    if (!skill && suggestion.itemId !== undefined) {
+      const itemIndex = parseInt(suggestion.itemId, 10);
+      if (!isNaN(itemIndex) && cvData.skills?.[itemIndex]) {
+        skill = cvData.skills[itemIndex];
+      }
+    }
+    
+    // If still not found, try by original name
+    if (!skill && suggestion.original) {
+      skill = cvData.skills?.find(s => s.name === suggestion.original);
+    }
+    
+    if (skill && (suggestion.type === 'modify' || suggestion.type === 'rewrite')) {
+      // Modify existing skill
+      skill.name = suggestion.improved;
+    } else if (suggestion.type === 'add') {
+      // Add new skill
       cvData.skills = cvData.skills || [];
       cvData.skills.push({
-        id: `skill-${Date.now()}`,
+        id: `skill-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         category: suggestion.category || 'Technical',
         name: suggestion.improved,
         level: suggestion.level || 'intermediate'

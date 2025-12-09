@@ -257,8 +257,14 @@ export default function ExportPanel({ cvData, template, onBackToPreview }: Expor
           top: '0', 
           width: '210mm', 
           minHeight: '297mm',
+          maxWidth: '210mm',
           background: 'white',
-          zIndex: -1
+          zIndex: -1,
+          fontFamily: "'Times New Roman', 'Georgia', serif",
+          WebkitFontSmoothing: 'antialiased',
+          MozOsxFontSmoothing: 'grayscale' as any,
+          textRendering: 'optimizeLegibility',
+          color: '#000000'
         }}
       >
         <CVTemplateRenderer

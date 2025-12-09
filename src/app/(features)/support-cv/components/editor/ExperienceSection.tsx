@@ -36,24 +36,32 @@ export default function ExperienceSection({ data, onChange, aiAppliedChanges = [
     onChange(data.filter((_, i) => i !== index));
   };
 
-  // Helper function to check if a field was AI-modified
-  const isAIModified = (itemId: string, fieldName: string): AIAppliedChange | undefined => {
+  // Helper function to check if a field was AI-modified (check by itemId or index)
+  const isAIModified = (itemId: string, fieldName: string, index?: number): AIAppliedChange | undefined => {
     return aiAppliedChanges.find(change => 
       (change.section.toLowerCase() === 'experience' || change.section.toLowerCase() === 'experiences') && 
-      change.itemId === itemId && 
+      (change.itemId === itemId || change.itemId === String(index)) && 
       change.field.toLowerCase() === fieldName.toLowerCase()
     );
   };
 
-  // Generate input class with AI highlight
-  const getInputClass = (itemId: string, fieldName: string) => {
-    const aiChange = isAIModified(itemId, fieldName);
-    const baseClass = "px-4 py-2 bg-white/5 border rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all";
+  // Check if any experience item was AI-modified (check by itemId or index)
+  const isItemAIModified = (itemId: string, index?: number): boolean => {
+    return aiAppliedChanges.some(change => 
+      (change.section.toLowerCase() === 'experience' || change.section.toLowerCase() === 'experiences') && 
+      (change.itemId === itemId || change.itemId === String(index))
+    );
+  };
+
+  // Generate input class with AI highlight - more prominent styling
+  const getInputClass = (itemId: string, fieldName: string, index?: number) => {
+    const aiChange = isAIModified(itemId, fieldName, index);
+    const baseClass = "px-4 py-2 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all";
     
     if (aiChange) {
-      return `${baseClass} border-amber-500/70 ring-1 ring-amber-500/50 bg-amber-500/10`;
+      return `${baseClass} bg-amber-500/20 border-2 border-amber-400/70 ring-2 ring-amber-400/30`;
     }
-    return `${baseClass} border-white/10`;
+    return `${baseClass} bg-white/5 border border-white/10`;
   };
 
   const addAchievement = (index: number) => {
@@ -86,7 +94,21 @@ export default function ExperienceSection({ data, onChange, aiAppliedChanges = [
 
       <div className="space-y-8">
         {data.map((exp, index) => (
-          <div key={exp.id} className="glass-effect border border-white/10 rounded-xl p-6 relative hover:border-purple-500/50 transition-all">
+          <div 
+            key={exp.id} 
+            className={`glass-effect border rounded-xl p-6 relative transition-all ${
+              isItemAIModified(exp.id, index) 
+                ? 'border-amber-400/50 bg-gradient-to-br from-amber-500/5 to-orange-500/5 shadow-lg shadow-amber-500/10' 
+                : 'border-white/10 hover:border-purple-500/50'
+            }`}
+          >
+            {/* AI Enhanced Badge for the whole experience */}
+            {isItemAIModified(exp.id, index) && (
+              <div className="absolute -top-3 left-4 px-2 py-1 bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-200 text-xs rounded-full font-semibold flex items-center gap-1 border border-amber-400/50">
+                <Sparkles className="w-3 h-3" />
+                AI Enhanced
+              </div>
+            )}
             <button
               onClick={() => removeExperience(index)}
               className="absolute top-4 right-4 text-red-500 hover:text-red-700"
@@ -98,7 +120,7 @@ export default function ExperienceSection({ data, onChange, aiAppliedChanges = [
               {/* Position & Company */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="relative">
-                  {isAIModified(exp.id, 'position') && (
+                  {isAIModified(exp.id, 'position', index) && (
                     <Sparkles className="absolute -top-2 -right-2 w-4 h-4 text-amber-400 z-10" />
                   )}
                   <input
@@ -106,11 +128,11 @@ export default function ExperienceSection({ data, onChange, aiAppliedChanges = [
                     value={exp.position}
                     onChange={(e) => updateExperience(index, { position: e.target.value })}
                     placeholder="Job Title"
-                    className={getInputClass(exp.id, 'position')}
+                    className={getInputClass(exp.id, 'position', index)}
                   />
                 </div>
                 <div className="relative">
-                  {isAIModified(exp.id, 'company') && (
+                  {isAIModified(exp.id, 'company', index) && (
                     <Sparkles className="absolute -top-2 -right-2 w-4 h-4 text-amber-400 z-10" />
                   )}
                   <input
@@ -118,7 +140,7 @@ export default function ExperienceSection({ data, onChange, aiAppliedChanges = [
                     value={exp.company}
                     onChange={(e) => updateExperience(index, { company: e.target.value })}
                     placeholder="Company Name"
-                    className={getInputClass(exp.id, 'company')}
+                    className={getInputClass(exp.id, 'company', index)}
                   />
                 </div>
               </div>
@@ -126,18 +148,18 @@ export default function ExperienceSection({ data, onChange, aiAppliedChanges = [
               {/* Dates */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="relative">
-                  {isAIModified(exp.id, 'startDate') && (
+                  {isAIModified(exp.id, 'startDate', index) && (
                     <Sparkles className="absolute -top-2 -right-2 w-4 h-4 text-amber-400 z-10" />
                   )}
                   <input
                     type="month"
                     value={exp.startDate}
                     onChange={(e) => updateExperience(index, { startDate: e.target.value })}
-                    className={getInputClass(exp.id, 'startDate')}
+                    className={getInputClass(exp.id, 'startDate', index)}
                   />
                 </div>
                 <div className="relative">
-                  {isAIModified(exp.id, 'endDate') && (
+                  {isAIModified(exp.id, 'endDate', index) && (
                     <Sparkles className="absolute -top-2 -right-2 w-4 h-4 text-amber-400 z-10" />
                   )}
                   <input
@@ -145,7 +167,7 @@ export default function ExperienceSection({ data, onChange, aiAppliedChanges = [
                     value={exp.endDate}
                     onChange={(e) => updateExperience(index, { endDate: e.target.value })}
                     disabled={exp.current}
-                    className={`${getInputClass(exp.id, 'endDate')} disabled:opacity-50`}
+                    className={`${getInputClass(exp.id, 'endDate', index)} disabled:opacity-50`}
                   />
                 </div>
                 <label className="flex items-center gap-2">
@@ -161,7 +183,7 @@ export default function ExperienceSection({ data, onChange, aiAppliedChanges = [
 
               {/* Achievements */}
               <div className="relative">
-                {isAIModified(exp.id, 'achievements') && (
+                {isAIModified(exp.id, 'achievements', index) && (
                   <Sparkles className="absolute -top-2 right-24 w-4 h-4 text-amber-400 z-10" />
                 )}
                 <div className="flex items-center justify-between mb-2">
@@ -182,7 +204,7 @@ export default function ExperienceSection({ data, onChange, aiAppliedChanges = [
                     onChange={(e) => updateAchievement(index, achIndex, e.target.value)}
                     placeholder="• Achieved [Result] by [Action], resulting in [Metric]..."
                     rows={2}
-                    className={`w-full px-4 py-3 bg-white/5 border rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-2 resize-none ${isAIModified(exp.id, 'achievements') ? 'border-amber-500/70 ring-1 ring-amber-500/50 bg-amber-500/10' : 'border-white/10'}`}
+                    className={`w-full px-4 py-3 bg-white/5 border rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-2 resize-none ${isAIModified(exp.id, 'achievements', index) ? 'border-amber-500/70 ring-1 ring-amber-500/50 bg-amber-500/10' : 'border-white/10'}`}
                   />
                 ))}
               </div>

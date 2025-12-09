@@ -252,7 +252,7 @@ export async function POST(request: NextRequest) {
 
     // Initialize Gemini with optimized settings
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash-exp',
+      model: 'gemini-2.5-flash-lite',
       generationConfig: {
         temperature: 0.2, // Lower temperature for more consistent outputs
         topK: 40,
@@ -299,7 +299,7 @@ export async function POST(request: NextRequest) {
       analysis,
       metadata: {
         timestamp: new Date().toISOString(),
-        model: 'gemini-2.5-flash-exp',
+        model: 'gemini-2.5-flash-lite',
         cvLength: cvText.length
       }
     });

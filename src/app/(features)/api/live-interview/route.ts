@@ -91,7 +91,7 @@ export async function POST(req: Request) {
 
               // safe call to generateText + safe handling of return type
                             const refineResult = await generateText({
-                              model: google("gemini-2.5-flash", { apiKey: apiKey as any } as any),
+                              model: google("gemini-2.5-flash-lite", { apiKey: apiKey as any } as any),
                               prompt: refinePrompt,
                               // no heavy generation needed
                               maxTokens: 300,
@@ -133,7 +133,7 @@ export async function POST(req: Request) {
     console.log("[Live Interview] Last message:", messages[messages.length - 1]?.content);
     
     const result = streamText({
-      model: google("gemini-2.5-flash"),
+      model: google("gemini-2.5-flash-lite"),
       messages: messages as any,
       system: `You are a helpful AI interview assistant. Answer interview questions quickly and professionally.
 
@@ -204,7 +204,7 @@ EXAMPLES:
   
 //   try {
 //     const result = streamText({
-//       model: google("gemini-2.5-flash"), // Thay đổi từ "gemini-2.5-pro-latest" thành "gemini-2.5-flash"
+//       model: google("gemini-2.5-flash-lite"), // Thay đổi từ "gemini-2.5-pro-latest" thành "gemini-2.5-flash-lite"
 //       messages,
 //       system: `You are a helpful interview assistant. 
 //         Use tools on every request.

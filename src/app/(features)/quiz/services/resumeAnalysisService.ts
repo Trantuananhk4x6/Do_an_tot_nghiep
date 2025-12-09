@@ -1051,37 +1051,37 @@ Analyze the CV and determine the MAIN job role from these categories:
 CV Content:
 ${cvText.substring(0, 12000)}
 
-Return ONLY valid JSON (no markdown, no code blocks):
+Return ONLY valid JSON (no markdown, no code blocks). Keep lists SHORT - max 10 items each:
 {
   "primaryRole": "one role from the list above that BEST matches this person's main job",
-  "primaryRoleConfidence": "high|medium|low - how confident are you in this classification",
-  "roleExplanation": "1-2 sentences explaining why you chose this primary role",
-  "programmingLanguages": ["list ALL languages"],
-  "frameworks": ["list ALL frameworks"],
-  "databases": ["list ALL databases"],
-  "tools": ["list ALL tools"],
-  "cloudPlatforms": ["list ALL cloud services"],
+  "primaryRoleConfidence": "high|medium|low",
+  "roleExplanation": "Brief 1 sentence explanation",
+  "programmingLanguages": ["max 5 MAIN languages from CV"],
+  "frameworks": ["max 5 MAIN frameworks from CV"],
+  "databases": ["max 3 databases from CV"],
+  "tools": ["max 10 MAIN tools actually mentioned in CV"],
+  "cloudPlatforms": ["max 3 cloud platforms from CV"],
   "experienceLevel": "junior|mid|senior",
-  "yearsOfExperience": "X years or estimate",
-  "allSkills": ["COMPREHENSIVE list of ALL technical skills"]
+  "yearsOfExperience": "X years",
+  "allSkills": ["max 15 key technical skills from CV only"]
 }
 
-Analyze carefully. PRIMARY ROLE is the most important field.`;
+IMPORTANT: Only include skills ACTUALLY mentioned in the CV. Do NOT add skills not in the CV. Keep response under 1000 tokens.`;
 
   try {
     console.log('[analyzeSkillsWithAI] Calling Gemini API with retry logic...');
     const response = await fetchWithRetry(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 4096,
-            topK: 40,
-            topP: 0.95,
+            temperature: 0.1,
+            maxOutputTokens: 1500,
+            topK: 20,
+            topP: 0.8,
           },
           safetySettings: [
             { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
@@ -1095,8 +1095,24 @@ Analyze carefully. PRIMARY ROLE is the most important field.`;
     
     console.log('[analyzeSkillsWithAI] API call successful');
 
-    const data = await response.json();
-    console.log('[analyzeSkillsWithAI] Raw API response:', JSON.stringify(data, null, 2));
+    const responseText = await response.text();
+    console.log('[analyzeSkillsWithAI] Raw response text:', responseText.substring(0, 500));
+    
+    // Check if response is an error message
+    if (responseText.startsWith('The provid') || responseText.includes('API key') || responseText.includes('error')) {
+      console.error('[analyzeSkillsWithAI] API Error:', responseText);
+      throw new Error(`API Error: ${responseText.substring(0, 200)}`);
+    }
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('[analyzeSkillsWithAI] Failed to parse API response as JSON:', responseText.substring(0, 500));
+      throw new Error(`Invalid API response: ${responseText.substring(0, 100)}`);
+    }
+    
+    console.log('[analyzeSkillsWithAI] Parsed API response:', JSON.stringify(data, null, 2));
     
     const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
 

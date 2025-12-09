@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     // Call Gemini API with retry logic for rate limits
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 4096,

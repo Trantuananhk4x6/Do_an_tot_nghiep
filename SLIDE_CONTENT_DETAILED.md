@@ -4,7 +4,7 @@
 
 ### Công nghệ sử dụng
 - **Framework**: Next.js 14 (App Router)
-- **AI Model**: Google Gemini (gemini-2.5-flash, gemini-2.5-flash)
+- **AI Model**: Google Gemini (gemini-2.5-flash-lite, gemini-2.5-flash-lite)
 - **Voice**: Web Speech API (Speech Recognition & Text-to-Speech)
 - **Avatar**: D-ID Talking Head API
 - **Video**: WebRTC Camera Streaming
@@ -195,7 +195,7 @@ src/app/(features)/quiz/
 
 [STEP 5] Quiz Session
     ├── questionService.ts → generateQuestions()
-    │   └── Google Gemini API (gemini-2.5-flash)
+    │   └── Google Gemini API (gemini-2.5-flash-lite)
     ├── QuizSessionStep.tsx: Hiển thị quiz
     ├── QuestionCard.tsx: Từng câu hỏi
     └── User chọn đáp án

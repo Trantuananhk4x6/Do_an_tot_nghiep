@@ -264,7 +264,7 @@ export async function POST(req: Request) {
     while (retries > 0) {
       try {
         result = await generateText({
-          model: google("gemini-2.5-flash") as any, // Sử dụng model nhẹ hơn
+          model: google("gemini-2.5-flash-lite") as any, // Sử dụng model nhẹ hơn
           prompt: `You are an expert technical interviewer. Generate 10 interview questions with detailed answers based on the candidate's resume, target position, and company.
 
 IMPORTANT: Generate ALL questions and answers in ${outputLanguage} language.

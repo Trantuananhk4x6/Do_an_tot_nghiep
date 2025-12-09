@@ -194,7 +194,7 @@ export default function SupportCVPage() {
     );
     
     // Build applied changes for highlighting in editor
-    // Match changes with raw suggestions to get itemId
+    // Match changes with raw suggestions and resolve actual item IDs
     const appliedChanges = autoEditChanges
       .filter(change => selectedIds.includes(change.id))
       .map((change, index) => {
@@ -205,10 +205,53 @@ export default function SupportCVPage() {
           s.improved === change.after
         );
         
+        // Resolve actual itemId from the original CV based on section and index
+        let resolvedItemId: string | undefined = undefined;
+        const suggestionItemId = matchingSuggestion?.itemId;
+        
+        if (suggestionItemId !== undefined) {
+          const sectionLower = change.section.toLowerCase();
+          
+          // Map index-based itemIds to actual item IDs
+          if (sectionLower === 'experiences' || sectionLower === 'experience') {
+            const itemIndex = parseInt(suggestionItemId, 10);
+            if (!isNaN(itemIndex) && originalCVBeforeEdit.experiences?.[itemIndex]) {
+              resolvedItemId = originalCVBeforeEdit.experiences[itemIndex].id;
+            }
+          } else if (sectionLower === 'education') {
+            const itemIndex = parseInt(suggestionItemId, 10);
+            if (!isNaN(itemIndex) && originalCVBeforeEdit.education?.[itemIndex]) {
+              resolvedItemId = originalCVBeforeEdit.education[itemIndex].id;
+            }
+          } else if (sectionLower === 'projects') {
+            const itemIndex = parseInt(suggestionItemId, 10);
+            if (!isNaN(itemIndex) && originalCVBeforeEdit.projects?.[itemIndex]) {
+              resolvedItemId = originalCVBeforeEdit.projects[itemIndex].id;
+            }
+          } else if (sectionLower === 'skills') {
+            // For skills, try to match by index or by name
+            const itemIndex = parseInt(suggestionItemId, 10);
+            if (!isNaN(itemIndex) && originalCVBeforeEdit.skills?.[itemIndex]) {
+              resolvedItemId = originalCVBeforeEdit.skills[itemIndex].id;
+            } else {
+              // Try to find by original skill name
+              const matchedSkill = originalCVBeforeEdit.skills?.find(s => 
+                s.name === matchingSuggestion?.original || s.name === change.before
+              );
+              if (matchedSkill) {
+                resolvedItemId = matchedSkill.id;
+              }
+            }
+          } else if (sectionLower === 'personalinfo' || sectionLower === 'summary') {
+            // For personal info fields, use the field name as identifier
+            resolvedItemId = change.field;
+          }
+        }
+        
         return {
           section: change.section,
           field: change.field,
-          itemId: matchingSuggestion?.itemId || undefined, // Get itemId from raw suggestion
+          itemId: resolvedItemId,
           originalValue: change.before,
           newValue: change.after,
           reason: change.reason,
@@ -216,7 +259,7 @@ export default function SupportCVPage() {
         };
       });
     
-    console.log('[Support CV] Applied changes with itemIds:', appliedChanges);
+    console.log('[Support CV] Applied changes with resolved itemIds:', appliedChanges);
     
     // Update state with final CV, applied changes, and go back to edit
     updateState({ 

@@ -48,24 +48,32 @@ export default function ProjectsSection({ data, onChange, aiAppliedChanges = [] 
     onChange(updated);
   };
 
-  // Helper function to check if a field was AI-modified
-  const isAIModified = (itemId: string, fieldName: string): AIAppliedChange | undefined => {
+  // Helper function to check if a field was AI-modified (check by itemId or index)
+  const isAIModified = (itemId: string, fieldName: string, index?: number): AIAppliedChange | undefined => {
     return aiAppliedChanges.find(change => 
       change.section.toLowerCase() === 'projects' && 
-      change.itemId === itemId && 
+      (change.itemId === itemId || change.itemId === String(index)) && 
       change.field.toLowerCase() === fieldName.toLowerCase()
     );
   };
 
-  // Generate input class with AI highlight
-  const getInputClass = (itemId: string, fieldName: string, extraClass = '') => {
-    const aiChange = isAIModified(itemId, fieldName);
-    const baseClass = `w-full px-4 py-3 bg-white/5 border rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${extraClass}`;
+  // Check if any project item was AI-modified (check by itemId or index)
+  const isItemAIModified = (itemId: string, index?: number): boolean => {
+    return aiAppliedChanges.some(change => 
+      change.section.toLowerCase() === 'projects' && 
+      (change.itemId === itemId || change.itemId === String(index))
+    );
+  };
+
+  // Generate input class with AI highlight - more prominent styling
+  const getInputClass = (itemId: string, fieldName: string, index?: number, extraClass = '') => {
+    const aiChange = isAIModified(itemId, fieldName, index);
+    const baseClass = `w-full px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${extraClass}`;
     
     if (aiChange) {
-      return `${baseClass} border-amber-500/70 ring-1 ring-amber-500/50 bg-amber-500/10`;
+      return `${baseClass} bg-amber-500/20 border-2 border-amber-400/70 ring-2 ring-amber-400/30`;
     }
-    return `${baseClass} border-white/10`;
+    return `${baseClass} bg-white/5 border border-white/10`;
   };
 
   const addAchievement = (index: number) => {
@@ -99,7 +107,22 @@ export default function ProjectsSection({ data, onChange, aiAppliedChanges = [] 
 
       <div className="space-y-6">
         {data.map((project, index) => (
-          <div key={project.id} className="glass-effect border border-white/10 rounded-xl p-6 relative hover:border-purple-500/50 transition-all">
+          <div 
+            key={project.id} 
+            className={`glass-effect border rounded-xl p-6 relative transition-all ${
+              isItemAIModified(project.id, index) 
+                ? 'border-amber-400/50 bg-amber-500/5 shadow-lg shadow-amber-500/10' 
+                : 'border-white/10 hover:border-purple-500/50'
+            }`}
+          >
+            {/* AI Modified Badge */}
+            {isItemAIModified(project.id, index) && (
+              <div className="absolute -top-3 left-4 px-3 py-1 bg-gradient-to-r from-amber-500 to-yellow-500 text-white text-xs font-semibold rounded-full flex items-center gap-1 shadow-lg">
+                <Sparkles className="w-3 h-3" />
+                AI Enhanced
+              </div>
+            )}
+
             <button
               onClick={() => removeProject(index)}
               className="absolute top-4 right-4 text-red-400 hover:text-red-300 transition-all hover:scale-110"
@@ -115,7 +138,7 @@ export default function ProjectsSection({ data, onChange, aiAppliedChanges = [] 
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Project Name *
                   </label>
-                  {isAIModified(project.id, 'name') && (
+                  {isAIModified(project.id, 'name', index) && (
                     <Sparkles className="absolute top-0 right-0 w-4 h-4 text-amber-400 z-10" />
                   )}
                   <input
@@ -123,14 +146,14 @@ export default function ProjectsSection({ data, onChange, aiAppliedChanges = [] 
                     value={project.name}
                     onChange={(e) => updateProject(index, { name: e.target.value })}
                     placeholder="e.g., Restaurant Management System"
-                    className={getInputClass(project.id, 'name')}
+                    className={getInputClass(project.id, 'name', index)}
                   />
                 </div>
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Project URL (Optional)
                   </label>
-                  {isAIModified(project.id, 'link') && (
+                  {isAIModified(project.id, 'link', index) && (
                     <Sparkles className="absolute top-0 right-0 w-4 h-4 text-amber-400 z-10" />
                   )}
                   <input
@@ -138,7 +161,7 @@ export default function ProjectsSection({ data, onChange, aiAppliedChanges = [] 
                     value={project.link || ''}
                     onChange={(e) => updateProject(index, { link: e.target.value })}
                     placeholder="GitHub, Demo, etc."
-                    className={getInputClass(project.id, 'link')}
+                    className={getInputClass(project.id, 'link', index)}
                   />
                 </div>
               </div>
@@ -148,7 +171,7 @@ export default function ProjectsSection({ data, onChange, aiAppliedChanges = [] 
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Project Description *
                 </label>
-                {isAIModified(project.id, 'description') && (
+                {isAIModified(project.id, 'description', index) && (
                   <Sparkles className="absolute top-0 right-0 w-4 h-4 text-amber-400 z-10" />
                 )}
                 <textarea
@@ -156,7 +179,7 @@ export default function ProjectsSection({ data, onChange, aiAppliedChanges = [] 
                   onChange={(e) => updateProject(index, { description: e.target.value })}
                   placeholder="Describe your project, its purpose, and what you built..."
                   rows={4}
-                  className={getInputClass(project.id, 'description', 'resize-none')}
+                  className={getInputClass(project.id, 'description', index, 'resize-none')}
                 />
                 <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
                   <Lightbulb className="w-3 h-3" />
@@ -168,19 +191,19 @@ export default function ProjectsSection({ data, onChange, aiAppliedChanges = [] 
               <div className="grid grid-cols-2 gap-4">
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
-                  {isAIModified(project.id, 'startDate') && (
+                  {isAIModified(project.id, 'startDate', index) && (
                     <Sparkles className="absolute top-0 right-0 w-4 h-4 text-amber-400 z-10" />
                   )}
                   <input
                     type="month"
                     value={project.startDate || ''}
                     onChange={(e) => updateProject(index, { startDate: e.target.value })}
-                    className={getInputClass(project.id, 'startDate')}
+                    className={getInputClass(project.id, 'startDate', index)}
                   />
                 </div>
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-300 mb-2">End Date (optional)</label>
-                  {isAIModified(project.id, 'endDate') && (
+                  {isAIModified(project.id, 'endDate', index) && (
                     <Sparkles className="absolute top-0 right-0 w-4 h-4 text-amber-400 z-10" />
                   )}
                   <input
@@ -188,7 +211,7 @@ export default function ProjectsSection({ data, onChange, aiAppliedChanges = [] 
                     value={project.endDate || ''}
                     onChange={(e) => updateProject(index, { endDate: e.target.value })}
                     placeholder="Leave empty if ongoing"
-                    className={getInputClass(project.id, 'endDate')}
+                    className={getInputClass(project.id, 'endDate', index)}
                   />
                 </div>
               </div>
@@ -198,7 +221,7 @@ export default function ProjectsSection({ data, onChange, aiAppliedChanges = [] 
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Technologies Used *
                 </label>
-                {isAIModified(project.id, 'technologies') && (
+                {isAIModified(project.id, 'technologies', index) && (
                   <Sparkles className="absolute top-0 right-0 w-4 h-4 text-amber-400 z-10" />
                 )}
                 <div className="flex flex-wrap gap-2 mb-2">

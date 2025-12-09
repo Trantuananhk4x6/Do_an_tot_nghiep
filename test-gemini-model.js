@@ -13,8 +13,8 @@ async function testGemini() {
   
   // Test different models
   const modelsToTest = [
-    'gemini-2.5-flash-exp',
-    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
+    'gemini-2.5-flash-lite',
     'gemini-1.5-flash-latest',
     'gemini-1.5-flash',
     'gemini-1.5-pro',

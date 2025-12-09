@@ -47,7 +47,7 @@ export async function exportCV(
 }
 
 async function exportFromHTML(element: HTMLElement): Promise<Blob> {
-  console.log('[Export Service] Converting HTML to PDF...');
+  console.log('[Export Service] Converting HTML to PDF with high quality...');
   
   // Clone the element to avoid modifying the original
   const clone = element.cloneNode(true) as HTMLElement;
@@ -100,24 +100,53 @@ async function exportFromHTML(element: HTMLElement): Promise<Blob> {
           <meta charset="utf-8">
           ${styles}
           <style>
-            * { box-sizing: border-box; }
+            @page {
+              size: A4;
+              margin: 0;
+            }
+            * { 
+              box-sizing: border-box; 
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
             body { 
               margin: 0; 
               padding: 0; 
               background: white !important;
-              font-family: 'Times New Roman', Times, serif;
+              font-family: 'Times New Roman', 'Georgia', serif;
+              -webkit-font-smoothing: antialiased;
+              -moz-osx-font-smoothing: grayscale;
+              text-rendering: optimizeLegibility;
             }
             .cv-container {
               width: 210mm;
               min-height: 297mm;
               background: white !important;
-              padding: 0;
+              padding: 15mm 15mm 15mm 15mm;
               margin: 0;
+              page-break-inside: avoid;
             }
             /* Force all backgrounds to be visible */
-            [class*="bg-"] { background-color: inherit; }
-            /* Ensure text is visible */
-            [class*="text-"] { color: inherit; }
+            [class*="bg-"] { 
+              background-color: inherit; 
+              -webkit-print-color-adjust: exact !important;
+            }
+            /* Ensure text is crisp and visible */
+            [class*="text-"] { 
+              color: inherit; 
+            }
+            /* Prevent text from being cut off */
+            h1, h2, h3, h4, h5, h6 {
+              page-break-after: avoid;
+            }
+            p, li, span, div {
+              orphans: 3;
+              widows: 3;
+            }
+            /* Ensure proper spacing for sections */
+            section, article, .section {
+              page-break-inside: avoid;
+            }
           </style>
         </head>
         <body>
@@ -129,8 +158,8 @@ async function exportFromHTML(element: HTMLElement): Promise<Blob> {
     `);
     iframeDoc.close();
 
-    // Wait for content to render
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Wait for content to render and fonts to load
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     const targetElement = iframeDoc.querySelector('.cv-container') as HTMLElement;
     if (!targetElement) {
@@ -139,9 +168,12 @@ async function exportFromHTML(element: HTMLElement): Promise<Blob> {
 
     const actualHeight = targetElement.scrollHeight || targetElement.offsetHeight || 1123;
     
-    // Capture with html2canvas
+    // Higher scale for sharper text (4x for crisp quality)
+    const scale = 4;
+    
+    // Capture with html2canvas at high resolution
     const canvas = await html2canvas(targetElement, {
-      scale: 3, // Higher resolution for sharper PDF
+      scale: scale,
       useCORS: true,
       allowTaint: true,
       logging: false,
@@ -154,20 +186,23 @@ async function exportFromHTML(element: HTMLElement): Promise<Blob> {
       scrollY: 0,
       x: 0,
       y: 0,
+      imageTimeout: 0,
       onclone: (clonedDoc) => {
-        // Ensure white background
+        // Ensure white background and crisp text
         const body = clonedDoc.body;
         body.style.background = 'white';
         body.style.margin = '0';
         body.style.padding = '0';
+        body.style.webkitFontSmoothing = 'antialiased';
       }
     });
 
-    // Create PDF
+    // Create PDF with high quality settings
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
-      format: 'a4'
+      format: 'a4',
+      compress: false // Don't compress for better quality
     });
 
     const imgWidth = 210; // A4 width in mm
@@ -176,8 +211,9 @@ async function exportFromHTML(element: HTMLElement): Promise<Blob> {
     
     // If content fits on one page, just add the image
     if (imgHeight <= pageHeight) {
-      const imgData = canvas.toDataURL('image/jpeg', 0.95); // Use JPEG with high quality for better compression
-      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
+      // Use PNG for sharper text quality
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'NONE');
     } else {
       // For multi-page content
       const pixelsPerPage = (pageHeight / imgWidth) * canvas.width;
@@ -209,14 +245,15 @@ async function exportFromHTML(element: HTMLElement): Promise<Blob> {
             pdf.addPage();
           }
           
-          const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.95);
+          // Use PNG for sharper text on multi-page PDFs
+          const pageImgData = pageCanvas.toDataURL('image/png');
           const sliceHeight = (sourceHeight * imgWidth) / canvas.width;
-          pdf.addImage(pageImgData, 'JPEG', 0, 0, imgWidth, sliceHeight, undefined, 'FAST');
+          pdf.addImage(pageImgData, 'PNG', 0, 0, imgWidth, sliceHeight, undefined, 'NONE');
         }
       }
     }
 
-    console.log('[Export Service] ✓ HTML to PDF conversion complete');
+    console.log('[Export Service] ✓ HTML to PDF conversion complete with high quality');
     return pdf.output('blob');
   } finally {
     // Clean up

@@ -34,11 +34,19 @@ export default function SkillsSection({ data, onChange, aiAppliedChanges = [] }:
   };
 
   // Helper function to check if a skill was AI-modified
-  const isAIModified = (itemId: string): AIAppliedChange | undefined => {
-    return aiAppliedChanges.find(change => 
-      change.section.toLowerCase() === 'skills' && 
-      change.itemId === itemId
-    );
+  // Checks by itemId first, then by skill name as fallback
+  const isAIModified = (skill: Skill): AIAppliedChange | undefined => {
+    return aiAppliedChanges.find(change => {
+      if (change.section.toLowerCase() !== 'skills') return false;
+      
+      // Check by itemId first
+      if (change.itemId && change.itemId === skill.id) return true;
+      
+      // Check by new value (the improved skill name matches current skill name)
+      if (change.newValue && change.newValue === skill.name) return true;
+      
+      return false;
+    });
   };
 
   // Check if any skills section was AI-modified
@@ -70,8 +78,8 @@ export default function SkillsSection({ data, onChange, aiAppliedChanges = [] }:
           </div>
         )}
         {data.map((skill, index) => (
-          <div key={skill.id} className={`glass-effect border rounded-lg p-3 lg:p-4 transition-all ${isAIModified(skill.id) ? 'border-amber-500/50 ring-1 ring-amber-500/30 bg-amber-500/5' : 'border-white/10 hover:border-purple-500/50'}`}>
-            {isAIModified(skill.id) && (
+          <div key={skill.id} className={`relative glass-effect border rounded-lg p-3 lg:p-4 transition-all ${isAIModified(skill) ? 'border-amber-500/50 ring-1 ring-amber-500/30 bg-amber-500/5' : 'border-white/10 hover:border-purple-500/50'}`}>
+            {isAIModified(skill) && (
               <Sparkles className="absolute -top-2 -right-2 w-4 h-4 text-amber-400" />
             )}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
