@@ -143,9 +143,9 @@ class GeminiClient {
       );
     }
 
-    // Using gemini-2.0-flash (faster and less likely to hit rate limits)
+    // Using gemini-2.5-flash (faster and less likely to hit rate limits)
     return this.genAI.getGenerativeModel({
-      model: config.model || 'gemini-2.0-flash',
+      model: config.model || 'gemini-2.5-flash',
       generationConfig: {
         temperature: config.temperature ?? 0.3,
         maxOutputTokens: config.maxOutputTokens || 2048, // Limit output to reduce API usage

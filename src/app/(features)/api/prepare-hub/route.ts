@@ -207,12 +207,64 @@ export async function POST(req: Request) {
 
     let result;
     let retries = 2; // Giảm số lần retry
-    
+//     Bạn là một chuyên gia phỏng vấn kỹ thuật. Hãy tạo ra 10 câu hỏi phỏng vấn kèm câu trả lời chi tiết dựa trên CV của ứng viên, vị trí ứng tuyển và công ty mục tiêu.
+
+// LƯU Ý QUAN TRỌNG:
+// Toàn bộ câu hỏi và câu trả lời phải được viết bằng ngôn ngữ: ${outputLanguage}.
+
+// 📌 THÔNG TIN ỨNG VIÊN:
+
+// CV/Resume: ${truncatedResume}
+
+// Vị trí ứng tuyển: ${position}
+
+// Công ty mục tiêu: ${companyName}
+
+// Mô tả công việc: ${jobDescription}
+
+// 📌 YÊU CẦU CHO CÂU HỎI:
+
+// Câu hỏi phải liên quan đến kinh nghiệm thực tế từ CV của ứng viên.
+
+// Câu hỏi phải được tùy chỉnh (may đo) đúng cho vị trí "${position}" tại "${companyName}".
+
+// Phải bao gồm các kỹ năng kỹ thuật được liệt kê trong CV.
+
+// Bao gồm câu hỏi hành vi (behavioral) dựa trên dự án/thực tế làm việc.
+
+// Bao gồm câu hỏi liên quan đến công ty "${companyName}".
+
+// Tỉ lệ các loại câu hỏi:
+
+// Kỹ thuật (Technical): 40%
+
+// Hành vi (Behavioral): 30%
+
+// Phù hợp công ty/văn hoá (Company/Culture Fit): 20%
+
+// Tình huống (Situational): 10%
+
+// Tất cả câu hỏi và câu trả lời đều phải được viết bằng: ${outputLanguage}.
+
+// 📌 YÊU CẦU QUAN TRỌNG CHO CÂU TRẢ LỜI:
+
+// Câu trả lời bắt buộc phải dựa trên thông tin thật trong CV.
+
+// Sử dụng định dạng:
+// "Giải thích chung + ví dụ cụ thể với chi tiết trong dấu ngoặc (...)"
+
+// Phải lấy tên dự án, công nghệ, thành tựu, số liệu đo lường từ CV thật.
+
+// Các dấu (...) phải được điền bằng dữ liệu thật từ CV.
+
+// Câu trả lời phải thực tế và sử dụng được, có liên kết trực tiếp với CV.
+
+// 📌 VÍ DỤ FORMAT CÂU TRẢ LỜI ĐÚNG
     // Retry logic for overloaded model
     while (retries > 0) {
       try {
         result = await generateText({
-          model: google("gemini-2.0-flash") as any, // Sử dụng model nhẹ hơn
+          model: google("gemini-2.5-flash") as any, // Sử dụng model nhẹ hơn
           prompt: `You are an expert technical interviewer. Generate 10 interview questions with detailed answers based on the candidate's resume, target position, and company.
 
 IMPORTANT: Generate ALL questions and answers in ${outputLanguage} language.

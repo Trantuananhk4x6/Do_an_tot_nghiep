@@ -402,7 +402,7 @@ export async function POST(req: NextRequest) {
     while (retries > 0) {
       try {
         result = await generateText({
-          model: google("gemini-2.0-flash") as any,
+          model: google("gemini-2.5-flash") as any,
           prompt: `${interviewerPrompt}
 
 ===================

@@ -528,7 +528,7 @@ ${truncated}
 
   // Step 6: Call Gemini API with retry
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     console.log("[generateSummary] Gọi Gemini API...");
 
     const response = await fetchWithRetry(url, {

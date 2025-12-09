@@ -4,7 +4,7 @@
 
 ### Công nghệ sử dụng
 - **Framework**: Next.js 14 (App Router)
-- **AI Model**: Google Gemini (gemini-2.0-flash, gemini-2.5-flash)
+- **AI Model**: Google Gemini (gemini-2.5-flash, gemini-2.5-flash)
 - **Voice**: Web Speech API (Speech Recognition & Text-to-Speech)
 - **Avatar**: D-ID Talking Head API
 - **Video**: WebRTC Camera Streaming

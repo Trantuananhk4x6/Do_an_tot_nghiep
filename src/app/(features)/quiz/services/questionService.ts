@@ -477,8 +477,8 @@ Return ONLY valid JSON in this exact format (no markdown code blocks, no extra t
   };
 
   try {
-    // Use gemini-2.0-flash stable version
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    // Use gemini-2.5-flash stable version
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
     console.log(`[generateQuestionsWithAI] Generating ${count} questions in ${language} for skills:`, skills);
     

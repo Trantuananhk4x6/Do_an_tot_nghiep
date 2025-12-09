@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { interviewSession }: AssessmentAPIRequest = body;
 
-    console.log('🔍 Received assessment request');
-    console.log('📦 Request body:', JSON.stringify(body, null, 2));
+    
+    
 
     // Validate input
     if (!interviewSession) {
@@ -51,10 +51,7 @@ export async function POST(request: NextRequest) {
       } as AssessmentAPIResponse, { status: 400 });
     }
 
-    console.log('✅ Session ID:', interviewSession.sessionId);
-    console.log('📝 Transcript entries:', interviewSession.transcript.length);
-    console.log('⏱️ Duration:', interviewSession.duration, 'seconds');
-    console.log('❓ Questions asked:', interviewSession.questionsAsked?.length || 0);
+ 
 
     if (!process.env.GEMINI_API_KEY) {
       console.error('❌ GEMINI_API_KEY not configured');
@@ -66,19 +63,17 @@ export async function POST(request: NextRequest) {
 
     // Build AI prompt
     const prompt = buildAssessmentPrompt(interviewSession);
-    console.log('📄 Prompt built, length:', prompt.length);
+    
 
     // Call Gemini API with retry logic for rate limits
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 4096,
       }
     });
-    
-    console.log('🤖 Calling Gemini API...');
-    console.log('📄 Prompt length:', prompt.length, 'characters');
+  
     
     let result;
     let retries = 3;
@@ -86,9 +81,9 @@ export async function POST(request: NextRequest) {
     
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        console.log(`🔄 Attempt ${attempt}/${retries}...`);
+        
         result = await model.generateContent(prompt);
-        console.log('✅ API call successful!');
+        
         break; // Success, exit retry loop
       } catch (geminiError: any) {
         lastError = geminiError;
@@ -107,7 +102,7 @@ export async function POST(request: NextRequest) {
           if (attempt < retries) {
             // Exponential backoff: 2s, 4s, 8s
             const waitTime = Math.pow(2, attempt) * 1000;
-            console.log(`⏳ Waiting ${waitTime / 1000}s before retry...`);
+            
             await new Promise(resolve => setTimeout(resolve, waitTime));
           } else {
             console.error('❌ Max retries reached, rate limit exceeded');
@@ -136,7 +131,7 @@ export async function POST(request: NextRequest) {
     }
     
     const response = (result as any).response.text();
-    console.log('✅ Received response, length:', response.length);
+    
 
     // Parse JSON response
     let jsonText = response.trim();
@@ -152,9 +147,9 @@ export async function POST(request: NextRequest) {
     let assessment: AssessmentResult;
     try {
       assessment = JSON.parse(jsonText);
-      console.log('✅ Assessment parsed successfully');
-      console.log('📊 Overall Score:', assessment.overallScore);
-      console.log('🎯 Readiness Level:', assessment.readinessLevel);
+      
+      
+      
     } catch (parseError) {
       console.error('❌ JSON parse error:', parseError);
       console.error('Response text:', jsonText.substring(0, 500));

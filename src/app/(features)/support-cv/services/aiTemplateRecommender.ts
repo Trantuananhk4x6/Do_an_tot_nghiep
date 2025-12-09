@@ -24,7 +24,7 @@ export async function recommendTemplate(cvData: CVData): Promise<AITemplateResul
   console.log('[AI Template Recommender] Starting analysis...');
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     // Analyze CV to determine best template
     const prompt = `You are an expert CV/Resume consultant. Analyze this CV data and recommend the BEST template from the following options:

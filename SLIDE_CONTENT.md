@@ -22,7 +22,7 @@
 ## 💡 GIẢI PHÁP
 
 ### Công nghệ sử dụng:
-- **Google Gemini AI** (gemini-2.0-flash) - Đánh giá và tạo câu hỏi
+- **Google Gemini AI** (gemini-2.5-flash) - Đánh giá và tạo câu hỏi
 - **Web Speech API** - Nhận diện giọng nói (hỗ trợ đa ngôn ngữ: VI, EN, JA, ZH, KO)
 - **D-ID Talking Head** - Avatar AI động nói chuyện
 - **WebRTC** - Streaming camera người dùng
@@ -481,7 +481,7 @@ Link được format với:
 
 ## Công nghệ chung:
 - **Frontend**: Next.js 14, React, TailwindCSS, Framer Motion
-- **AI**: Google Gemini API (2.0-flash, 2.5-flash)
+- **AI**: Google Gemini API (2.5-flash, 2.5-flash)
 - **Voice**: Web Speech API, Text-to-Speech
 - **Video**: D-ID Talking Head, WebRTC
 - **Languages**: VI, EN, JA, ZH, KO

@@ -6,8 +6,8 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const fetchWithRetry = async (
   url: string,
   options: RequestInit,
-  retries = 6,
-  baseDelayMs = 1000
+  retries = 8,
+  baseDelayMs = 3000
 ): Promise<Response> => {
   let lastError: any;
   
@@ -22,8 +22,9 @@ const fetchWithRetry = async (
       
       // If it's a 503 (overload) or 429 (rate limit), retry with exponential backoff
       if ((response.status === 503 || response.status === 429) && attempt < retries) {
-        const delay = baseDelayMs * Math.pow(2, attempt) + Math.floor(Math.random() * 1000);
-        console.log(`[fetchWithRetry] Attempt ${attempt + 1}/${retries + 1} failed with ${response.status}, retrying in ${delay}ms...`);
+        // Longer delays for rate limiting - wait 10-60+ seconds
+        const delay = baseDelayMs * Math.pow(2, attempt) + Math.floor(Math.random() * 2000);
+        console.log(`[fetchWithRetry] Rate limited (${response.status}). Attempt ${attempt + 1}/${retries + 1}, waiting ${Math.round(delay/1000)}s before retry...`);
         await sleep(delay);
         continue;
       }
@@ -1070,7 +1071,7 @@ Analyze carefully. PRIMARY ROLE is the most important field.`;
   try {
     console.log('[analyzeSkillsWithAI] Calling Gemini API with retry logic...');
     const response = await fetchWithRetry(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
